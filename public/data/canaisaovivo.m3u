@@ -1,0 +1,17 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="globo" tvg-name="Globo" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Globo_logo.svg/200px-Globo_logo.svg.png" group-title="Abertos",Globo
+https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
+#EXTINF:-1 tvg-id="sbt" tvg-name="SBT" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/SBT_logo.svg/200px-SBT_logo.svg.png" group-title="Abertos",SBT
+https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
+#EXTINF:-1 tvg-id="record" tvg-name="Record TV" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/RecordTV_logo.svg/200px-RecordTV_logo.svg.png" group-title="Abertos",Record TV
+https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
+#EXTINF:-1 tvg-id="band" tvg-name="Band" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Rede_Bandeirantes_logo.svg/200px-Rede_Bandeirantes_logo.svg.png" group-title="Abertos",Band
+https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
+#EXTINF:-1 tvg-id="espn" tvg-name="ESPN" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/200px-ESPN_wordmark.svg.png" group-title="Esportes",ESPN
+https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
+#EXTINF:-1 tvg-id="sportv" tvg-name="SporTV" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/SporTV_logo.svg/200px-SporTV_logo.svg.png" group-title="Esportes",SporTV
+https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
+#EXTINF:-1 tvg-id="discovery" tvg-name="Discovery" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Discovery_Channel_2019.svg/200px-Discovery_Channel_2019.svg.png" group-title="Variedades",Discovery
+https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
+#EXTINF:-1 tvg-id="cartoon" tvg-name="Cartoon Network" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Cartoon_Network_2010_logo.svg/200px-Cartoon_Network_2010_logo.svg.png" group-title="Infantil",Cartoon Network
+https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
