@@ -13,6 +13,30 @@ export interface Movie {
   kids?: boolean;
 }
 
+// Raw shape from remote cinema/filmeskids JSON
+export interface RawMovieItem {
+  titulo: string;
+  url: string;
+  genero: string;
+  year: string;
+  rating: string;
+  desc: string;
+  poster: string;
+  type: string;
+}
+
+// Raw shape from remote séries/sérieskids JSON
+export interface RawSeriesItem {
+  titulo: string;
+  identificador_archive: string;
+  genero: string;
+  year: string;
+  rating: string;
+  desc: string;
+  poster: string;
+  type: string;
+}
+
 export interface Channel {
   id: string;
   name: string;

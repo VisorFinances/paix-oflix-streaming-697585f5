@@ -13,12 +13,22 @@ export function parseM3U(content: string): Channel[] {
     const groupMatch = line.match(/group-title="([^"]+)"/);
     const idMatch = line.match(/tvg-id="([^"]+)"/);
     
-    const url = lines[i + 1];
-    if (!url || url.startsWith('#')) continue;
+    // Find the next non-comment, non-empty line as the URL
+    let url = '';
+    for (let j = i + 1; j < lines.length; j++) {
+      if (!lines[j].startsWith('#')) {
+        url = lines[j];
+        break;
+      }
+    }
+    if (!url) continue;
+    
+    const name = nameMatch?.[1] || '';
+    if (!name) continue; // skip entries without a name
     
     channels.push({
       id: idMatch?.[1] || `ch-${channels.length}`,
-      name: nameMatch?.[1] || 'Unknown',
+      name,
       logo: logoMatch?.[1] || '',
       url,
       group: groupMatch?.[1] || 'Outros',
