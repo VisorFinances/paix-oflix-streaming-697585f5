@@ -3,15 +3,17 @@ import { Movie, RawMovieItem, RawSeriesItem } from '@/types';
 
 const BASE = 'https://raw.githubusercontent.com/VisorFinances/tv.paixaoflix/refs/heads/main/data';
 
-const SOURCES = [
-  { url: `${BASE}/cinema.json`, kind: 'movie' as const, kids: false },
-  { url: `${BASE}/favoritos.json`, kind: 'movie' as const, kids: false },
-  { url: `${BASE}/filmeskids.json`, kind: 'movie' as const, kids: true },
-  { url: `${BASE}/s%C3%A9ries.json`, kind: 'series' as const, kids: false },
-  { url: `${BASE}/s%C3%A9rieskids.json`, kind: 'series' as const, kids: true },
+import { SourceFile } from '@/types';
+
+const SOURCES: { url: string; kind: 'movie' | 'series'; kids: boolean; source: SourceFile }[] = [
+  { url: `${BASE}/cinema.json`, kind: 'movie', kids: false, source: 'cinema' },
+  { url: `${BASE}/favoritos.json`, kind: 'movie', kids: false, source: 'favoritos' },
+  { url: `${BASE}/filmeskids.json`, kind: 'movie', kids: true, source: 'filmeskids' },
+  { url: `${BASE}/s%C3%A9ries.json`, kind: 'series', kids: false, source: 'series' },
+  { url: `${BASE}/s%C3%A9rieskids.json`, kind: 'series', kids: true, source: 'serieskids' },
 ];
 
-function normalizeMovie(raw: RawMovieItem, index: number, kind: 'movie' | 'series', kids: boolean): Movie {
+function normalizeMovie(raw: RawMovieItem, index: number, kind: 'movie' | 'series', kids: boolean, source: SourceFile): Movie {
   return {
     id: `${kind}-${kids ? 'k' : 'a'}-${index}`,
     title: raw.titulo,
@@ -23,10 +25,11 @@ function normalizeMovie(raw: RawMovieItem, index: number, kind: 'movie' | 'serie
     rating: raw.rating || '',
     streamUrl: raw.url || '',
     kids,
+    source,
   };
 }
 
-function normalizeSeries(raw: RawSeriesItem, index: number, kids: boolean): Movie {
+function normalizeSeries(raw: RawSeriesItem, index: number, kids: boolean, source: SourceFile): Movie {
   return {
     id: `series-${kids ? 'k' : 'a'}-${index}`,
     title: raw.titulo,
@@ -40,6 +43,7 @@ function normalizeSeries(raw: RawSeriesItem, index: number, kids: boolean): Movi
       ? `https://archive.org/download/${raw.identificador_archive}/`
       : '',
     kids,
+    source,
   };
 }
 
@@ -63,9 +67,9 @@ export function useMovies() {
 
         data.forEach((item, idx) => {
           if (item.identificador_archive !== undefined) {
-            all.push(normalizeSeries(item, all.length + idx, src.kids));
+            all.push(normalizeSeries(item, all.length + idx, src.kids, src.source));
           } else {
-            all.push(normalizeMovie(item, all.length + idx, src.kind, src.kids));
+            all.push(normalizeMovie(item, all.length + idx, src.kind, src.kids, src.source));
           }
         });
       });

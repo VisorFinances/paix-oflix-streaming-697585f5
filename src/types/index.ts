@@ -1,3 +1,5 @@
+export type SourceFile = 'cinema' | 'favoritos' | 'filmeskids' | 'series' | 'serieskids';
+
 export interface Movie {
   id: string;
   title: string;
@@ -11,6 +13,7 @@ export interface Movie {
   duration?: string;
   streamUrl?: string;
   kids?: boolean;
+  source: SourceFile;
 }
 
 // Raw shape from remote cinema/filmeskids JSON
