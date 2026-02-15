@@ -11,9 +11,10 @@ interface MovieRowProps {
   onToggleFavorite: (movieId: string) => void;
   favorites: string[];
   continueWatching?: Record<string, number>;
+  onShowDetails?: (movie: Movie) => void;
 }
 
-const MovieRow = ({ title, subtitle, movies, onPlay, onToggleFavorite, favorites, continueWatching }: MovieRowProps) => {
+const MovieRow = ({ title, subtitle, movies, onPlay, onToggleFavorite, favorites, continueWatching, onShowDetails }: MovieRowProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const scroll = (dir: 'left' | 'right') => {
@@ -47,6 +48,7 @@ const MovieRow = ({ title, subtitle, movies, onPlay, onToggleFavorite, favorites
               onToggleFavorite={onToggleFavorite}
               isFavorite={favorites.includes(movie.id)}
               progress={continueWatching?.[movie.id]}
+              onShowDetails={onShowDetails}
             />
           ))}
         </div>

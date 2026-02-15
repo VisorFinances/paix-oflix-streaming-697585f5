@@ -11,9 +11,10 @@ interface SearchViewProps {
   favorites: string[];
   onBack: () => void;
   onPlayChannel: (channel: Channel) => void;
+  onShowDetails?: (movie: Movie) => void;
 }
 
-const SearchView = ({ movies, channels, onPlay, onToggleFavorite, favorites, onBack, onPlayChannel }: SearchViewProps) => {
+const SearchView = ({ movies, channels, onPlay, onToggleFavorite, favorites, onBack, onPlayChannel, onShowDetails }: SearchViewProps) => {
   const [query, setQuery] = useState('');
 
   const filteredMovies = useMemo(() => {
@@ -61,6 +62,7 @@ const SearchView = ({ movies, channels, onPlay, onToggleFavorite, favorites, onB
                 onPlay={onPlay}
                 onToggleFavorite={onToggleFavorite}
                 isFavorite={favorites.includes(m.id)}
+                onShowDetails={onShowDetails}
               />
             ))}
           </div>

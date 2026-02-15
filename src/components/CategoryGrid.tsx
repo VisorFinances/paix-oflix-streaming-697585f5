@@ -9,9 +9,10 @@ interface CategoryGridProps {
   onToggleFavorite: (movieId: string) => void;
   favorites: string[];
   onBack: () => void;
+  onShowDetails?: (movie: Movie) => void;
 }
 
-const CategoryGrid = ({ title, movies, onPlay, onToggleFavorite, favorites, onBack }: CategoryGridProps) => {
+const CategoryGrid = ({ title, movies, onPlay, onToggleFavorite, favorites, onBack, onShowDetails }: CategoryGridProps) => {
   return (
     <div className="min-h-screen px-4 md:px-12 py-8 animate-fade-in">
       <div className="flex items-center gap-4 mb-8">
@@ -28,6 +29,7 @@ const CategoryGrid = ({ title, movies, onPlay, onToggleFavorite, favorites, onBa
             onPlay={onPlay}
             onToggleFavorite={onToggleFavorite}
             isFavorite={favorites.includes(movie.id)}
+            onShowDetails={onShowDetails}
           />
         ))}
       </div>

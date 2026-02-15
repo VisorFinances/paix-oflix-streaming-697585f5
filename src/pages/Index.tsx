@@ -11,12 +11,14 @@ import CategoryGrid from '@/components/CategoryGrid';
 import LiveTV from '@/components/LiveTV';
 import SearchView from '@/components/SearchView';
 import PlayerOverlay from '@/components/PlayerOverlay';
+import MovieDetailModal from '@/components/MovieDetailModal';
 
 const Index = () => {
   const { movies } = useMovies();
   const { channels } = useChannels();
   const [activeView, setActiveView] = useState('home');
   const [playingMovie, setPlayingMovie] = useState<Movie | null>(null);
+  const [detailMovie, setDetailMovie] = useState<Movie | null>(null);
   const [favorites, setFavorites] = useLocalStorage<string[]>('paixaoflix-favorites', []);
   const [continueWatching, setContinueWatching] = useLocalStorage<Record<string, number>>('paixaoflix-progress', {});
 
@@ -155,10 +157,21 @@ const Index = () => {
           />
         )}
 
+        {/* Detail Modal */}
+        {detailMovie && (
+          <MovieDetailModal
+            movie={detailMovie}
+            onClose={() => setDetailMovie(null)}
+            onPlay={(m) => { setDetailMovie(null); handlePlay(m); }}
+            onToggleFavorite={toggleFavorite}
+            isFavorite={favorites.includes(detailMovie.id)}
+          />
+        )}
+
         {/* Home View */}
         {activeView === 'home' && (
           <>
-            <HeroBanner movie={heroMovie} onPlay={handlePlay} />
+            <HeroBanner movie={heroMovie} onPlay={handlePlay} onShowDetails={setDetailMovie} />
             
             <div className="-mt-20 relative z-10">
               {continueWatchingMovies.length > 0 && (
@@ -169,6 +182,7 @@ const Index = () => {
                   onToggleFavorite={toggleFavorite}
                   favorites={favorites}
                   continueWatching={continueWatching}
+                  onShowDetails={setDetailMovie}
                 />
               )}
 
@@ -179,20 +193,21 @@ const Index = () => {
                   onPlay={handlePlay}
                   onToggleFavorite={toggleFavorite}
                   favorites={favorites}
+                  onShowDetails={setDetailMovie}
                 />
               )}
 
               <MenuCards onNavigate={setActiveView} />
 
-              <MovieRow title="Não deixe de ver" movies={categories.naoPerder} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} />
-              <MovieRow title="Sábado a noite merece" subtitle="Ação e adrenalina" movies={categories.sabado} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} />
-              <MovieRow title="As crianças amam" movies={categories.criancas} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} />
-              <MovieRow title="Romances para inspirações" subtitle="Histórias que aceleram o coração..." movies={categories.romance} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} />
-              <MovieRow title="Nostalgias" movies={categories.nostalgia} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} />
-              <MovieRow title="Melhores Lançamentos 2025" movies={categories.best2025} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} />
-              <MovieRow title="Prepare a pipoca" subtitle="Séries imperdíveis" movies={categories.pipoca} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} />
+              <MovieRow title="Não deixe de ver" movies={categories.naoPerder} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} onShowDetails={setDetailMovie} />
+              <MovieRow title="Sábado a noite merece" subtitle="Ação e adrenalina" movies={categories.sabado} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} onShowDetails={setDetailMovie} />
+              <MovieRow title="As crianças amam" movies={categories.criancas} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} onShowDetails={setDetailMovie} />
+              <MovieRow title="Romances para inspirações" subtitle="Histórias que aceleram o coração..." movies={categories.romance} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} onShowDetails={setDetailMovie} />
+              <MovieRow title="Nostalgias" movies={categories.nostalgia} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} onShowDetails={setDetailMovie} />
+              <MovieRow title="Melhores Lançamentos 2025" movies={categories.best2025} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} onShowDetails={setDetailMovie} />
+              <MovieRow title="Prepare a pipoca" subtitle="Séries imperdíveis" movies={categories.pipoca} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} onShowDetails={setDetailMovie} />
               {categories.novelas.length > 0 && (
-                <MovieRow title="Novelas" movies={categories.novelas} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} />
+                <MovieRow title="Novelas" movies={categories.novelas} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} onShowDetails={setDetailMovie} />
               )}
             </div>
           </>
@@ -213,6 +228,7 @@ const Index = () => {
             favorites={favorites}
             onBack={() => setActiveView('home')}
             onPlayChannel={handlePlayChannel}
+            onShowDetails={setDetailMovie}
           />
         )}
 
@@ -225,6 +241,7 @@ const Index = () => {
             onToggleFavorite={toggleFavorite}
             favorites={favorites}
             onBack={() => setActiveView('home')}
+            onShowDetails={setDetailMovie}
           />
         )}
       </main>

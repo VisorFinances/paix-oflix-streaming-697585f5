@@ -4,9 +4,10 @@ import { Play, Info } from 'lucide-react';
 interface HeroBannerProps {
   movie: Movie | null;
   onPlay: (movie: Movie) => void;
+  onShowDetails?: (movie: Movie) => void;
 }
 
-const HeroBanner = ({ movie, onPlay }: HeroBannerProps) => {
+const HeroBanner = ({ movie, onPlay, onShowDetails }: HeroBannerProps) => {
   if (!movie) return null;
 
   return (
@@ -36,7 +37,7 @@ const HeroBanner = ({ movie, onPlay }: HeroBannerProps) => {
           >
             <Play className="w-5 h-5" /> Assistir
           </button>
-          <button className="flex items-center gap-2 px-6 py-2.5 rounded-md bg-muted/60 text-foreground font-semibold hover:bg-muted transition text-sm">
+          <button onClick={() => onShowDetails?.(movie)} className="flex items-center gap-2 px-6 py-2.5 rounded-md bg-muted/60 text-foreground font-semibold hover:bg-muted transition text-sm">
             <Info className="w-5 h-5" /> Mais Informações
           </button>
         </div>

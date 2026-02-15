@@ -1,5 +1,5 @@
 import { Movie } from '@/types';
-import { Play, Plus, Check } from 'lucide-react';
+import { Play, Plus, Check, Info } from 'lucide-react';
 
 interface MovieCardProps {
   movie: Movie;
@@ -7,9 +7,10 @@ interface MovieCardProps {
   onToggleFavorite: (movieId: string) => void;
   isFavorite: boolean;
   progress?: number;
+  onShowDetails?: (movie: Movie) => void;
 }
 
-const MovieCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress }: MovieCardProps) => {
+const MovieCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, onShowDetails }: MovieCardProps) => {
   return (
     <div className="movie-card group flex-shrink-0 w-[180px] md:w-[220px]">
       <div className="relative aspect-[2/3]">
@@ -18,6 +19,7 @@ const MovieCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress }: Mo
           alt={movie.title}
           className="w-full h-full object-cover rounded-md"
           loading="lazy"
+          onClick={() => onShowDetails?.(movie)}
         />
         {progress !== undefined && progress > 0 && (
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-muted rounded-b-md">
@@ -43,6 +45,14 @@ const MovieCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress }: Mo
             >
               {isFavorite ? <Check className="w-4 h-4 text-primary" /> : <Plus className="w-4 h-4" />}
             </button>
+            {onShowDetails && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onShowDetails(movie); }}
+                className="flex items-center justify-center w-8 h-8 rounded-full border border-muted-foreground/50 hover:border-foreground transition"
+              >
+                <Info className="w-4 h-4" />
+              </button>
+            )}
             {movie.rating && (
               <span className="text-[10px] border border-muted-foreground/40 px-1 rounded">{movie.rating}</span>
             )}
