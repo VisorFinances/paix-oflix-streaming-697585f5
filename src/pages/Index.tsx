@@ -12,6 +12,7 @@ import LiveTV from '@/components/LiveTV';
 import SearchView from '@/components/SearchView';
 import PlayerOverlay from '@/components/PlayerOverlay';
 import MovieDetailModal from '@/components/MovieDetailModal';
+import SeriesDetailModal from '@/components/SeriesDetailModal';
 
 const Index = () => {
   const { movies } = useMovies();
@@ -30,8 +31,16 @@ const Index = () => {
     setContinueWatching(prev => ({ ...prev, [movieId]: progress }));
   };
 
-  const handlePlay = (movie: Movie) => {
-    setPlayingMovie(movie);
+  const handlePlay = (movie: Movie, episodeUrl?: string) => {
+    if (episodeUrl) {
+      setPlayingMovie({ ...movie, streamUrl: episodeUrl });
+    } else {
+      setPlayingMovie(movie);
+    }
+  };
+
+  const handleShowDetails = (movie: Movie) => {
+    setDetailMovie(movie);
   };
 
   const handlePlayChannel = (channel: Channel) => {
@@ -157,8 +166,18 @@ const Index = () => {
           />
         )}
 
-        {/* Detail Modal */}
-        {detailMovie && (
+        {/* Detail Modal - Series vs Movie */}
+        {detailMovie && detailMovie.type === 'series' && (
+          <SeriesDetailModal
+            movie={detailMovie}
+            allMovies={movies}
+            onClose={() => setDetailMovie(null)}
+            onPlay={(m, episodeUrl) => { setDetailMovie(null); handlePlay(m, episodeUrl); }}
+            onToggleFavorite={toggleFavorite}
+            isFavorite={favorites.includes(detailMovie.id)}
+          />
+        )}
+        {detailMovie && detailMovie.type !== 'series' && (
           <MovieDetailModal
             movie={detailMovie}
             onClose={() => setDetailMovie(null)}
