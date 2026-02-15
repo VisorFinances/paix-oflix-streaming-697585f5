@@ -1,5 +1,8 @@
 import { Movie } from '@/types';
 import { Play, Plus, Check, X, Star, Calendar, Clock, Film } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { getTrailerUrl } from '@/lib/tmdb';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface MovieDetailModalProps {
   movie: Movie;
@@ -10,105 +13,126 @@ interface MovieDetailModalProps {
 }
 
 const MovieDetailModal = ({ movie, onClose, onPlay, onToggleFavorite, isFavorite }: MovieDetailModalProps) => {
+  const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
+  const [showTrailer, setShowTrailer] = useState(false);
+
+  useEffect(() => {
+    getTrailerUrl(movie.title, 'movie').then(url => setTrailerUrl(url));
+  }, [movie.title]);
+
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 animate-fade-in">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+    <AnimatePresence>
+      <motion.div
+        className="fixed inset-0 z-[90] flex items-center justify-center p-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      >
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Modal */}
-      <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-xl bg-card shadow-2xl animate-slide-up">
-        {/* Hero image */}
-        <div className="relative w-full aspect-video overflow-hidden rounded-t-xl">
-          <img
-            src={movie.backdrop || movie.image}
-            alt={movie.title}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
-
-          {/* Close button */}
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-background/70 backdrop-blur flex items-center justify-center text-foreground hover:bg-background transition"
-          >
-            <X className="w-5 h-5" />
-          </button>
-
-          {/* Title overlay */}
-          <div className="absolute bottom-6 left-6 right-6">
-            <h2 className="text-3xl md:text-5xl font-display tracking-wider text-foreground">
-              {movie.title}
-            </h2>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="p-6 space-y-6">
-          {/* Actions */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => onPlay(movie)}
-              className="flex items-center gap-2 px-8 py-3 rounded-md bg-foreground text-background font-semibold hover:opacity-80 transition text-sm"
-            >
-              <Play className="w-5 h-5" /> Assistir Agora
-            </button>
-            <button
-              onClick={() => onToggleFavorite(movie.id)}
-              className="flex items-center justify-center w-11 h-11 rounded-full border-2 border-muted-foreground/50 hover:border-foreground transition"
-              title={isFavorite ? 'Remover da lista' : 'Adicionar à lista'}
-            >
-              {isFavorite ? <Check className="w-5 h-5 text-primary" /> : <Plus className="w-5 h-5" />}
-            </button>
-          </div>
-
-          {/* Metadata */}
-          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <Calendar className="w-4 h-4 text-primary" />
-              {movie.year}
-            </span>
-            {movie.rating && (
-              <span className="flex items-center gap-1.5">
-                <Star className="w-4 h-4 text-primary" />
-                {movie.rating}
-              </span>
+        <motion.div
+          className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-xl bg-card shadow-2xl"
+          initial={{ scale: 0.9, opacity: 0, y: 40 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.9, opacity: 0, y: 40 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        >
+          <div className="relative w-full aspect-video overflow-hidden rounded-t-xl">
+            {showTrailer && trailerUrl ? (
+              <iframe
+                src={trailerUrl}
+                className="w-full h-full"
+                allow="autoplay; encrypted-media"
+                allowFullScreen
+                title="Trailer"
+              />
+            ) : (
+              <img
+                src={movie.backdrop || movie.image}
+                alt={movie.title}
+                className="w-full h-full object-cover"
+              />
             )}
-            {movie.duration && (
-              <span className="flex items-center gap-1.5">
-                <Clock className="w-4 h-4 text-primary" />
-                {movie.duration}
-              </span>
-            )}
-            <span className="flex items-center gap-1.5">
-              <Film className="w-4 h-4 text-primary" />
-              {movie.type === 'series' ? 'Série' : movie.type === 'novela' ? 'Novela' : 'Filme'}
-            </span>
-          </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent pointer-events-none" />
 
-          {/* Genres */}
-          <div className="flex flex-wrap gap-2">
-            {movie.genre.map((g) => (
-              <span
-                key={g}
-                className="px-3 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground"
-              >
-                {g}
-              </span>
-            ))}
-          </div>
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 w-9 h-9 rounded-full bg-background/70 backdrop-blur flex items-center justify-center text-foreground hover:bg-background transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
 
-          {/* Synopsis */}
-          {movie.description && (
-            <div>
-              <h3 className="text-lg font-display tracking-wider text-foreground mb-2">Sinopse</h3>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                {movie.description}
-              </p>
+            <div className="absolute bottom-6 left-6 right-6">
+              <h2 className="text-3xl md:text-5xl font-display tracking-wider text-foreground">
+                {movie.title}
+              </h2>
             </div>
-          )}
-        </div>
-      </div>
-    </div>
+          </div>
+
+          <div className="p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => onPlay(movie)}
+                className="flex items-center gap-2 px-8 py-3 rounded-md bg-foreground text-background font-semibold hover:opacity-80 transition text-sm"
+              >
+                <Play className="w-5 h-5" /> Assistir Agora
+              </button>
+
+              {trailerUrl && (
+                <button
+                  onClick={() => setShowTrailer(!showTrailer)}
+                  className="flex items-center gap-2 px-5 py-3 rounded-md bg-muted/60 text-foreground font-semibold hover:bg-muted transition text-sm"
+                >
+                  <Play className="w-4 h-4" /> {showTrailer ? 'Fechar Trailer' : 'Trailer'}
+                </button>
+              )}
+
+              <button
+                onClick={() => onToggleFavorite(movie.id)}
+                className="flex items-center justify-center w-11 h-11 rounded-full border-2 border-muted-foreground/50 hover:border-foreground transition"
+                title={isFavorite ? 'Remover da lista' : 'Adicionar à lista'}
+              >
+                {isFavorite ? <Check className="w-5 h-5 text-primary" /> : <Plus className="w-5 h-5" />}
+              </button>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-primary" /> {movie.year}
+              </span>
+              {movie.rating && (
+                <span className="flex items-center gap-1.5">
+                  <Star className="w-4 h-4 text-primary" /> {movie.rating}
+                </span>
+              )}
+              {movie.duration && (
+                <span className="flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-primary" /> {movie.duration}
+                </span>
+              )}
+              <span className="flex items-center gap-1.5">
+                <Film className="w-4 h-4 text-primary" /> Filme
+              </span>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {movie.genre.map((g) => (
+                <span key={g} className="px-3 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
+                  {g}
+                </span>
+              ))}
+            </div>
+
+            {movie.description && (
+              <div>
+                <h3 className="text-lg font-display tracking-wider text-foreground mb-2">Sinopse</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">{movie.description}</p>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 };
 

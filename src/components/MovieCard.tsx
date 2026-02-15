@@ -34,7 +34,7 @@ const MovieCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, onSh
           <p className="text-xs text-muted-foreground mt-0.5">{movie.year} · {movie.genre[0]}</p>
           <div className="flex items-center gap-2 mt-2">
             <button
-              onClick={(e) => { e.stopPropagation(); onPlay(movie); }}
+              onClick={(e) => { e.stopPropagation(); movie.type === 'series' && onShowDetails ? onShowDetails(movie) : onPlay(movie); }}
               className="flex items-center justify-center w-8 h-8 rounded-full bg-foreground text-background hover:opacity-80 transition"
             >
               <Play className="w-4 h-4 ml-0.5" />
