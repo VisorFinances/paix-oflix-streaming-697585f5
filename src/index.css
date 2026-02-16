@@ -109,10 +109,8 @@
     display: none;
   }
 
-  .menu-tile {
-    @apply relative rounded-lg overflow-hidden cursor-pointer transition-transform duration-300;
-  }
-  .menu-tile:hover {
-    transform: scale(1.05);
+  /* Smart TV focus ring */
+  *:focus-visible {
+    @apply outline outline-4 outline-foreground outline-offset-2 rounded-sm;
   }
 }

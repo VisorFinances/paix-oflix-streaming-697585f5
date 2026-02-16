@@ -3,16 +3,34 @@ import { Movie, Channel } from '@/types';
 import { useMovies } from '@/hooks/useMovies';
 import { useChannels } from '@/hooks/useChannels';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useSmartTV } from '@/hooks/useSmartTV';
 import AppSidebar from '@/components/AppSidebar';
 import HeroBanner from '@/components/HeroBanner';
 import MovieRow from '@/components/MovieRow';
-import MenuCards from '@/components/MenuCards';
 import CategoryGrid from '@/components/CategoryGrid';
 import LiveTV from '@/components/LiveTV';
 import SearchView from '@/components/SearchView';
 import PlayerOverlay from '@/components/PlayerOverlay';
 import MovieDetailModal from '@/components/MovieDetailModal';
 import SeriesDetailModal from '@/components/SeriesDetailModal';
+
+const ORDER_LIST = [
+  'Lançamento 2026', 'Lançamento 2025', 'Ação', 'Aventura', 'Anime', 'Animação',
+  'Comédia', 'Drama', 'Dorama', 'Clássicos', 'Crime', 'Policial', 'Família',
+  'Musical', 'Documentário', 'Faroeste', 'Ficção', 'Nacional', 'Religioso',
+  'Romance', 'Terror', 'Suspense', 'Adulto',
+];
+
+/** Deduplicate by normalized title (handles different seasons of same show) */
+function deduplicateByTitle(movies: Movie[]): Movie[] {
+  const seen = new Set<string>();
+  return movies.filter(m => {
+    const key = m.title.replace(/\s*[-–]\s*\d.*$/, '').replace(/\s*temporada\s*\d.*/i, '').trim().toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
 
 const Index = () => {
   const { movies } = useMovies();
@@ -22,6 +40,8 @@ const Index = () => {
   const [detailMovie, setDetailMovie] = useState<Movie | null>(null);
   const [favorites, setFavorites] = useLocalStorage<string[]>('paixaoflix-favorites', []);
   const [continueWatching, setContinueWatching] = useLocalStorage<Record<string, number>>('paixaoflix-progress', {});
+
+  useSmartTV();
 
   const toggleFavorite = (id: string) => {
     setFavorites(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]);
@@ -57,8 +77,11 @@ const Index = () => {
     });
   };
 
-  // Derived data
-  const heroMovie = movies[0] || null;
+  // Deduplicated movies for home
+  const uniqueMovies = useMemo(() => deduplicateByTitle(movies), [movies]);
+
+  // Hero
+  const heroMovie = uniqueMovies[0] || null;
 
   const continueWatchingMovies = useMemo(() => {
     const ids = Object.entries(continueWatching)
@@ -71,84 +94,94 @@ const Index = () => {
 
   const favoriteMovies = useMemo(() => movies.filter(m => favorites.includes(m.id)), [movies, favorites]);
 
-  const categories = useMemo(() => {
-    const used = new Set<string>();
-    const pick = (list: Movie[], count: number) => {
+  // Home categories - no repetition across rows
+  const homeCategories = useMemo(() => {
+    const usedTitles = new Set<string>();
+    const titleKey = (m: Movie) => m.title.replace(/\s*[-–]\s*\d.*$/, '').replace(/\s*temporada\s*\d.*/i, '').trim().toLowerCase();
+
+    const pickUnique = (list: Movie[], count: number): Movie[] => {
       const result: Movie[] = [];
       for (const m of list) {
-        if (!used.has(m.id) && result.length < count) {
+        const key = titleKey(m);
+        if (!usedTitles.has(key) && result.length < count) {
           result.push(m);
-          used.add(m.id);
+          usedTitles.add(key);
         }
       }
       return result;
     };
 
-    // Não deixe de ver: 3 filmes + 2 séries de Lançamento 2026
-    const launch2026 = movies.filter(m => m.year === 2026 || m.genre.some(g => g.toLowerCase().includes('lançamento') && m.year >= 2026));
-    const naoPerder = [
-      ...pick(launch2026.filter(m => m.type === 'movie'), 3),
-      ...pick(launch2026.filter(m => m.type === 'series'), 2),
-    ];
+    const naoPerder = pickUnique(
+      uniqueMovies.filter(m => m.year >= 2026 || m.genre.some(g => g.toLowerCase().includes('lançamento 2026'))),
+      5
+    );
 
-    // Sábado a noite merece: 2 romance, 1 comédia, 1 nacional, 1 religioso
-    const sabado = [
-      ...pick(movies.filter(m => m.genre.some(g => /romance/i.test(g))), 2),
-      ...pick(movies.filter(m => m.genre.some(g => /com[eé]dia/i.test(g))), 1),
-      ...pick(movies.filter(m => m.genre.some(g => /nacional/i.test(g) || /drama/i.test(g))), 1),
-      ...pick(movies.filter(m => m.genre.some(g => /religi/i.test(g))), 1),
-    ];
+    const sabado = pickUnique([
+      ...uniqueMovies.filter(m => m.genre.some(g => /romance/i.test(g))),
+      ...uniqueMovies.filter(m => m.genre.some(g => /com[eé]dia/i.test(g))),
+      ...uniqueMovies.filter(m => m.genre.some(g => /nacional|drama/i.test(g))),
+      ...uniqueMovies.filter(m => m.genre.some(g => /religi/i.test(g))),
+    ], 5);
 
-    // As crianças amam: 3 filmes kids + 2 séries kids
-    const criancas = [
-      ...pick(movies.filter(m => m.source === 'filmeskids'), 3),
-      ...pick(movies.filter(m => m.source === 'serieskids'), 2),
-    ];
+    const criancas = pickUnique(
+      [...uniqueMovies.filter(m => m.source === 'filmeskids'), ...uniqueMovies.filter(m => m.source === 'serieskids')]
+        .sort((a, b) => a.title.localeCompare(b.title)),
+      5
+    );
 
-    // Romances para inspirações: 4 filmes + 1 série romance
-    const romanceMovies = movies.filter(m => m.genre.some(g => /romance/i.test(g)) && m.type === 'movie');
-    const romanceSeries = movies.filter(m => m.genre.some(g => /romance|drama/i.test(g)) && m.type === 'series');
-    const romance = [
-      ...pick(romanceMovies, 4),
-      ...pick(romanceSeries, 1),
-    ];
-
-    // Nostalgias: 4 filmes + 1 série clássicos
-    const classicMovies = movies.filter(m => m.genre.some(g => /cl[aá]ssic/i.test(g)) || m.year < 2000);
-    const classicSeries = movies.filter(m => (m.genre.some(g => /cl[aá]ssic/i.test(g)) || m.year < 2000) && m.type === 'series');
-    const nostalgia = [
-      ...pick(classicMovies.filter(m => m.type === 'movie'), 4),
-      ...pick(classicSeries, 1),
-    ];
-
-    // Melhores Lançamentos 2025: 4 filmes + 1 série
-    const launch2025 = movies.filter(m => m.year === 2025 || m.genre.some(g => g.toLowerCase().includes('lançamento 2025')));
-    const best2025 = [
-      ...pick(launch2025.filter(m => m.type === 'movie'), 4),
-      ...pick(launch2025.filter(m => m.type === 'series'), 1),
-    ];
-
-    // Prepare a pipoca: 5 séries sem repetir
-    const pipoca = pick(movies.filter(m => m.type === 'series'), 5);
-
-    // Novelas: só aparece se houver gênero novela
-    const novelas = movies.filter(m => m.type === 'novela' || m.genre.some(g => /novela/i.test(g)));
+    const romance = pickUnique(uniqueMovies.filter(m => m.genre.some(g => /romance/i.test(g))), 5);
+    const nostalgia = pickUnique(uniqueMovies.filter(m => m.year < 2010), 5);
+    const best2025 = pickUnique(
+      uniqueMovies.filter(m => m.year === 2025 || m.genre.some(g => g.toLowerCase().includes('lançamento 2025'))),
+      5
+    );
+    const pipoca = pickUnique(uniqueMovies.filter(m => m.type === 'series'), 5);
+    const novelas = pickUnique(uniqueMovies.filter(m => m.type === 'novela' || m.genre.some(g => /novela/i.test(g))), 5);
 
     return { naoPerder, sabado, criancas, romance, nostalgia, best2025, pipoca, novelas };
+  }, [uniqueMovies]);
+
+  // Genre-based categories for Cinema/Series views
+  const genreCategories = useMemo(() => {
+    return (source: 'cinema' | 'series') => {
+      const sourceMovies = movies.filter(m => m.source === source);
+      const genreMap = new Map<string, Movie[]>();
+
+      // Collect all genres
+      for (const m of sourceMovies) {
+        for (const g of m.genre) {
+          const normalized = g.trim();
+          if (!normalized) continue;
+          if (!genreMap.has(normalized)) genreMap.set(normalized, []);
+          genreMap.get(normalized)!.push(m);
+        }
+      }
+
+      // Add year-based launch categories
+      const launch2026 = sourceMovies.filter(m => m.year >= 2026);
+      if (launch2026.length > 0) genreMap.set('Lançamento 2026', launch2026);
+      const launch2025 = sourceMovies.filter(m => m.year === 2025);
+      if (launch2025.length > 0) genreMap.set('Lançamento 2025', launch2025);
+
+      // Sort by ORDER_LIST
+      const sorted = Array.from(genreMap.entries()).sort((a, b) => {
+        const ia = ORDER_LIST.findIndex(o => o.toLowerCase() === a[0].toLowerCase());
+        const ib = ORDER_LIST.findIndex(o => o.toLowerCase() === b[0].toLowerCase());
+        const pa = ia >= 0 ? ia : 999;
+        const pb = ib >= 0 ? ib : 999;
+        return pa - pb;
+      });
+
+      return sorted;
+    };
   }, [movies]);
 
-  // Category view data
-  const categoryViewData = useMemo((): { title: string; movies: Movie[] } | null => {
-    switch (activeView) {
-      case 'cinema': return { title: 'Cinema', movies: movies.filter(m => m.source === 'cinema') };
-      case 'series': return { title: 'Séries', movies: movies.filter(m => m.source === 'series') };
-      case 'kids': return { title: 'Kids', movies: movies.filter(m => m.kids) };
-      case 'kids-movies': return { title: 'Filmes Kids', movies: movies.filter(m => m.source === 'filmeskids') };
-      case 'kids-series': return { title: 'Séries Kids', movies: movies.filter(m => m.source === 'serieskids') };
-      case 'mylist': return { title: 'Minha Lista', movies: movies.filter(m => m.source === 'favoritos') };
-      default: return null;
-    }
-  }, [activeView, movies]);
+  // Kids view: alphabetical
+  const kidsMovies = useMemo(() => {
+    return movies
+      .filter(m => m.kids)
+      .sort((a, b) => a.title.localeCompare(b.title));
+  }, [movies]);
 
   const sidebarOffset = 'ml-16';
 
@@ -157,7 +190,6 @@ const Index = () => {
       <AppSidebar activeView={activeView} onNavigate={setActiveView} />
 
       <main className={`${sidebarOffset} transition-all duration-300`}>
-        {/* Player Overlay */}
         {playingMovie && (
           <PlayerOverlay
             movie={playingMovie}
@@ -166,7 +198,6 @@ const Index = () => {
           />
         )}
 
-        {/* Detail Modal - Series vs Movie */}
         {detailMovie && detailMovie.type === 'series' && (
           <SeriesDetailModal
             movie={detailMovie}
@@ -194,42 +225,62 @@ const Index = () => {
             
             <div className="-mt-20 relative z-10">
               {continueWatchingMovies.length > 0 && (
-                <MovieRow
-                  title="Continue Assistindo"
-                  movies={continueWatchingMovies}
-                  onPlay={handlePlay}
-                  onToggleFavorite={toggleFavorite}
-                  favorites={favorites}
-                  continueWatching={continueWatching}
-                  onShowDetails={setDetailMovie}
-                />
+                <MovieRow title="Continue Assistindo" movies={continueWatchingMovies} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} continueWatching={continueWatching} onShowDetails={setDetailMovie} />
               )}
-
               {favoriteMovies.length > 0 && (
-                <MovieRow
-                  title="Minha Lista"
-                  movies={favoriteMovies}
-                  onPlay={handlePlay}
-                  onToggleFavorite={toggleFavorite}
-                  favorites={favorites}
-                  onShowDetails={setDetailMovie}
-                />
+                <MovieRow title="Minha Lista" movies={favoriteMovies} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} onShowDetails={setDetailMovie} />
               )}
 
-              <MenuCards onNavigate={setActiveView} />
-
-              <MovieRow title="Não deixe de ver" movies={categories.naoPerder} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} onShowDetails={setDetailMovie} />
-              <MovieRow title="Sábado a noite merece" subtitle="Ação e adrenalina" movies={categories.sabado} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} onShowDetails={setDetailMovie} />
-              <MovieRow title="As crianças amam" movies={categories.criancas} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} onShowDetails={setDetailMovie} />
-              <MovieRow title="Romances para inspirações" subtitle="Histórias que aceleram o coração..." movies={categories.romance} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} onShowDetails={setDetailMovie} />
-              <MovieRow title="Nostalgias" movies={categories.nostalgia} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} onShowDetails={setDetailMovie} />
-              <MovieRow title="Melhores Lançamentos 2025" movies={categories.best2025} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} onShowDetails={setDetailMovie} />
-              <MovieRow title="Prepare a pipoca" subtitle="Séries imperdíveis" movies={categories.pipoca} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} onShowDetails={setDetailMovie} />
-              {categories.novelas.length > 0 && (
-                <MovieRow title="Novelas" movies={categories.novelas} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} onShowDetails={setDetailMovie} />
+              <MovieRow title="Não deixe de ver" movies={homeCategories.naoPerder} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} onShowDetails={setDetailMovie} />
+              <MovieRow title="Sábado a noite merece" subtitle="Romance, ação, adrenalina e comédia" movies={homeCategories.sabado} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} onShowDetails={setDetailMovie} />
+              <MovieRow title="As crianças amam" movies={homeCategories.criancas} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} onShowDetails={setDetailMovie} />
+              <MovieRow title="Romances para inspirações" subtitle="Histórias que aceleram o coração..." movies={homeCategories.romance} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} onShowDetails={setDetailMovie} />
+              <MovieRow title="Nostalgias" movies={homeCategories.nostalgia} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} onShowDetails={setDetailMovie} />
+              <MovieRow title="Melhores Lançamentos 2025" movies={homeCategories.best2025} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} onShowDetails={setDetailMovie} />
+              <MovieRow title="Prepare a pipoca" subtitle="Séries imperdíveis" movies={homeCategories.pipoca} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} onShowDetails={setDetailMovie} />
+              {homeCategories.novelas.length > 0 && (
+                <MovieRow title="Novelas" movies={homeCategories.novelas} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} onShowDetails={setDetailMovie} />
               )}
             </div>
           </>
+        )}
+
+        {/* Cinema / Series - genre-based */}
+        {(activeView === 'cinema' || activeView === 'series') && (
+          <div className="min-h-screen py-8 animate-fade-in">
+            <div className="px-4 md:px-12 mb-6 flex items-center gap-4">
+              <button onClick={() => setActiveView('home')} className="text-muted-foreground hover:text-foreground transition">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+              </button>
+              <h1 className="text-3xl md:text-4xl font-display tracking-wider">
+                {activeView === 'cinema' ? 'Cinema' : 'Séries'}
+              </h1>
+            </div>
+            {genreCategories(activeView as 'cinema' | 'series').map(([genre, genreMovies]) => (
+              <MovieRow
+                key={genre}
+                title={genre}
+                movies={genreMovies}
+                onPlay={handlePlay}
+                onToggleFavorite={toggleFavorite}
+                favorites={favorites}
+                onShowDetails={setDetailMovie}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Kids - alphabetical grid */}
+        {activeView === 'kids' && (
+          <CategoryGrid
+            title="Kids"
+            movies={kidsMovies}
+            onPlay={handlePlay}
+            onToggleFavorite={toggleFavorite}
+            favorites={favorites}
+            onBack={() => setActiveView('home')}
+            onShowDetails={setDetailMovie}
+          />
         )}
 
         {/* Live TV */}
@@ -251,11 +302,11 @@ const Index = () => {
           />
         )}
 
-        {/* Category Grid */}
-        {categoryViewData && (
+        {/* My List */}
+        {activeView === 'mylist' && (
           <CategoryGrid
-            title={categoryViewData.title}
-            movies={categoryViewData.movies}
+            title="Minha Lista"
+            movies={movies.filter(m => m.source === 'favoritos')}
             onPlay={handlePlay}
             onToggleFavorite={toggleFavorite}
             favorites={favorites}
