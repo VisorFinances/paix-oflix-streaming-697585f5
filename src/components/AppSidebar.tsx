@@ -21,16 +21,37 @@ const AppSidebar = ({ activeView, onNavigate }: AppSidebarProps) => {
 
   return (
     <>
+      {/* Mobile bottom nav */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-sidebar border-t border-sidebar-border flex justify-around py-2 sm:hidden">
+        {navItems.slice(0, 5).map(item => {
+          const isActive = activeView === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => onNavigate(item.id)}
+              className={`flex flex-col items-center gap-0.5 px-2 py-1 transition-colors ${
+                isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground'
+              }`}
+              data-nav="sidebar"
+            >
+              <item.icon className="w-5 h-5" />
+              <span className="text-[9px]">{item.label}</span>
+            </button>
+          );
+        })}
+      </nav>
+
       {/* Mobile overlay */}
       {expanded && (
         <div
-          className="fixed inset-0 bg-background/60 z-40 md:hidden"
+          className="fixed inset-0 bg-background/60 z-40 hidden sm:block"
           onClick={() => setExpanded(false)}
         />
       )}
 
+      {/* Desktop sidebar */}
       <aside
-        className={`sidebar-nav fixed top-0 left-0 h-full z-50 flex flex-col bg-sidebar border-r border-sidebar-border
+        className={`sidebar-nav fixed top-0 left-0 h-full z-50 hidden sm:flex flex-col bg-sidebar border-r border-sidebar-border
           ${expanded ? 'w-56' : 'w-16'}`}
       >
         {/* Logo / Toggle */}
@@ -43,7 +64,7 @@ const AppSidebar = ({ activeView, onNavigate }: AppSidebarProps) => {
               </button>
             </div>
           ) : (
-            <button onClick={() => setExpanded(true)} className="text-sidebar-foreground hover:text-foreground transition">
+            <button onClick={() => setExpanded(true)} className="text-sidebar-foreground hover:text-foreground transition" data-nav="sidebar">
               <Menu className="w-6 h-6" />
             </button>
           )}
@@ -62,6 +83,7 @@ const AppSidebar = ({ activeView, onNavigate }: AppSidebarProps) => {
                     ? 'bg-sidebar-accent text-sidebar-primary'
                     : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                   }`}
+                data-nav="sidebar"
               >
                 <item.icon className="w-5 h-5 flex-shrink-0" />
                 {expanded && <span className="text-sm font-medium whitespace-nowrap">{item.label}</span>}

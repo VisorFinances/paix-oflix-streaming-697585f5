@@ -88,15 +88,20 @@ body {
     @apply relative rounded-md overflow-hidden cursor-pointer transition-all duration-300 ease-out;
   }
   .movie-card:hover {
-    transform: scale(1.2);
+    transform: scale(1.08);
     z-index: 30;
     box-shadow: var(--card-shadow);
+  }
+  @media (min-width: 640px) {
+    .movie-card:hover {
+      transform: scale(1.15);
+    }
   }
   .movie-card:hover .movie-card-info {
     @apply opacity-100 translate-y-0;
   }
   .movie-card-info {
-    @apply absolute bottom-0 left-0 right-0 p-3 opacity-0 translate-y-2 transition-all duration-300;
+    @apply absolute bottom-0 left-0 right-0 p-2 sm:p-3 opacity-0 translate-y-2 transition-all duration-300;
     background: linear-gradient(to top, hsl(0 0% 5% / 0.95), transparent);
   }
 
