@@ -10,18 +10,19 @@ interface CategoryGridProps {
   favorites: string[];
   onBack: () => void;
   onShowDetails?: (movie: Movie) => void;
+  isKids?: boolean;
 }
 
-const CategoryGrid = ({ title, movies, onPlay, onToggleFavorite, favorites, onBack, onShowDetails }: CategoryGridProps) => {
+const CategoryGrid = ({ title, movies, onPlay, onToggleFavorite, favorites, onBack, onShowDetails, isKids }: CategoryGridProps) => {
   return (
     <div className="min-h-screen px-4 md:px-12 py-8 animate-fade-in">
       <div className="flex items-center gap-4 mb-8">
-        <button onClick={onBack} className="text-muted-foreground hover:text-foreground transition">
+        <button onClick={onBack} className="text-muted-foreground hover:text-foreground transition" data-nav="back">
           <ArrowLeft className="w-6 h-6" />
         </button>
         <h1 className="text-3xl md:text-4xl font-display tracking-wider">{title}</h1>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      <div className={`grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 ${isKids ? 'gap-[15px]' : 'gap-4'}`}>
         {movies.map(movie => (
           <MovieCard
             key={movie.id}

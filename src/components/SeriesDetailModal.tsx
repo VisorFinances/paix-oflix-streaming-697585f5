@@ -83,7 +83,7 @@ const SeriesDetailModal = ({
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-[90] flex items-start justify-center overflow-y-auto py-8 px-4"
+        className="fixed inset-0 z-[90] flex items-start justify-center overflow-y-auto py-4 sm:py-8 px-2 sm:px-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -120,20 +120,20 @@ const SeriesDetailModal = ({
 
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-background/70 backdrop-blur flex items-center justify-center text-foreground hover:bg-background transition"
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-background/70 backdrop-blur flex items-center justify-center text-foreground hover:bg-background transition"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
 
           {/* Header Info */}
-          <div className="px-6 -mt-16 relative z-10">
-            <h2 className="text-3xl md:text-5xl font-display tracking-wider text-foreground mb-3">
+          <div className="px-4 sm:px-6 -mt-12 sm:-mt-16 relative z-10">
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-display tracking-wider text-foreground mb-2 sm:mb-3">
               {displayTitle}
             </h2>
 
             {/* Actions */}
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 flex-wrap">
               <button
                 onClick={() => {
                   if (episodes.length > 0) {
@@ -142,64 +142,64 @@ const SeriesDetailModal = ({
                     onPlay(movie);
                   }
                 }}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-md bg-foreground text-background font-semibold hover:opacity-80 transition text-sm"
+                className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-md bg-foreground text-background font-semibold hover:opacity-80 transition text-xs sm:text-sm"
               >
-                <Play className="w-5 h-5" /> Assistir
+                <Play className="w-4 h-4 sm:w-5 sm:h-5" /> Assistir
               </button>
 
               {trailerUrl && (
                 <button
                   onClick={() => setShowTrailer(!showTrailer)}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-md bg-muted/60 text-foreground font-semibold hover:bg-muted transition text-sm"
+                  className="flex items-center gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-md bg-muted/60 text-foreground font-semibold hover:bg-muted transition text-xs sm:text-sm"
                 >
-                  <Play className="w-4 h-4" /> {showTrailer ? 'Fechar Trailer' : 'Trailer'}
+                  <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {showTrailer ? 'Fechar Trailer' : 'Trailer'}
                 </button>
               )}
 
               <button
                 onClick={() => onToggleFavorite(movie.id)}
-                className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-muted-foreground/50 hover:border-foreground transition"
+                className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-muted-foreground/50 hover:border-foreground transition"
               >
-                {isFavorite ? <Check className="w-5 h-5 text-primary" /> : <Plus className="w-5 h-5" />}
+                {isFavorite ? <Check className="w-4 h-4 sm:w-5 sm:h-5 text-primary" /> : <Plus className="w-4 h-4 sm:w-5 sm:h-5" />}
               </button>
             </div>
 
             {/* Metadata */}
-            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-3">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground mb-3">
               <span className="flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-primary" />
+                <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
                 {seriesGroup?.year || movie.year}
               </span>
               {(seriesGroup?.rating || movie.rating) && (
                 <span className="flex items-center gap-1.5">
-                  <Star className="w-4 h-4 text-primary" />
+                  <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
                   {seriesGroup?.rating || movie.rating}
                 </span>
               )}
               <span className="flex items-center gap-1.5">
-                <Film className="w-4 h-4 text-primary" />
+                <Film className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
                 {seasons.length} Temporada{seasons.length !== 1 ? 's' : ''}
               </span>
             </div>
 
             {/* Genres */}
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3 sm:mb-4">
               {(seriesGroup?.genre || movie.genre).map(g => (
-                <span key={g} className="px-3 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
+                <span key={g} className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-secondary text-secondary-foreground">
                   {g}
                 </span>
               ))}
             </div>
 
             {/* Synopsis */}
-            <p className="text-sm leading-relaxed text-muted-foreground mb-6">
+            <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground mb-4 sm:mb-6">
               {displayDesc}
             </p>
           </div>
 
           {/* Tabs */}
-          <div className="px-6 border-b border-border">
-            <div className="flex gap-6">
+          <div className="px-4 sm:px-6 border-b border-border">
+            <div className="flex gap-4 sm:gap-6 overflow-x-auto">
               {([
                 { key: 'episodes', label: 'Episódios' },
                 { key: 'trailers', label: 'Trailer e Mais' },
@@ -208,7 +208,7 @@ const SeriesDetailModal = ({
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
-                  className={`py-3 text-sm font-semibold transition-colors relative ${
+                  className={`py-3 text-xs sm:text-sm font-semibold transition-colors relative whitespace-nowrap ${
                     activeTab === tab.key
                       ? 'text-foreground'
                       : 'text-muted-foreground hover:text-foreground/80'
@@ -227,7 +227,7 @@ const SeriesDetailModal = ({
           </div>
 
           {/* Tab Content */}
-          <div className="px-6 py-4 max-h-[50vh] overflow-y-auto">
+          <div className="px-4 sm:px-6 py-4 max-h-[50vh] overflow-y-auto">
             <AnimatePresence mode="wait">
               {/* Episodes Tab */}
               {activeTab === 'episodes' && (
@@ -242,13 +242,13 @@ const SeriesDetailModal = ({
                     <div className="relative mb-4">
                       <button
                         onClick={() => setSeasonDropdownOpen(!seasonDropdownOpen)}
-                        className="flex items-center gap-2 px-4 py-2 bg-secondary rounded-md text-sm font-medium text-secondary-foreground hover:bg-accent transition"
+                        className="flex items-center gap-2 px-4 py-2 bg-secondary rounded-md text-xs sm:text-sm font-medium text-secondary-foreground hover:bg-accent transition"
                       >
                         {seasons[selectedSeason]?.label || 'Temporada 1'}
                         <ChevronDown className={`w-4 h-4 transition-transform ${seasonDropdownOpen ? 'rotate-180' : ''}`} />
                       </button>
                       {seasonDropdownOpen && (
-                        <div className="absolute top-full mt-1 left-0 bg-card border border-border rounded-md shadow-xl z-20 min-w-[180px]">
+                        <div className="absolute top-full mt-1 left-0 bg-card border border-border rounded-md shadow-xl z-20 min-w-[180px] max-h-60 overflow-y-auto">
                           {seasons.map((s, i) => (
                             <button
                               key={i}
@@ -273,47 +273,49 @@ const SeriesDetailModal = ({
                   ) : episodes.length === 0 ? (
                     <p className="text-muted-foreground text-center py-8">Nenhum episódio encontrado.</p>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {episodes.map(ep => (
                         <motion.button
                           key={ep.number}
                           onClick={() => onPlay(movie, ep.streamUrl)}
-                          className="w-full flex items-center gap-4 p-3 rounded-lg hover:bg-accent/50 transition group text-left"
+                          className="w-full flex items-start gap-3 sm:gap-5 p-3 sm:p-4 rounded-lg hover:bg-accent/50 transition group text-left"
                           whileHover={{ scale: 1.01 }}
                         >
                           {/* Episode Number */}
-                          <span className="text-2xl font-display text-muted-foreground w-8 text-center flex-shrink-0">
+                          <span className="text-xl sm:text-2xl font-display text-muted-foreground w-6 sm:w-8 text-center flex-shrink-0 mt-1">
                             {ep.number}
                           </span>
 
-                          {/* Thumbnail */}
-                          <div className="relative w-32 aspect-video rounded-md overflow-hidden bg-muted flex-shrink-0">
-                            <img
-                              src={displayPoster}
-                              alt={ep.title}
-                              className="w-full h-full object-cover"
-                            />
+                          {/* Thumbnail - proper 16:9 with full visibility */}
+                          <div className="relative flex-shrink-0 w-[140px] sm:w-[200px] md:w-[240px] rounded-md overflow-hidden bg-muted">
+                            <div className="aspect-video">
+                              <img
+                                src={displayPoster}
+                                alt={ep.title}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
                             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition bg-black/40">
-                              <Play className="w-8 h-8 text-foreground" />
+                              <Play className="w-6 h-6 sm:w-8 sm:h-8 text-foreground" />
                             </div>
                           </div>
 
-                          {/* Info */}
-                          <div className="flex-1 min-w-0">
-                            <h4 className="text-sm font-semibold text-foreground truncate">
-                              {ep.title}
-                            </h4>
-                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                              {displayDesc.slice(0, 100)}...
+                          {/* Info - non-truncated description */}
+                          <div className="flex-1 min-w-0 py-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <h4 className="text-xs sm:text-sm font-semibold text-foreground line-clamp-2">
+                                {ep.title}
+                              </h4>
+                              {ep.duration && (
+                                <span className="text-[10px] sm:text-xs text-muted-foreground flex-shrink-0">
+                                  {ep.duration}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1.5 sm:mt-2 leading-relaxed line-clamp-3 sm:line-clamp-4">
+                              {displayDesc}
                             </p>
                           </div>
-
-                          {/* Duration */}
-                          {ep.duration && (
-                            <span className="text-xs text-muted-foreground flex-shrink-0">
-                              {ep.duration}
-                            </span>
-                          )}
                         </motion.button>
                       ))}
                     </div>
@@ -354,7 +356,7 @@ const SeriesDetailModal = ({
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+                  className="grid grid-cols-3 sm:grid-cols-4 gap-3"
                 >
                   {suggestions.map(s => (
                     <button
@@ -368,7 +370,7 @@ const SeriesDetailModal = ({
                         className="w-full aspect-[2/3] object-cover"
                       />
                       <div className="p-2 bg-card">
-                        <p className="text-xs font-semibold truncate">{s.title}</p>
+                        <p className="text-[10px] sm:text-xs font-semibold truncate">{s.title}</p>
                       </div>
                     </button>
                   ))}

@@ -80,9 +80,6 @@ const Index = () => {
   // Deduplicated movies for home
   const uniqueMovies = useMemo(() => deduplicateByTitle(movies), [movies]);
 
-  // Hero
-  const heroMovie = uniqueMovies[0] || null;
-
   const continueWatchingMovies = useMemo(() => {
     const ids = Object.entries(continueWatching)
       .filter(([, p]) => p > 0 && p < 95)
@@ -147,7 +144,6 @@ const Index = () => {
       const sourceMovies = movies.filter(m => m.source === source);
       const genreMap = new Map<string, Movie[]>();
 
-      // Collect all genres
       for (const m of sourceMovies) {
         for (const g of m.genre) {
           const normalized = g.trim();
@@ -157,13 +153,11 @@ const Index = () => {
         }
       }
 
-      // Add year-based launch categories
       const launch2026 = sourceMovies.filter(m => m.year >= 2026);
       if (launch2026.length > 0) genreMap.set('Lançamento 2026', launch2026);
       const launch2025 = sourceMovies.filter(m => m.year === 2025);
       if (launch2025.length > 0) genreMap.set('Lançamento 2025', launch2025);
 
-      // Sort by ORDER_LIST
       const sorted = Array.from(genreMap.entries()).sort((a, b) => {
         const ia = ORDER_LIST.findIndex(o => o.toLowerCase() === a[0].toLowerCase());
         const ib = ORDER_LIST.findIndex(o => o.toLowerCase() === b[0].toLowerCase());
@@ -183,10 +177,10 @@ const Index = () => {
       .sort((a, b) => a.title.localeCompare(b.title));
   }, [movies]);
 
-  const sidebarOffset = 'ml-16';
+  const sidebarOffset = 'sm:ml-16';
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground pb-14 sm:pb-0">
       <AppSidebar activeView={activeView} onNavigate={setActiveView} />
 
       <main className={`${sidebarOffset} transition-all duration-300`}>
@@ -221,9 +215,9 @@ const Index = () => {
         {/* Home View */}
         {activeView === 'home' && (
           <>
-            <HeroBanner movie={heroMovie} onPlay={handlePlay} onShowDetails={setDetailMovie} />
+            <HeroBanner movies={uniqueMovies} onPlay={handlePlay} onShowDetails={setDetailMovie} />
             
-            <div className="-mt-20 relative z-10">
+            <div className="-mt-16 sm:-mt-20 relative z-10">
               {continueWatchingMovies.length > 0 && (
                 <MovieRow title="Continue Assistindo" movies={continueWatchingMovies} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} continueWatching={continueWatching} onShowDetails={setDetailMovie} />
               )}
@@ -249,7 +243,7 @@ const Index = () => {
         {(activeView === 'cinema' || activeView === 'series') && (
           <div className="min-h-screen py-8 animate-fade-in">
             <div className="px-4 md:px-12 mb-6 flex items-center gap-4">
-              <button onClick={() => setActiveView('home')} className="text-muted-foreground hover:text-foreground transition">
+              <button onClick={() => setActiveView('home')} className="text-muted-foreground hover:text-foreground transition" data-nav="back">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
               </button>
               <h1 className="text-3xl md:text-4xl font-display tracking-wider">
@@ -270,7 +264,7 @@ const Index = () => {
           </div>
         )}
 
-        {/* Kids - alphabetical grid */}
+        {/* Kids - alphabetical grid with 15px spacing */}
         {activeView === 'kids' && (
           <CategoryGrid
             title="Kids"
@@ -280,6 +274,7 @@ const Index = () => {
             favorites={favorites}
             onBack={() => setActiveView('home')}
             onShowDetails={setDetailMovie}
+            isKids
           />
         )}
 
