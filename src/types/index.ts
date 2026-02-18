@@ -12,6 +12,7 @@ export interface Movie {
   rating?: string;
   duration?: string;
   streamUrl?: string;
+  trailer?: string;
   kids?: boolean;
   source: SourceFile;
 }

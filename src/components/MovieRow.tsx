@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { Movie } from '@/types';
-import MovieCard from './MovieCard';
+import PreviewCard from './PreviewCard';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface MovieRowProps {
@@ -41,7 +41,7 @@ const MovieRow = ({ title, subtitle, movies, onPlay, onToggleFavorite, favorites
         </button>
         <div ref={scrollRef} className="category-row px-3 sm:px-4 md:px-12 gap-2 sm:gap-3">
           {movies.map(movie => (
-            <MovieCard
+            <PreviewCard
               key={movie.id}
               movie={movie}
               onPlay={onPlay}
