@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Movie, Channel } from '@/types';
-import MovieCard from './MovieCard';
+import PreviewCard from './PreviewCard';
 import { Search as SearchIcon, ArrowLeft } from 'lucide-react';
 
 interface SearchViewProps {
@@ -56,7 +56,7 @@ const SearchView = ({ movies, channels, onPlay, onToggleFavorite, favorites, onB
           <h3 className="text-xl font-display tracking-wider mb-4">Filmes & Séries</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
             {filteredMovies.map(m => (
-              <MovieCard
+              <PreviewCard
                 key={m.id}
                 movie={m}
                 onPlay={onPlay}

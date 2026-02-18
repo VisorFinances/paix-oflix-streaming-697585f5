@@ -1,5 +1,5 @@
 import { Movie } from '@/types';
-import MovieCard from './MovieCard';
+import PreviewCard from './PreviewCard';
 import { ArrowLeft } from 'lucide-react';
 
 interface CategoryGridProps {
@@ -24,7 +24,7 @@ const CategoryGrid = ({ title, movies, onPlay, onToggleFavorite, favorites, onBa
       </div>
       <div className={`grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 ${isKids ? 'gap-[15px]' : 'gap-4'}`}>
         {movies.map(movie => (
-          <MovieCard
+          <PreviewCard
             key={movie.id}
             movie={movie}
             onPlay={onPlay}
