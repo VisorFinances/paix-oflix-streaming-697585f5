@@ -101,15 +101,30 @@ export function useMovies() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const safeFetch = async (url: string) => {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) { console.warn(`Fetch falhou: ${url} → HTTP ${res.status}`); return []; }
+        const ct = res.headers.get('content-type') || '';
+        if (!ct.includes('json') && !ct.includes('text')) { console.warn(`Tipo inesperado: ${ct}`); return []; }
+        const text = await res.text();
+        // Se vier HTML (ex: rate limit ou redirect), retorna vazio
+        if (text.trim().startsWith('<')) { console.warn(`GitHub retornou HTML em vez de JSON: ${url}`); return []; }
+        return JSON.parse(text);
+      } catch (e) {
+        console.warn(`Erro ao buscar ${url}:`, e);
+        return [];
+      }
+    };
+
     Promise.all([
-      fetch(`${BASE}/filmes`).then(r => r.ok ? r.json() : []).catch(() => []),
-      fetch(`${BASE}/series`).then(r => r.ok ? r.json() : []).catch(() => []),
+      safeFetch(`${BASE}/filmes`),
+      safeFetch(`${BASE}/series`),
     ]).then(([filmesRaw, seriesRaw]: [RawFilme[], RawSerie[]]) => {
       const all: Movie[] = [];
 
       if (Array.isArray(filmesRaw)) {
-        filmesRaw.forEach((item, i) => {
-          // Skip entries without a poster or title (incomplete records)
+        filmesRaw.forEach((item) => {
           if (item.titulo && item.poster) {
             all.push(normalizeFilme(item, all.length));
           }
@@ -117,7 +132,7 @@ export function useMovies() {
       }
 
       if (Array.isArray(seriesRaw)) {
-        seriesRaw.forEach((item, i) => {
+        seriesRaw.forEach((item) => {
           if (item.titulo && item.poster) {
             all.push(normalizeSerie(item, all.length));
           }
