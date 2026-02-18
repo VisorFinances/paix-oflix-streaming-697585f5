@@ -1,0 +1,114 @@
+#EXTM3U
+
+########## CANAIS ABERTOS ##########
+
+#EXTINF:-1 http-user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 
+http://hls1.sua.tv/live/globotvbahiafhdbr2/s.m3u8
+
+#EXTINF:-1 tvg-id="SBT" tvg-logo="https://i.imgur.com/Jgbq3CC.jpeg" group-title="ABERTOS",SBT HD
+https://cdn.jmvstream.com/w/LVW-10801/LVW10801_Xvg4R0u57n/playlist.m3u8
+
+#EXTINF:-1 tvg-id="Record" tvg-logo="https://i.imgur.com/zaTvGQW.jpeg" group-title="ABERTOS",Record TV
+https://cdn.jmvstream.com/w/LVW-10842/LVW10842_513N26MDBL/playlist.m3u8
+
+#EXTINF:-1 tvg-id="RedeTV" tvg-logo="https://i.imgur.com/8zg9jQn.jpeg" group-title="ABERTOS",Rede TV!
+https://streaming.cloudecast.com/hls/redetves/index.m3u8
+
+#EXTINF:-1 tvg-id="Cultura" tvg-logo="https://i.imgur.com/UD5r8B8.jpeg" group-title="ABERTOS",TV Cultura
+https://5b33b873179a2.streamlock.net:1443/live/livestream/playlist.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/Jgbq3CC.jpeg" group-title="ABERTOS",VTV SBT
+https://video01.kshost.com.br:4443/tvlagos/tvlagos/chunklist_w2011496035.m3u8
+
+########## INFANTIL & ANIMES ##########
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/zXf9h4X.png" group-title="KIDS",Geekdot Animes
+https://stream.ichibantv.com:3764/hybrid/play.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/6X9m9Yp.png" group-title="KIDS",AWTV Kids
+https://awtv.nuvemplay.live/hls/stream.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/6X9m9Yp.png" group-title="KIDS",BDC TV
+https://video01.kshost.com.br/bdctv/bdctv/playlist.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/6W9m9Yp.png" group-title="KIDS",Boruto Pluto TV
+https://service-stitcher.clusters.pluto.tv/v1/stitch/embed/hls/channel/656f389c3944b60008e5bdab/master.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/6W9m9Yp.png" group-title="KIDS",One Piece Pluto TV
+https://service-stitcher.clusters.pluto.tv/v1/stitch/embed/hls/channel/624b1c8d4321e200073ee421/master.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/6X9m9Yp.png" group-title="KIDS",Os Jetsons
+https://stmv1.srvif.com/jetsontv/jetsontv/playlist.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/6X9m9Yp.png" group-title="KIDS",Kuriakos Kids
+https://w2.manasat.com/kkids/smil:kkids.smil/playlist.m3u8
+
+########## ESPORTES & NOTÍCIAS ##########
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/F0v9Z4L.png" group-title="ESPORTES",TNT Esportes
+https://cdn-1.nxplay.com.br/TNT_TK/index.m3u8
+
+#EXTINF:-1 tvg-logo="https://raw.githubusercontent.com/LITUATUI/TV-Logos/master/Canais/TV%20Brasil%20HD.png" group-title="ESPORTES",TV Brasil Esportes
+https://ebc-tvbrasil.akamaized.net/hls/live/2033663/tvbrasil/index.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/oI0A2M3.png" group-title="JORNALISMO",Jovem Pan News
+https://d6yfbj4xxtrod.cloudfront.net/out/v1/7836eb391ec24452b149f3dc6df15bbd/index.m3u8
+
+########## RELIGIOSOS ##########
+
+#EXTINF:-1 tvg-logo="https://raw.githubusercontent.com/mariosanthos/arquivos/main/tvaparecida.png" group-title="RELIGIOSO",TV Aparecida
+https://cdn.jmvstream.com/w/LVW-9716/LVW9716_HbtQtezcaw/playlist.m3u8
+
+#EXTINF:-1 tvg-logo="https://raw.githubusercontent.com/mariosanthos/arquivos/main/novotempo.png" group-title="RELIGIOSO",Novo Tempo
+https://stream.live.novotempo.com/tv/smil:tvnovotempo.smil/playlist.m3u8
+
+#EXTINF:-1 tvg-logo="https://raw.githubusercontent.com/mariosanthos/arquivos/main/redegospel.png" group-title="RELIGIOSO",Rede Gospel
+https://cdn.jmvstream.com/w/LVW-8719/LVW8719_AcLVAxWy5J/playlist.m3u8
+
+########## VARIEDADES & FILMES ##########
+
+########## FILMES E CINEMA ##########
+
+#EXTINF:-1 tvg-id="Darkflix" tvg-logo="https://i.imgur.com/9v6Q27q.png" group-title="FILMES",Darkflix
+https://video01.soultv.com.br/darkflix/darkflix/playlist.m3u8
+
+#EXTINF:-1 tvg-id="GLN_Filmes" tvg-logo="https://i.imgur.com/6pYVjS9.png" group-title="FILMES",GLN Filmes
+https://stmv8.samcast.com.br/glnfilmes/glnfilmes/playlist.m3u8
+
+#EXTINF:-1 tvg-id="Cine_Monde" tvg-logo="https://i.imgur.com/9v6Q27q.png" group-title="FILMES",Cine Monde
+https://video01.soultv.com.br/cinemonde/cinemonde/playlist.m3u8
+
+#EXTINF:-1 tvg-id="Soul_Cine" tvg-logo="https://i.imgur.com/9v6Q27q.png" group-title="FILMES",Soul Cine Clube
+https://video01.soultv.com.br/soulcine/soulcine/playlist.m3u8
+
+#EXTINF:-1 tvg-id="Top_Cine" tvg-logo="https://provider-static.plex.tv/epg/images/ott_channels/logos/topcine_logo_dark_v3.png" group-title="FILMES",Top Cine
+https://olympusamagi.amagi.tv/hls/amagi_hls_data_olympusat-topcine-latam-plex/CDN/playlist.m3u8
+
+#EXTINF:-1 tvg-id="Runtime_Esp" tvg-logo="https://provider-static.plex.tv/epg/images/ott_channels/logos/runtime-espanol.png" group-title="FILMES",Runtime Cinema
+https://ammo-espanol-plex.amagi.tv/hls/amagi_hls_data_plexAAAAA-ammo-espanol-plex/CDN/playlist.m3u8
+
+########## SÉRIES E CLÁSSICOS ##########
+
+#EXTINF:-1 tvg-id="Serie_Classic" tvg-logo="https://i.imgur.com/9v6Q27q.png" group-title="SERIES",TV Series Classic
+https://video10.logicahost.com.br/serieclassic/serieclassic/playlist.m3u8
+
+#EXTINF:-1 tvg-id="Viva_Web" tvg-logo="https://i.imgur.com/9v6Q27q.png" group-title="SERIES",Viva Web TV
+https://video01.kshost.com.br:4443/cypriano46326/cypriano46326/playlist.m3u8
+
+#EXTINF:-1 tvg-id="Shorts_TV" tvg-logo="https://i.imgur.com/lyBkCzB.png" group-title="SERIES",Shorts TV
+https://shortstv-fast-spain-lg.amagi.tv/playlist.m3u8
+
+#EXTINF:-1 tvg-id="Cinehouse" tvg-logo="https://provider-static.plex.tv/epg/images/ott_channels/logos/Cinehouse_logo_dark.png" group-title="SERIES",Cinehouse
+https://3e14f4fda10247bc907cf85bbf6f6d88.mediatailor.us-east-1.amazonaws.com/v1/master/44f73ba4d03e9607dcd9bebdcb8494d86964f1d8/Plex_Cinehouse/playlist.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/9v6Q27q.png" group-title="FILMES",Darkflix
+https://video01.soultv.com.br/darkflix/darkflix/playlist.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/B9O0o3m.png" group-title="VARIEDADES",Canal Educação
+https://canaleducacao-stream.ebc.com.br/index.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/lyBkCzB.png" group-title="ESPANHOL",Shorts TV
+https://shortstv-fast-spain-lg.amagi.tv/playlist.m3u8
+
+#EXTINF:-1 tvg-logo="https://provider-static.plex.tv/epg/images/ott_channels/logos/topcine_logo_dark_v3.png" group-title="ESPANHOL",Top Cine
+https://olympusamagi.amagi.tv/hls/amagi_hls_data_olympusat-topcine-latam-plex/CDN/playlist.m3u8
