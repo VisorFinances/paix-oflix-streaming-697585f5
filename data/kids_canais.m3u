@@ -1,0 +1,60 @@
+#EXTM3U
+
+########## INFANTIL & ANIMES ##########
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/zXf9h4X.png" group-title="INFANTIL",Geekdot Animes
+https://stream.ichibantv.com:3764/hybrid/play.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/6pYVjS9.png" group-title="FILMES",GLN Filmes
+https://stmv8.samcast.com.br/glnfilmes/glnfilmes/playlist.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/zXf9h4X.png" group-title="INFANTIL",Loading TV
+https://stmv1.srvif.com/loadingtv/loadingtv/playlist.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/6W9m9Yp.png" group-title="INFANTIL",One Piece Pluto
+https://service-stitcher.clusters.pluto.tv/v1/stitch/embed/hls/channel/624b1c8d4321e200073ee421/master.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/6W9m9Yp.png" group-title="INFANTIL",Boruto Pluto
+https://service-stitcher.clusters.pluto.tv/v1/stitch/embed/hls/channel/656f389c3944b60008e5bdab/master.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/6X9m9Yp.png" group-title="INFANTIL",Gospel Cartoon
+https://stmv1.srvif.com/gospelcartoon/gospelcartoon/playlist.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/B9O0o3m.png" group-title="INFANTIL",Adesso TV
+https://cdn.jmvstream.com/w/LVW-9715/LVW9715_12B26T62tm/playlist.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/6X9m9Yp.png" group-title="INFANTIL",AWTV Kids
+https://awtv.nuvemplay.live/hls/stream.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/9v6Q27q.png" group-title="FILMES",DarkFlix
+https://video01.soultv.com.br/darkflix/darkflix/playlist.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/6W9m9Yp.png" group-title="INFANTIL",Os Jetsons
+https://stmv1.srvif.com/jetsontv/jetsontv/playlist.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/B9O0o3m.png" group-title="INFANTIL",ISTV Kids
+https://stmv1.srvstm.com/sistema7933/sistema7933/playlist.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/6W9m9Yp.png" group-title="INFANTIL",Super Onze Pluto
+https://service-stitcher.clusters.pluto.tv/v1/stitch/embed/hls/channel/63988c2750108d00072e2686/master.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/6W9m9Yp.png" group-title="INFANTIL",Cocoricó Pluto
+https://service-stitcher.clusters.pluto.tv/v1/stitch/embed/hls/channel/62d969fd8451a30007f0fd94/master.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/6W9m9Yp.png" group-title="INFANTIL",Os Padrinhos Mágicos
+https://service-stitcher.clusters.pluto.tv/v1/stitch/embed/hls/channel/63221e41af69b500076f84e7/master.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/6W9m9Yp.png" group-title="INFANTIL",Beyblade Pluto
+https://service-stitcher.clusters.pluto.tv/v1/stitch/embed/hls/channel/633dc392e0282400071b0d39/master.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/6X9m9Yp.png" group-title="INFANTIL",TV Acesso
+https://cdn.live.br1.jmvstream.com/webtv/tvacessochannel/playlist/chunklist.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/6W9m9Yp.png" group-title="INFANTIL",Nick Classic Pluto
+https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5f12151794c1800007a8ae63/master.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/6W9m9Yp.png" group-title="INFANTIL",Nick Jr Club
+https://service-stitcher.clusters.pluto.tv/v1/stitch/embed/hls/channel/5f121460b73ac6000719fbaf/master.m3u8
+
+#EXTINF:-1 tvg-logo="https://i.imgur.com/6X9m9Yp.png" group-title="INFANTIL",Kuriakos Kids
+https://w2.manasat.com/kkids/smil:kkids.smil/playlist.m3u8
