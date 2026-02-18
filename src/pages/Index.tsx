@@ -217,7 +217,7 @@ const Index = () => {
           <>
             <HeroBanner movies={uniqueMovies} onPlay={handlePlay} onShowDetails={setDetailMovie} />
             
-            <div className="-mt-16 sm:-mt-20 relative z-10">
+            <div className="mt-[94px] relative z-10">
               {continueWatchingMovies.length > 0 && (
                 <MovieRow title="Continue Assistindo" movies={continueWatchingMovies} onPlay={handlePlay} onToggleFavorite={toggleFavorite} favorites={favorites} continueWatching={continueWatching} onShowDetails={setDetailMovie} />
               )}
