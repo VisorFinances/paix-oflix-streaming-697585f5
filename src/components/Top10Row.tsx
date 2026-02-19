@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { Movie } from '@/types';
 import PreviewCard from './PreviewCard';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Top10RowProps {
   title: string;
@@ -14,6 +15,7 @@ interface Top10RowProps {
 
 const Top10Row = ({ title, movies, onPlay, onToggleFavorite, favorites, onShowDetails }: Top10RowProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   const scroll = (dir: 'left' | 'right') => {
     if (scrollRef.current) {
@@ -22,6 +24,12 @@ const Top10Row = ({ title, movies, onPlay, onToggleFavorite, favorites, onShowDe
   };
 
   if (movies.length === 0) return null;
+
+  // How much of the number peeks between cards
+  // Mobile: smaller peek, Desktop: bigger peek
+  const PEEK = isMobile ? 40 : 64;
+  const FONT_SIZE = isMobile ? 'clamp(3.5rem, 14vw, 5rem)' : 'clamp(5rem, 8vw, 8rem)';
+  const STROKE = isMobile ? '1.5px' : '2.5px';
 
   return (
     <section className="mb-6 sm:mb-8 animate-fade-in">
@@ -36,26 +44,44 @@ const Top10Row = ({ title, movies, onPlay, onToggleFavorite, favorites, onShowDe
           <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
 
-        <div ref={scrollRef} className="flex overflow-x-auto scrollbar-hide gap-0 px-3 sm:px-4 md:px-12 pb-2">
+        <div
+          ref={scrollRef}
+          className="flex overflow-x-auto scrollbar-hide px-3 sm:px-4 md:px-12 pb-4"
+          style={{ gap: 0 }}
+        >
           {movies.slice(0, 10).map((movie, index) => (
-            <div key={movie.id} className="relative flex-shrink-0 flex items-end" style={{ marginRight: index < 9 ? '-2rem' : '0' }}>
-              {/* Big rank number behind the card */}
+            <div
+              key={movie.id}
+              className="relative flex-shrink-0 flex items-end"
+              style={{
+                // First item: no extra left space needed (number floats left of card)
+                // Subsequent items: reserve PEEK px on the left so the number from
+                // the previous slot doesn't overlap the card
+                paddingLeft: index === 0 ? `${PEEK}px` : `${PEEK}px`,
+              }}
+            >
+              {/* Big rank number — anchored to left edge, partially behind next card */}
               <span
-                className="absolute left-0 bottom-0 z-0 font-black leading-none select-none pointer-events-none"
+                className="absolute bottom-0 z-0 font-black leading-none select-none pointer-events-none"
                 style={{
-                  fontSize: 'clamp(5rem, 12vw, 9rem)',
+                  // Position the number so its RIGHT edge aligns with the card's left edge
+                  // giving the "peek" effect: number is mostly behind the card
+                  right: '100%',
+                  // Shift it back a little so it partially overlaps with the card
+                  marginRight: `-${PEEK}px`,
+                  fontSize: FONT_SIZE,
                   color: 'transparent',
-                  WebkitTextStroke: '2px hsl(var(--foreground) / 0.6)',
-                  letterSpacing: '-0.05em',
+                  WebkitTextStroke: `${STROKE} hsl(var(--foreground) / 0.6)`,
                   lineHeight: 1,
-                  transform: 'translateX(-35%)',
-                  textShadow: '0 0 20px hsl(var(--background))',
+                  textShadow: `0 2px 20px hsl(var(--background) / 0.8)`,
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {index + 1}
               </span>
-              {/* Card pushed right to let number peek out */}
-              <div className="relative z-10 ml-10 sm:ml-12">
+
+              {/* Card — sits above the number */}
+              <div className="relative z-10">
                 <PreviewCard
                   movie={movie}
                   onPlay={onPlay}
