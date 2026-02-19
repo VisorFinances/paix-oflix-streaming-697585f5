@@ -1,18 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Movie } from '@/types';
 
-const BASE = 'https://raw.githubusercontent.com/VisorFinances/tv.paixaoflix/main/data';
+const BASE = 'https://raw.githubusercontent.com/VisorFinances/paix-oflix-streaming-697585f5/refs/heads/main/data';
 
-// ─── Raw types from the actual repository ───────────────────────────────────
+// ─── Raw types ───────────────────────────────────────────────────────────────
 
 interface RawFilme {
   titulo: string;
   url?: string;
   tmdb_id?: string;
   trailer?: string;
-  /** single genre string */
   genero?: string;
-  /** OR multi-category array (includes launch labels) */
   categories?: string[];
   year?: string;
   rating?: string;
@@ -36,10 +34,33 @@ interface RawSerie {
   kids?: boolean;
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+export function shuffleArray<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+async function safeFetch(url: string): Promise<unknown[]> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) { console.warn(`Fetch failed: ${url} → HTTP ${res.status}`); return []; }
+    const text = await res.text();
+    if (text.trim().startsWith('<')) { console.warn(`HTML instead of JSON: ${url}`); return []; }
+    return JSON.parse(text);
+  } catch (e) {
+    console.warn(`Error fetching ${url}:`, e);
+    return [];
+  }
+}
+
 // ─── Normalizers ─────────────────────────────────────────────────────────────
 
-function normalizeFilme(raw: RawFilme, idx: number): Movie {
-  // Build genre list: prefer categories array, fall back to single genero
+function normalizeFilme(raw: RawFilme, idx: number, source: 'cinema' | 'filmeskids'): Movie {
   let genres: string[] = [];
   if (raw.categories && raw.categories.length > 0) {
     genres = raw.categories;
@@ -47,11 +68,11 @@ function normalizeFilme(raw: RawFilme, idx: number): Movie {
     genres = [raw.genero];
   }
 
-  const isKids = !!raw.kids ||
+  const isKids = !!raw.kids || source === 'filmeskids' ||
     genres.some(g => /kids|infantil|crian/i.test(g));
 
   return {
-    id: `filme-${idx}`,
+    id: `${source}-${idx}`,
     title: raw.titulo || '',
     description: raw.desc || '',
     image: raw.poster || '',
@@ -66,7 +87,7 @@ function normalizeFilme(raw: RawFilme, idx: number): Movie {
   };
 }
 
-function normalizeSerie(raw: RawSerie, idx: number): Movie {
+function normalizeSerie(raw: RawSerie, idx: number, source: 'series' | 'serieskids'): Movie {
   let genres: string[] = [];
   if (raw.categories && raw.categories.length > 0) {
     genres = raw.categories;
@@ -74,11 +95,11 @@ function normalizeSerie(raw: RawSerie, idx: number): Movie {
     genres = [raw.genero];
   }
 
-  const isKids = !!raw.kids ||
+  const isKids = !!raw.kids || source === 'serieskids' ||
     genres.some(g => /kids|infantil|crian/i.test(g));
 
   return {
-    id: `serie-${idx}`,
+    id: `${source}-${idx}`,
     title: raw.titulo || '',
     description: raw.desc || '',
     image: raw.poster || '',
@@ -100,41 +121,66 @@ export function useMovies() {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const safeFetch = async (url: string) => {
-      try {
-        const res = await fetch(url);
-        if (!res.ok) { console.warn(`Fetch falhou: ${url} → HTTP ${res.status}`); return []; }
-        const ct = res.headers.get('content-type') || '';
-        if (!ct.includes('json') && !ct.includes('text')) { console.warn(`Tipo inesperado: ${ct}`); return []; }
-        const text = await res.text();
-        // Se vier HTML (ex: rate limit ou redirect), retorna vazio
-        if (text.trim().startsWith('<')) { console.warn(`GitHub retornou HTML em vez de JSON: ${url}`); return []; }
-        return JSON.parse(text);
-      } catch (e) {
-        console.warn(`Erro ao buscar ${url}:`, e);
-        return [];
-      }
-    };
+  // Session-stable shuffle seed (re-randomizes on each full page load)
+  const [shuffleSeed] = useState(() => Math.random());
 
+  useEffect(() => {
     Promise.all([
-      safeFetch(`${BASE}/filmes`),
-      safeFetch(`${BASE}/series`),
-    ]).then(([filmesRaw, seriesRaw]: [RawFilme[], RawSerie[]]) => {
+      safeFetch(`${BASE}/cinema.json`),
+      safeFetch(`${BASE}/series.json`),
+      safeFetch(`${BASE}/kids_filmes.json`),
+      safeFetch(`${BASE}/kids_series.json`),
+      safeFetch(`${BASE}/Favoritos.json`),
+    ]).then(([filmesRaw, seriesRaw, kidsFilmesRaw, kidsSeriesRaw, favoritosRaw]) => {
       const all: Movie[] = [];
 
+      // Cinema (filmes adultos)
       if (Array.isArray(filmesRaw)) {
-        filmesRaw.forEach((item) => {
-          if (item.titulo && item.poster) {
-            all.push(normalizeFilme(item, all.length));
+        filmesRaw.forEach((item, i) => {
+          const raw = item as RawFilme;
+          if (raw.titulo && raw.poster) {
+            all.push(normalizeFilme(raw, i, 'cinema'));
           }
         });
       }
 
+      // Séries adultas
       if (Array.isArray(seriesRaw)) {
-        seriesRaw.forEach((item) => {
-          if (item.titulo && item.poster) {
-            all.push(normalizeSerie(item, all.length));
+        seriesRaw.forEach((item, i) => {
+          const raw = item as RawSerie;
+          if (raw.titulo && raw.poster) {
+            all.push(normalizeSerie(raw, i, 'series'));
+          }
+        });
+      }
+
+      // Kids filmes
+      if (Array.isArray(kidsFilmesRaw)) {
+        kidsFilmesRaw.forEach((item, i) => {
+          const raw = item as RawFilme;
+          if (raw.titulo && raw.poster) {
+            all.push(normalizeFilme(raw, i, 'filmeskids'));
+          }
+        });
+      }
+
+      // Kids séries
+      if (Array.isArray(kidsSeriesRaw)) {
+        kidsSeriesRaw.forEach((item, i) => {
+          const raw = item as RawSerie;
+          if (raw.titulo && raw.poster) {
+            all.push(normalizeSerie(raw, i, 'serieskids'));
+          }
+        });
+      }
+
+      // Favoritos
+      if (Array.isArray(favoritosRaw)) {
+        favoritosRaw.forEach((item, i) => {
+          const raw = item as RawFilme;
+          if (raw.titulo && raw.poster) {
+            const m = normalizeFilme(raw, i, 'cinema');
+            all.push({ ...m, id: `favoritos-${i}`, source: 'favoritos' });
           }
         });
       }
@@ -142,7 +188,13 @@ export function useMovies() {
       setMovies(all);
       setLoading(false);
     });
-  }, []);
+  }, [shuffleSeed]);
 
   return { movies, loading };
+}
+
+// ─── Utility: pick random items ──────────────────────────────────────────────
+
+export function pickRandom<T>(arr: T[], count: number): T[] {
+  return shuffleArray(arr).slice(0, count);
 }
