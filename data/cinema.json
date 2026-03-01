@@ -482,17 +482,7 @@
 {
     "titulo": "Malês",
     "url": "https://ia601703.us.archive.org/6/items/revolta-dos-males-paixaoflix/CONV_Mal%C3%AAs.mp4",
-    "genero": "Nacional",
-    "year": "2025",
-    "rating": "8.3",
-    "desc": "MALÊS é uma jornada de resistência e coragem, ambientada na vibrante Salvador de 1835. Durante seu casamento, dois jovens muçulmanos são arrancados de sua terra natal na África e escravizados no Brasil. Separados pelo destino cruel, ambos lutam para sobreviver e reencontrar-se, enquanto se veem envolvidos na maior insurreição de escravizados da história do Brasil: a Revolta dos Malês.",
-    "poster": "https://image.tmdb.org/t/p/w600_and_h900_face/zqqMdCnQfVuhAyxNI5Pxr2gt6b3.jpg",
-    "type": "movie"
-  },
-{
-    "titulo": "Malês",
-    "url": "https://ia601703.us.archive.org/6/items/revolta-dos-males-paixaoflix/CONV_Mal%C3%AAs.mp4",
-    "genero": "Lançamento",
+    "genero": ["Negritude", "Nacional"],
     "year": "2025",
     "rating": "8.3",
     "desc": "MALÊS é uma jornada de resistência e coragem, ambientada na vibrante Salvador de 1835. Durante seu casamento, dois jovens muçulmanos são arrancados de sua terra natal na África e escravizados no Brasil. Separados pelo destino cruel, ambos lutam para sobreviver e reencontrar-se, enquanto se veem envolvidos na maior insurreição de escravizados da história do Brasil: a Revolta dos Malês.",
