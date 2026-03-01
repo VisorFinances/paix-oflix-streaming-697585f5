@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Movie } from '@/types';
 
 const BASE = 'https://raw.githubusercontent.com/VisorFinances/paix-oflix-streaming-697585f5/refs/heads/main/data';
@@ -124,71 +124,65 @@ export function useMovies() {
   // Session-stable shuffle seed (re-randomizes on each full page load)
   const [shuffleSeed] = useState(() => Math.random());
 
-  useEffect(() => {
-    Promise.all([
+  const fetchData = useCallback(async () => {
+    const [filmesRaw, seriesRaw, kidsFilmesRaw, kidsSeriesRaw, favoritosRaw] = await Promise.all([
       safeFetch(`${BASE}/cinema.json`),
       safeFetch(`${BASE}/series.json`),
       safeFetch(`${BASE}/kids_filmes.json`),
       safeFetch(`${BASE}/kids_series.json`),
       safeFetch(`${BASE}/Favoritos.json`),
-    ]).then(([filmesRaw, seriesRaw, kidsFilmesRaw, kidsSeriesRaw, favoritosRaw]) => {
-      const all: Movie[] = [];
+    ]);
 
-      // Cinema (filmes adultos)
-      if (Array.isArray(filmesRaw)) {
-        filmesRaw.forEach((item, i) => {
-          const raw = item as RawFilme;
-          if (raw.titulo && raw.poster) {
-            all.push(normalizeFilme(raw, i, 'cinema'));
-          }
-        });
-      }
+    const all: Movie[] = [];
 
-      // Séries adultas
-      if (Array.isArray(seriesRaw)) {
-        seriesRaw.forEach((item, i) => {
-          const raw = item as RawSerie;
-          if (raw.titulo && raw.poster) {
-            all.push(normalizeSerie(raw, i, 'series'));
-          }
-        });
-      }
+    if (Array.isArray(filmesRaw)) {
+      filmesRaw.forEach((item, i) => {
+        const raw = item as RawFilme;
+        if (raw.titulo && raw.poster) all.push(normalizeFilme(raw, i, 'cinema'));
+      });
+    }
 
-      // Kids filmes
-      if (Array.isArray(kidsFilmesRaw)) {
-        kidsFilmesRaw.forEach((item, i) => {
-          const raw = item as RawFilme;
-          if (raw.titulo && raw.poster) {
-            all.push(normalizeFilme(raw, i, 'filmeskids'));
-          }
-        });
-      }
+    if (Array.isArray(seriesRaw)) {
+      seriesRaw.forEach((item, i) => {
+        const raw = item as RawSerie;
+        if (raw.titulo && raw.poster) all.push(normalizeSerie(raw, i, 'series'));
+      });
+    }
 
-      // Kids séries
-      if (Array.isArray(kidsSeriesRaw)) {
-        kidsSeriesRaw.forEach((item, i) => {
-          const raw = item as RawSerie;
-          if (raw.titulo && raw.poster) {
-            all.push(normalizeSerie(raw, i, 'serieskids'));
-          }
-        });
-      }
+    if (Array.isArray(kidsFilmesRaw)) {
+      kidsFilmesRaw.forEach((item, i) => {
+        const raw = item as RawFilme;
+        if (raw.titulo && raw.poster) all.push(normalizeFilme(raw, i, 'filmeskids'));
+      });
+    }
 
-      // Favoritos
-      if (Array.isArray(favoritosRaw)) {
-        favoritosRaw.forEach((item, i) => {
-          const raw = item as RawFilme;
-          if (raw.titulo && raw.poster) {
-            const m = normalizeFilme(raw, i, 'cinema');
-            all.push({ ...m, id: `favoritos-${i}`, source: 'favoritos' });
-          }
-        });
-      }
+    if (Array.isArray(kidsSeriesRaw)) {
+      kidsSeriesRaw.forEach((item, i) => {
+        const raw = item as RawSerie;
+        if (raw.titulo && raw.poster) all.push(normalizeSerie(raw, i, 'serieskids'));
+      });
+    }
 
-      setMovies(all);
-      setLoading(false);
-    });
-  }, [shuffleSeed]);
+    if (Array.isArray(favoritosRaw)) {
+      favoritosRaw.forEach((item, i) => {
+        const raw = item as RawFilme;
+        if (raw.titulo && raw.poster) {
+          const m = normalizeFilme(raw, i, 'cinema');
+          all.push({ ...m, id: `favoritos-${i}`, source: 'favoritos' });
+        }
+      });
+    }
+
+    setMovies(all);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+    // Re-fetch JSON every 27 minutes to pick up new content
+    const id = setInterval(fetchData, 27 * 60 * 1000);
+    return () => clearInterval(id);
+  }, [fetchData, shuffleSeed]);
 
   return { movies, loading };
 }
