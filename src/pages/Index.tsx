@@ -4,10 +4,12 @@ import { useMovies, pickRandom, shuffleArray } from '@/hooks/useMovies';
 import { useChannels } from '@/hooks/useChannels';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useSmartTV } from '@/hooks/useSmartTV';
+import { useStreamingTop5, StreamingItem } from '@/hooks/useStreamingTop5';
 import AppSidebar from '@/components/AppSidebar';
 import HeroBanner from '@/components/HeroBanner';
 import MovieRow from '@/components/MovieRow';
 import Top10Row from '@/components/Top10Row';
+import StreamingRow from '@/components/StreamingRow';
 import CategoryGrid from '@/components/CategoryGrid';
 import LiveTV from '@/components/LiveTV';
 import SearchView from '@/components/SearchView';
@@ -20,12 +22,6 @@ const ORDER_LIST = [
   'Comédia', 'Drama', 'Dorama', 'Clássicos', 'Crime', 'Policial', 'Família',
   'Musical', 'Documentário', 'Faroeste', 'Ficção', 'Nacional', 'Religioso',
   'Romance', 'Terror', 'Suspense', 'Adulto',
-];
-
-// Top10 Brazil keyword patterns — matches titles/genres commonly trending in Brazil
-const TOP10_BR_KEYWORDS = [
-  /nacional/i, /brasil/i, /brasileir/i, /novela/i, /negritude/i,
-  /dorama/i, /anime/i, /aventura/i, /comédia/i, /comedia/i,
 ];
 
 /** Deduplicate by normalized title */
@@ -42,14 +38,42 @@ function deduplicateByTitle(movies: Movie[]): Movie[] {
 /** Check if it is currently Saturday >= 16:59 and before Sunday 12:00 */
 function isSabadoNoite(): boolean {
   const now = new Date();
-  const day = now.getDay(); // 0=Sun, 6=Sat
+  const day = now.getDay();
   const hour = now.getHours();
   const min = now.getMinutes();
   const timeVal = hour * 60 + min;
-
   if (day === 6 && timeVal >= 16 * 60 + 59) return true;
   if (day === 0 && timeVal < 12 * 60) return true;
   return false;
+}
+
+/** Get personalized recommendations based on watch history */
+function getPersonalized(movies: Movie[], watchHistory: Record<string, number>): Movie[] {
+  const watchedIds = Object.keys(watchHistory);
+  if (watchedIds.length === 0) return pickRandom(movies, 5);
+
+  // Count genres from watched content
+  const genreCount: Record<string, number> = {};
+  const watchedMovies = movies.filter(m => watchedIds.includes(m.id));
+  for (const m of watchedMovies) {
+    for (const g of m.genre) {
+      genreCount[g] = (genreCount[g] || 0) + 1;
+    }
+  }
+
+  // Sort genres by frequency
+  const topGenres = Object.entries(genreCount)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([g]) => g);
+
+  // Pick unwatched movies matching top genres
+  const candidates = movies.filter(m =>
+    !watchedIds.includes(m.id) &&
+    m.genre.some(g => topGenres.some(tg => g.toLowerCase() === tg.toLowerCase()))
+  );
+
+  return pickRandom(candidates.length > 0 ? candidates : movies, 5);
 }
 
 const Index = () => {
@@ -62,6 +86,11 @@ const Index = () => {
   const [continueWatching, setContinueWatching] = useLocalStorage<Record<string, number>>('paixaoflix-progress', {});
   const [showSabado, setShowSabado] = useState(isSabadoNoite());
   const [top10Movies, setTop10Movies] = useState<Movie[]>([]);
+  const [personalizedTs, setPersonalizedTs] = useLocalStorage<number>('paixaoflix-personalized-ts', 0);
+
+  // Streaming top 5s
+  const uniqueMovies = useMemo(() => deduplicateByTitle(movies), [movies]);
+  const { streamingData, trendingSeries, oscarNominees } = useStreamingTop5(uniqueMovies);
 
   useSmartTV();
 
@@ -97,16 +126,21 @@ const Index = () => {
     });
   };
 
-  // Unique movies (deduped)
-  const uniqueMovies = useMemo(() => deduplicateByTitle(movies), [movies]);
+  const handleStreamingPlay = (item: StreamingItem) => {
+    if (item.localMovie) handlePlay(item.localMovie);
+  };
 
-  // Top 10 Brazil — recalculated every 5 min, picks films with BR-relevant genres
+  const handleStreamingDetails = (item: StreamingItem) => {
+    if (item.localMovie) setDetailMovie(item.localMovie);
+  };
+
+  // Top 10 Brazil — recalculated every 5 min
+  const TOP10_BR_KEYWORDS = [/nacional/i, /brasil/i, /brasileir/i, /novela/i, /negritude/i, /dorama/i, /anime/i, /aventura/i, /comédia/i, /comedia/i];
+
   const computeTop10 = useCallback(() => {
     if (uniqueMovies.length === 0) return;
     const pool = uniqueMovies.filter(m =>
-      TOP10_BR_KEYWORDS.some(rx =>
-        m.genre.some(g => rx.test(g)) || rx.test(m.title)
-      )
+      TOP10_BR_KEYWORDS.some(rx => m.genre.some(g => rx.test(g)) || rx.test(m.title))
     );
     const shuffled = shuffleArray(pool.length >= 10 ? pool : uniqueMovies);
     setTop10Movies(shuffled.slice(0, 10));
@@ -118,95 +152,81 @@ const Index = () => {
     return () => clearInterval(id);
   }, [computeTop10]);
 
-  // Continue watching
+  // Continue watching — max 5, sorted by most recent, with progress bar
   const continueWatchingMovies = useMemo(() => {
     const ids = Object.entries(continueWatching)
       .filter(([, p]) => p > 0 && p < 95)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
+      .slice(0, 5)
       .map(([id]) => id);
     return movies.filter(m => ids.includes(m.id));
   }, [movies, continueWatching]);
 
   const favoriteMovies = useMemo(() => movies.filter(m => favorites.includes(m.id)), [movies, favorites]);
 
-  // ─── Home sections (picked randomly per session) ─────────────────────────
+  // ─── Home sections ─────────────────────────────────────────────────
   const homeCategories = useMemo(() => {
     if (uniqueMovies.length === 0) return null;
 
-    // "Não deixe de ver" — 6 random from high-rated or recent content
-    const naoPerder = pickRandom(
-      uniqueMovies.filter(m => m.year >= 2020 || parseFloat(m.rating || '0') >= 7),
-      6
-    );
-
-    // "Sábado à noite merece" — 1 of each: comédia, aventura, ação, suspense, religioso, terror, musical, família, nacional
     const pick1Genre = (rx: RegExp) =>
       pickRandom(uniqueMovies.filter(m => m.genre.some(g => rx.test(g))), 1);
 
+    // Lançamentos & Novidades — 5 from 2025/2026
+    const lancamentos = pickRandom(
+      uniqueMovies.filter(m => m.year >= 2025),
+      5
+    );
+
+    // Sábado à noite merece
     const sabadoList = [
-      ...pick1Genre(/com[eé]dia/i),
-      ...pick1Genre(/aventura/i),
-      ...pick1Genre(/a[çc][aã]o/i),
-      ...pick1Genre(/suspense/i),
-      ...pick1Genre(/religi/i),
-      ...pick1Genre(/terror/i),
-      ...pick1Genre(/musical/i),
-      ...pick1Genre(/fam[ií]lia/i),
-      ...pick1Genre(/nacional/i),
+      ...pick1Genre(/com[eé]dia/i), ...pick1Genre(/aventura/i), ...pick1Genre(/a[çc][aã]o/i),
+      ...pick1Genre(/suspense/i), ...pick1Genre(/religi/i), ...pick1Genre(/terror/i),
+      ...pick1Genre(/musical/i), ...pick1Genre(/fam[ií]lia/i), ...pick1Genre(/nacional/i),
     ];
-    // Fill to 9 if any genre is empty
     const sabado = sabadoList.length > 0
-      ? sabadoList.concat(pickRandom(uniqueMovies.filter(m => !sabadoList.includes(m)), 9 - sabadoList.length))
-      : pickRandom(uniqueMovies, 9);
+      ? sabadoList.concat(pickRandom(uniqueMovies.filter(m => !sabadoList.includes(m)), Math.max(0, 10 - sabadoList.length)))
+      : pickRandom(uniqueMovies, 10);
 
-    // "As crianças amam" — 6 kids movies/series
-    const criancas = pickRandom(
-      movies.filter(m => m.kids),
-      6
+    // Negritude em destaque — 5
+    const negritude = pickRandom(
+      uniqueMovies.filter(m => m.genre.some(g => /negritude/i.test(g))),
+      5
     );
 
-    // "Romances para se inspirar" — 6 romance
-    const romance = pickRandom(
-      uniqueMovies.filter(m => m.genre.some(g => /romance/i.test(g))),
-      6
-    );
-
-    // "Negritude em destaque" — all (no limit)
-    const negritude = uniqueMovies.filter(m =>
-      m.genre.some(g => /negritude/i.test(g))
-    );
-
-    // "Nostalgia que aquecem o coração" — 6 clássico category
-    const nostalgia = pickRandom(
-      uniqueMovies.filter(m =>
-        m.genre.some(g => /cl[aá]ssic/i.test(g)) || m.year < 2005
-      ),
-      6
-    );
-
-    // "Nacionais de sucesso" — 6 nacional
+    // Cinema Nacional — 5
     const nacionais = pickRandom(
       uniqueMovies.filter(m => m.genre.some(g => /nacional/i.test(g))),
-      6
+      5
     );
 
-    // "Premiados pela mídia" — 6 with rating >= 8
-    const premiados = pickRandom(
-      uniqueMovies.filter(m => parseFloat(m.rating || '0') >= 8.0),
-      6
+    // Animações para a Família — 5
+    const animacoes = pickRandom(
+      uniqueMovies.filter(m => m.genre.some(g => /anima[çc][aã]o/i.test(g))),
+      5
     );
 
-    // "Novela é sempre bom" — conditional: only if genre exists
+    // Romances para se inspirar — 5
+    const romance = pickRandom(
+      uniqueMovies.filter(m => m.genre.some(g => /romance/i.test(g))),
+      5
+    );
+
+    // Novela é sempre bom — conditional
     const novelas = pickRandom(
-      uniqueMovies.filter(m =>
-        m.type === 'novela' || m.genre.some(g => /novela/i.test(g))
-      ),
-      6
+      uniqueMovies.filter(m => m.type === 'novela' || m.genre.some(g => /novela/i.test(g))),
+      5
     );
 
-    return { naoPerder, sabado, criancas, romance, negritude, nostalgia, nacionais, premiados, novelas };
-  }, [uniqueMovies, movies]);
+    // Indicações exclusiva para você — personalized (refresh every 48h)
+    const shouldRefreshPersonalized = Date.now() - personalizedTs > 48 * 60 * 60 * 1000;
+    const personalized = getPersonalized(uniqueMovies, continueWatching);
+
+    if (shouldRefreshPersonalized) {
+      setPersonalizedTs(Date.now());
+    }
+
+    return { lancamentos, sabado, negritude, nacionais, animacoes, romance, novelas, personalized };
+  }, [uniqueMovies, continueWatching, personalizedTs]);
 
   // Genre-based categories for Cinema/Series views
   const genreCategories = useMemo(() => {
@@ -291,7 +311,7 @@ const Index = () => {
 
             <div className="mt-[94px] relative z-10">
 
-              {/* Continuar Assistindo */}
+              {/* 1. Continuar Assistindo — max 5, com barra de progresso e % */}
               {continueWatchingMovies.length > 0 && (
                 <MovieRow
                   title="Continuar Assistindo"
@@ -301,30 +321,54 @@ const Index = () => {
                 />
               )}
 
-              {/* Minha Lista */}
-              {favoriteMovies.length > 0 && (
-                <MovieRow title="Minha Lista" movies={favoriteMovies} {...sharedRowProps} />
-              )}
-
-              {/* Não deixe de ver */}
-              {!loading && homeCategories && (
+              {/* 2. Lançamentos & Novidades */}
+              {!loading && homeCategories && homeCategories.lancamentos.length > 0 && (
                 <MovieRow
-                  title="Não deixe de ver"
-                  movies={homeCategories.naoPerder}
+                  title="Lançamentos & Novidades"
+                  movies={homeCategories.lancamentos}
                   {...sharedRowProps}
                 />
               )}
 
-              {/* Top 10 do Brasileiro */}
-              {!loading && top10Movies.length > 0 && (
-                <Top10Row
-                  title="Top 10 do Brasileiro"
-                  movies={top10Movies}
+              {/* 3. Séries em Alta — from TMDB trending, cross-referenced */}
+              {trendingSeries.length > 0 && (
+                <StreamingRow
+                  title="Séries em Alta"
+                  items={trendingSeries.slice(0, 5)}
+                  onPlay={handleStreamingPlay}
+                  onShowDetails={handleStreamingDetails}
+                />
+              )}
+
+              {/* 4. Negritude em destaque */}
+              {!loading && homeCategories && homeCategories.negritude.length > 0 && (
+                <MovieRow
+                  title="Negritude em destaque"
+                  movies={homeCategories.negritude}
                   {...sharedRowProps}
                 />
               )}
 
-              {/* Sábado à noite merece — only visible Sat 16:59 → Sun 11:59 */}
+              {/* 5. Indicados ao Oscar 25/26 */}
+              {oscarNominees.length > 0 && (
+                <StreamingRow
+                  title="Indicados ao Oscar 25/26"
+                  items={oscarNominees.slice(0, 5)}
+                  onPlay={handleStreamingPlay}
+                  onShowDetails={handleStreamingDetails}
+                />
+              )}
+
+              {/* 6. Cinema Nacional */}
+              {!loading && homeCategories && homeCategories.nacionais.length > 0 && (
+                <MovieRow
+                  title="Cinema Nacional"
+                  movies={homeCategories.nacionais}
+                  {...sharedRowProps}
+                />
+              )}
+
+              {/* 7. Sábado à noite merece — Sat 16:59 → Sun 11:59 */}
               {!loading && showSabado && homeCategories && homeCategories.sabado.length > 0 && (
                 <MovieRow
                   title="Sábado à noite merece"
@@ -334,16 +378,16 @@ const Index = () => {
                 />
               )}
 
-              {/* As crianças amam */}
-              {!loading && homeCategories && homeCategories.criancas.length > 0 && (
+              {/* 8. Animações para a Família */}
+              {!loading && homeCategories && homeCategories.animacoes.length > 0 && (
                 <MovieRow
-                  title="As crianças amam"
-                  movies={homeCategories.criancas}
+                  title="Animações para a Família"
+                  movies={homeCategories.animacoes}
                   {...sharedRowProps}
                 />
               )}
 
-              {/* Romances para se inspirar */}
+              {/* 9. Romances para se inspirar */}
               {!loading && homeCategories && homeCategories.romance.length > 0 && (
                 <MovieRow
                   title="Romances para se inspirar"
@@ -352,40 +396,47 @@ const Index = () => {
                 />
               )}
 
-              {/* Negritude em destaque */}
-              {!loading && homeCategories && homeCategories.negritude.length > 0 && (
+              {/* 10. Indicações exclusiva para você */}
+              {!loading && homeCategories && homeCategories.personalized.length > 0 && (
                 <MovieRow
-                  title="Negritude em destaque"
-                  movies={homeCategories.negritude}
+                  title="Indicações exclusiva para você"
+                  movies={homeCategories.personalized}
                   {...sharedRowProps}
                 />
               )}
 
-              {/* Nostalgia que aquecem o coração */}
-              {!loading && homeCategories && homeCategories.nostalgia.length > 0 && (
-                <MovieRow
-                  title="Nostalgia que aquecem o coração"
-                  movies={homeCategories.nostalgia}
+              {/* 11. Top 10 do Brasileiro */}
+              {!loading && top10Movies.length > 0 && (
+                <Top10Row
+                  title="Top 10 do Brasileiro"
+                  movies={top10Movies}
                   {...sharedRowProps}
                 />
               )}
 
-              {/* Nacionais de sucesso */}
-              {!loading && homeCategories && homeCategories.nacionais.length > 0 && (
-                <MovieRow
-                  title="Nacionais de sucesso"
-                  movies={homeCategories.nacionais}
-                  {...sharedRowProps}
-                />
+              {/* 12-17. Top 5 Streamings */}
+              {streamingData.netflix && streamingData.netflix.length > 0 && (
+                <StreamingRow title="Top 5 Netflix" items={streamingData.netflix} onPlay={handleStreamingPlay} onShowDetails={handleStreamingDetails} />
+              )}
+              {streamingData.prime && streamingData.prime.length > 0 && (
+                <StreamingRow title="Top 5 Prime Vídeo" items={streamingData.prime} onPlay={handleStreamingPlay} onShowDetails={handleStreamingDetails} />
+              )}
+              {streamingData.globoplay && streamingData.globoplay.length > 0 && (
+                <StreamingRow title="Top 5 Globoplay" items={streamingData.globoplay} onPlay={handleStreamingPlay} onShowDetails={handleStreamingDetails} />
+              )}
+              {streamingData.disney && streamingData.disney.length > 0 && (
+                <StreamingRow title="Top 5 Disney+" items={streamingData.disney} onPlay={handleStreamingPlay} onShowDetails={handleStreamingDetails} />
+              )}
+              {streamingData.hbomax && streamingData.hbomax.length > 0 && (
+                <StreamingRow title="Top 5 HBO Max" items={streamingData.hbomax} onPlay={handleStreamingPlay} onShowDetails={handleStreamingDetails} />
+              )}
+              {streamingData.paramount && streamingData.paramount.length > 0 && (
+                <StreamingRow title="Top 5 Paramount+" items={streamingData.paramount} onPlay={handleStreamingPlay} onShowDetails={handleStreamingDetails} />
               )}
 
-              {/* Premiados pela mídia */}
-              {!loading && homeCategories && homeCategories.premiados.length > 0 && (
-                <MovieRow
-                  title="Premiados pela mídia"
-                  movies={homeCategories.premiados}
-                  {...sharedRowProps}
-                />
+              {/* Minha Lista */}
+              {favoriteMovies.length > 0 && (
+                <MovieRow title="Minha Lista" movies={favoriteMovies} {...sharedRowProps} />
               )}
 
               {/* Novela é sempre bom — conditional */}

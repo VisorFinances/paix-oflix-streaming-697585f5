@@ -27,6 +27,9 @@ const PreviewCard = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const dwellRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Use trailer field from movie data if no videoUrl prop
+  const trailerSrc = videoUrl || movie.trailer || '';
+
   const clearDwell = useCallback(() => {
     if (dwellRef.current) {
       clearTimeout(dwellRef.current);
@@ -34,14 +37,14 @@ const PreviewCard = ({
     }
   }, []);
 
-  const handleMouseEnter = useCallback(() => {
-    if (!videoUrl) return;
+  const handleFocus = useCallback(() => {
+    if (!trailerSrc) return;
     dwellRef.current = setTimeout(() => {
       setShowVideo(true);
-    }, 1500);
-  }, [videoUrl]);
+    }, 500);
+  }, [trailerSrc]);
 
-  const handleMouseLeave = useCallback(() => {
+  const handleBlur = useCallback(() => {
     clearDwell();
     setShowVideo(false);
     setVideoLoaded(false);
@@ -55,7 +58,7 @@ const PreviewCard = ({
   // Play/pause when showVideo toggles
   useEffect(() => {
     const v = videoRef.current;
-    if (!v || !videoUrl) return;
+    if (!v || !trailerSrc) return;
     if (showVideo) {
       v.muted = true;
       v.playsInline = true;
@@ -65,17 +68,27 @@ const PreviewCard = ({
       v.pause();
       v.currentTime = 0;
     }
-  }, [showVideo, videoUrl]);
+  }, [showVideo, trailerSrc]);
 
   // Cleanup on unmount
   useEffect(() => () => clearDwell(), [clearDwell]);
+
+  // Truncated synopsis (50 chars)
+  const synopsis = movie.description
+    ? movie.description.slice(0, 50) + (movie.description.length > 50 ? '...' : '')
+    : '';
 
   return (
     <div
       className="movie-card group flex-shrink-0 w-[140px] sm:w-[160px] md:w-[200px] lg:w-[220px]"
       data-nav="card"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      tabIndex={0}
+      onMouseEnter={handleFocus}
+      onMouseLeave={handleBlur}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      onTouchStart={handleFocus}
+      onTouchEnd={handleBlur}
     >
       <div className="relative aspect-[2/3] rounded-md overflow-hidden shadow-lg shadow-black/40">
         {/* Thumbnail */}
@@ -90,11 +103,11 @@ const PreviewCard = ({
           draggable={false}
         />
 
-        {/* Video preview */}
-        {videoUrl && (
+        {/* Video preview — plays after 500ms of focus/hover */}
+        {trailerSrc && (
           <video
             ref={videoRef}
-            src={showVideo ? videoUrl : undefined}
+            src={showVideo ? trailerSrc : undefined}
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
               showVideo && videoLoaded ? 'opacity-100' : 'opacity-0'
             }`}
@@ -106,16 +119,28 @@ const PreviewCard = ({
           />
         )}
 
-        {/* Bottom gradient shadow for text readability */}
+        {/* Bottom gradient shadow */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
 
-        {/* Progress bar */}
+        {/* Synopsis on card */}
+        {synopsis && (
+          <p className="absolute bottom-14 left-2 right-2 text-[9px] sm:text-[10px] text-foreground/80 line-clamp-2 pointer-events-none z-[5]">
+            {synopsis}
+          </p>
+        )}
+
+        {/* Progress bar with percentage */}
         {progress !== undefined && progress > 0 && (
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-muted rounded-b-md">
-            <div
-              className="h-full rounded-b-md transition-all"
-              style={{ width: `${progress}%`, background: 'hsl(var(--primary))' }}
-            />
+          <div className="absolute bottom-0 left-0 right-0 z-[5]">
+            <div className="flex items-center justify-end px-1.5 pb-0.5">
+              <span className="text-[8px] sm:text-[9px] font-bold text-foreground/90">{progress}%</span>
+            </div>
+            <div className="h-1 bg-muted rounded-b-md">
+              <div
+                className="h-full rounded-b-md transition-all"
+                style={{ width: `${progress}%`, background: 'hsl(var(--primary))' }}
+              />
+            </div>
           </div>
         )}
 
