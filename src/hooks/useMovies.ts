@@ -10,7 +10,7 @@ interface RawFilme {
   url?: string;
   tmdb_id?: string;
   trailer?: string;
-  genero?: string;
+  genero?: string | string[];
   categories?: string[];
   year?: string;
   rating?: string;
@@ -24,7 +24,9 @@ interface RawSerie {
   titulo: string;
   identificador_archive?: string;
   url?: string;
-  genero?: string;
+  tmdb_id?: string;
+  trailer?: string;
+  genero?: string | string[];
   categories?: string[];
   year?: string;
   rating?: string;
@@ -47,11 +49,12 @@ export function shuffleArray<T>(arr: T[]): T[] {
 
 async function safeFetch(url: string): Promise<unknown[]> {
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { cache: 'no-store' });
     if (!res.ok) { console.warn(`Fetch failed: ${url} → HTTP ${res.status}`); return []; }
     const text = await res.text();
     if (text.trim().startsWith('<')) { console.warn(`HTML instead of JSON: ${url}`); return []; }
-    return JSON.parse(text);
+    const parsed = JSON.parse(text);
+    return Array.isArray(parsed) ? parsed : [];
   } catch (e) {
     console.warn(`Error fetching ${url}:`, e);
     return [];
@@ -60,13 +63,22 @@ async function safeFetch(url: string): Promise<unknown[]> {
 
 // ─── Normalizers ─────────────────────────────────────────────────────────────
 
-function normalizeFilme(raw: RawFilme, idx: number, source: 'cinema' | 'filmeskids'): Movie {
+function parseGenres(raw: RawFilme | RawSerie): string[] {
   let genres: string[] = [];
   if (raw.categories && raw.categories.length > 0) {
     genres = raw.categories;
   } else if (raw.genero) {
-    genres = [raw.genero];
+    if (Array.isArray(raw.genero)) {
+      genres = raw.genero;
+    } else {
+      genres = [raw.genero];
+    }
   }
+  return genres;
+}
+
+function normalizeFilme(raw: RawFilme, idx: number, source: 'cinema' | 'filmeskids'): Movie {
+  const genres = parseGenres(raw);
 
   const isKids = !!raw.kids || source === 'filmeskids' ||
     genres.some(g => /kids|infantil|crian/i.test(g));
@@ -88,12 +100,7 @@ function normalizeFilme(raw: RawFilme, idx: number, source: 'cinema' | 'filmeski
 }
 
 function normalizeSerie(raw: RawSerie, idx: number, source: 'series' | 'serieskids'): Movie {
-  let genres: string[] = [];
-  if (raw.categories && raw.categories.length > 0) {
-    genres = raw.categories;
-  } else if (raw.genero) {
-    genres = [raw.genero];
-  }
+  const genres = parseGenres(raw);
 
   const isKids = !!raw.kids || source === 'serieskids' ||
     genres.some(g => /kids|infantil|crian/i.test(g));
@@ -110,6 +117,7 @@ function normalizeSerie(raw: RawSerie, idx: number, source: 'series' | 'serieski
     streamUrl: raw.identificador_archive
       ? `https://archive.org/download/${raw.identificador_archive}/`
       : (raw.url || ''),
+    trailer: raw.trailer || '',
     kids: isKids,
     source: isKids ? 'serieskids' : 'series',
   };
@@ -121,7 +129,6 @@ export function useMovies() {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Session-stable shuffle seed (re-randomizes on each full page load)
   const [shuffleSeed] = useState(() => Math.random());
 
   const fetchData = useCallback(async () => {
@@ -145,7 +152,7 @@ export function useMovies() {
     if (Array.isArray(seriesRaw)) {
       seriesRaw.forEach((item, i) => {
         const raw = item as RawSerie;
-        if (raw.titulo && raw.poster) all.push(normalizeSerie(raw, i, 'series'));
+        if (raw.titulo) all.push(normalizeSerie(raw, i, 'series'));
       });
     }
 
@@ -159,11 +166,11 @@ export function useMovies() {
     if (Array.isArray(kidsSeriesRaw)) {
       kidsSeriesRaw.forEach((item, i) => {
         const raw = item as RawSerie;
-        if (raw.titulo && raw.poster) all.push(normalizeSerie(raw, i, 'serieskids'));
+        if (raw.titulo) all.push(normalizeSerie(raw, i, 'serieskids'));
       });
     }
 
-    if (Array.isArray(favoritosRaw)) {
+    if (Array.isArray(favoritosRaw) && favoritosRaw.length > 0) {
       favoritosRaw.forEach((item, i) => {
         const raw = item as RawFilme;
         if (raw.titulo && raw.poster) {
@@ -179,7 +186,7 @@ export function useMovies() {
 
   useEffect(() => {
     fetchData();
-    // Re-fetch JSON every 27 minutes to pick up new content
+    // Re-fetch JSON every 27 minutes
     const id = setInterval(fetchData, 27 * 60 * 1000);
     return () => clearInterval(id);
   }, [fetchData, shuffleSeed]);

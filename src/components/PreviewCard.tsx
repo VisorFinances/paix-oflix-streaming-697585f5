@@ -9,7 +9,6 @@ interface PreviewCardProps {
   isFavorite: boolean;
   progress?: number;
   onShowDetails?: (movie: Movie) => void;
-  /** Se fornecido, habilita o preview de vídeo no hover */
   videoUrl?: string;
 }
 
@@ -22,12 +21,13 @@ const PreviewCard = ({
   onShowDetails,
   videoUrl,
 }: PreviewCardProps) => {
+  const [isHovered, setIsHovered] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const dwellRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
-  // Use trailer field from movie data if no videoUrl prop
   const trailerSrc = videoUrl || movie.trailer || '';
 
   const clearDwell = useCallback(() => {
@@ -38,6 +38,7 @@ const PreviewCard = ({
   }, []);
 
   const handleFocus = useCallback(() => {
+    setIsHovered(true);
     if (!trailerSrc) return;
     dwellRef.current = setTimeout(() => {
       setShowVideo(true);
@@ -46,6 +47,7 @@ const PreviewCard = ({
 
   const handleBlur = useCallback(() => {
     clearDwell();
+    setIsHovered(false);
     setShowVideo(false);
     setVideoLoaded(false);
     const v = videoRef.current;
@@ -55,7 +57,6 @@ const PreviewCard = ({
     }
   }, [clearDwell]);
 
-  // Play/pause when showVideo toggles
   useEffect(() => {
     const v = videoRef.current;
     if (!v || !trailerSrc) return;
@@ -70,17 +71,19 @@ const PreviewCard = ({
     }
   }, [showVideo, trailerSrc]);
 
-  // Cleanup on unmount
   useEffect(() => () => clearDwell(), [clearDwell]);
 
-  // Truncated synopsis (50 chars)
+  // Prime Video style: truncated synopsis
   const synopsis = movie.description
-    ? movie.description.slice(0, 50) + (movie.description.length > 50 ? '...' : '')
+    ? movie.description.length > 80
+      ? movie.description.slice(0, 80) + '…'
+      : movie.description
     : '';
 
   return (
     <div
-      className="movie-card group flex-shrink-0 w-[140px] sm:w-[160px] md:w-[200px] lg:w-[220px]"
+      ref={cardRef}
+      className="movie-card group flex-shrink-0 w-[140px] sm:w-[160px] md:w-[200px] lg:w-[220px] relative"
       data-nav="card"
       tabIndex={0}
       onMouseEnter={handleFocus}
@@ -103,7 +106,7 @@ const PreviewCard = ({
           draggable={false}
         />
 
-        {/* Video preview — plays after 500ms of focus/hover */}
+        {/* Inline video preview — plays after 500ms dwell */}
         {trailerSrc && (
           <video
             ref={videoRef}
@@ -119,17 +122,10 @@ const PreviewCard = ({
           />
         )}
 
-        {/* Bottom gradient shadow */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+        {/* Bottom gradient */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent pointer-events-none" />
 
-        {/* Synopsis on card */}
-        {synopsis && (
-          <p className="absolute bottom-14 left-2 right-2 text-[9px] sm:text-[10px] text-foreground/80 line-clamp-2 pointer-events-none z-[5]">
-            {synopsis}
-          </p>
-        )}
-
-        {/* Progress bar with percentage */}
+        {/* Progress bar */}
         {progress !== undefined && progress > 0 && (
           <div className="absolute bottom-0 left-0 right-0 z-[5]">
             <div className="flex items-center justify-end px-1.5 pb-0.5">
@@ -143,51 +139,76 @@ const PreviewCard = ({
             </div>
           </div>
         )}
+      </div>
 
-        {/* Card info overlay */}
-        <div className="movie-card-info">
+      {/* Prime Video style expanded overlay — floats ABOVE other cards */}
+      {isHovered && (
+        <div
+          className="absolute left-1/2 -translate-x-1/2 top-[calc(100%-20px)] z-[60] w-[180px] sm:w-[200px] md:w-[240px] lg:w-[260px] bg-card rounded-b-lg shadow-2xl shadow-black/70 p-2.5 sm:p-3 pointer-events-auto animate-fade-in"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={handleBlur}
+        >
           <h3 className="text-xs sm:text-sm font-semibold text-foreground truncate">{movie.title}</h3>
           <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
             {movie.year} · {movie.genre[0]}
+            {movie.rating ? ` · ★ ${movie.rating}` : ''}
           </p>
-          <div className="flex items-center gap-1.5 sm:gap-2 mt-2 mb-[5px]">
+
+          {/* Synopsis — Prime Video style: small text below metadata */}
+          {synopsis && (
+            <p className="text-[10px] sm:text-[11px] text-muted-foreground/80 mt-1.5 leading-snug line-clamp-3">
+              {synopsis}
+            </p>
+          )}
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-1.5 sm:gap-2 mt-2">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 movie.type === 'series' && onShowDetails ? onShowDetails(movie) : onPlay(movie);
               }}
-              className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-foreground text-background hover:opacity-80 transition"
+              className="flex items-center gap-1 px-2.5 py-1 rounded bg-foreground text-background text-[10px] sm:text-xs font-semibold hover:opacity-80 transition"
               data-nav="card-action"
             >
-              <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-0.5" />
+              <Play className="w-3 h-3" /> Assistir
             </button>
+            {movie.trailer && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onShowDetails?.(movie);
+                }}
+                className="flex items-center gap-1 px-2 py-1 rounded bg-muted/60 text-foreground text-[10px] sm:text-xs font-medium hover:bg-muted transition"
+                data-nav="card-action"
+              >
+                <Play className="w-3 h-3" /> Trailer
+              </button>
+            )}
             <button
               onClick={(e) => { e.stopPropagation(); onToggleFavorite(movie.id); }}
-              className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-muted-foreground/50 hover:border-foreground transition"
+              className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full border border-muted-foreground/50 hover:border-foreground transition ml-auto"
               data-nav="card-action"
+              title={isFavorite ? 'Remover da lista' : 'Adicionar à lista'}
             >
               {isFavorite
-                ? <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: 'hsl(var(--primary))' }} />
-                : <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                ? <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5" style={{ color: 'hsl(var(--primary))' }} />
+                : <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               }
             </button>
             {onShowDetails && (
               <button
                 onClick={(e) => { e.stopPropagation(); onShowDetails(movie); }}
-                className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-muted-foreground/50 hover:border-foreground transition"
+                className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full border border-muted-foreground/50 hover:border-foreground transition"
                 data-nav="card-action"
+                title="Mais Informações"
               >
-                <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <Info className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               </button>
-            )}
-            {movie.rating && (
-              <span className="text-[9px] sm:text-[10px] border border-muted-foreground/40 px-1 rounded">
-                {movie.rating}
-              </span>
             )}
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

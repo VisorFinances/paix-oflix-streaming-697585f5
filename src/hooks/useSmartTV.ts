@@ -53,24 +53,22 @@ export function useSmartTV() {
       const sidebarItems = allFocusable.filter(el => el.closest('aside'));
       const contentItems = allFocusable.filter(el => !el.closest('aside'));
 
-      // Sidebar → Content: pressing Right from sidebar goes to first content item
+      // Sidebar → Content
       if (isSidebar && e.key === 'ArrowRight') {
         if (contentItems.length > 0) {
           contentItems[0].focus();
-          contentItems[0].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          contentItems[0].scrollIntoView({ block: 'center', behavior: 'smooth' });
         }
         return;
       }
 
-      // Content → Sidebar: pressing Left from first column goes to sidebar
+      // Content → Sidebar
       if (!isSidebar && e.key === 'ArrowLeft') {
         const currentRect = current?.getBoundingClientRect();
-        // Check if we're roughly at the left edge of content
         const contentArea = document.querySelector('main');
         if (contentArea && currentRect) {
           const contentLeft = contentArea.getBoundingClientRect().left;
           if (currentRect.left - contentLeft < 100) {
-            // Go to sidebar - find closest sidebar item
             if (sidebarItems.length > 0) {
               const closest = findSpatialNearest(current, sidebarItems, 'left');
               if (closest) {
@@ -95,12 +93,12 @@ export function useSmartTV() {
         return;
       }
 
-      // Content spatial navigation
+      // Content spatial navigation — scroll focused element to center
       const direction = e.key.replace('Arrow', '').toLowerCase() as 'up' | 'down' | 'left' | 'right';
       const target = findSpatialNearest(current, contentItems, direction);
       if (target) {
         target.focus();
-        target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        target.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
       }
     };
 
@@ -152,7 +150,6 @@ function findSpatialNearest(
     if (!valid) continue;
 
     const dist = Math.sqrt(dx * dx + dy * dy);
-    // Weight: prefer items more aligned with the direction
     const alignment = direction === 'left' || direction === 'right'
       ? Math.abs(dy) * 2
       : Math.abs(dx) * 2;

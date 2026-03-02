@@ -7,13 +7,13 @@ interface AppSidebarProps {
 }
 
 const navItems = [
-  { id: 'home', label: 'Início', icon: Home },
-  { id: 'search', label: 'Buscar', icon: Search },
+  { id: 'home', label: 'Home', icon: Home },
+  { id: 'search', label: 'Pesquisa', icon: Search },
   { id: 'cinema', label: 'Cinema', icon: Film },
   { id: 'series', label: 'Séries', icon: Tv },
   { id: 'live', label: 'TV ao Vivo', icon: Radio },
   { id: 'kids', label: 'Kids', icon: Baby },
-  { id: 'mylist', label: 'Minha Lista', icon: Heart },
+  { id: 'mylist', label: 'Favoritos', icon: Heart },
 ];
 
 const AppSidebar = ({ activeView, onNavigate }: AppSidebarProps) => {
@@ -21,24 +21,26 @@ const AppSidebar = ({ activeView, onNavigate }: AppSidebarProps) => {
 
   return (
     <>
-      {/* Mobile bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-sidebar border-t border-sidebar-border flex justify-around py-2 sm:hidden">
-        {navItems.slice(0, 5).map(item => {
-          const isActive = activeView === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => onNavigate(item.id)}
-              className={`flex flex-col items-center gap-0.5 px-2 py-1 transition-colors ${
-                isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground'
-              }`}
-              data-nav="sidebar"
-            >
-              <item.icon className="w-5 h-5" />
-              <span className="text-[9px]">{item.label}</span>
-            </button>
-          );
-        })}
+      {/* Mobile bottom nav — ALL 7 menus */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-sidebar border-t border-sidebar-border sm:hidden">
+        <div className="flex justify-around py-1.5 px-1 overflow-x-auto scrollbar-hide">
+          {navItems.map(item => {
+            const isActive = activeView === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => onNavigate(item.id)}
+                className={`flex flex-col items-center gap-0.5 px-1.5 py-1 transition-colors min-w-0 flex-shrink-0 ${
+                  isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground'
+                }`}
+                data-nav="sidebar"
+              >
+                <item.icon className="w-4 h-4" />
+                <span className="text-[8px] leading-tight whitespace-nowrap">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </nav>
 
       {/* Mobile overlay */}
