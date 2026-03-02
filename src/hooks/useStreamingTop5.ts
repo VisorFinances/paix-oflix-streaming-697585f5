@@ -4,7 +4,7 @@ import { Movie } from '@/types';
 const TMDB_API_KEY = 'b275ce8e1a6b3d5d879bb0907e4f56ad';
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 
-// TMDB Watch Provider IDs for BR
+// TMDB Watch Provider IDs for BR — added Apple TV+
 const PROVIDERS: Record<string, number> = {
   netflix: 8,
   prime: 119,
@@ -12,6 +12,7 @@ const PROVIDERS: Record<string, number> = {
   disney: 337,
   hbomax: 619,
   paramount: 531,
+  appletv: 350,
 };
 
 interface TMDBResult {
@@ -32,14 +33,12 @@ export interface StreamingItem {
   overview: string;
   year: number;
   rating: string;
-  /** Matched local movie, or null if "em breve" */
   localMovie: Movie | null;
-  /** Badge: 'em_breve' | 'novidade' | null */
   badge: 'em_breve' | 'novidade' | null;
 }
 
 const CACHE_KEY = 'paixaoflix-streaming-top5';
-const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days for trending cache
+const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000;
 
 function normalizeTitle(t: string): string {
   return t.toLowerCase()
@@ -58,24 +57,20 @@ function matchLocal(tmdbTitle: string, movies: Movie[]): Movie | null {
 
 async function fetchProviderTop5(providerId: number): Promise<TMDBResult[]> {
   try {
-    // Try movies first
     const movieRes = await fetch(
       `${TMDB_BASE}/discover/movie?api_key=${TMDB_API_KEY}&language=pt-BR&watch_region=BR&with_watch_providers=${providerId}&sort_by=popularity.desc&page=1`
     );
     const movieData = movieRes.ok ? await movieRes.json() : { results: [] };
     
-    // Then TV
     const tvRes = await fetch(
       `${TMDB_BASE}/discover/tv?api_key=${TMDB_API_KEY}&language=pt-BR&watch_region=BR&with_watch_providers=${providerId}&sort_by=popularity.desc&page=1`
     );
     const tvData = tvRes.ok ? await tvRes.json() : { results: [] };
 
-    // Merge & pick top 5 by popularity (already sorted)
     const all = [
       ...(movieData.results || []).slice(0, 5).map((r: TMDBResult) => ({ ...r, media_type: 'movie' })),
       ...(tvData.results || []).slice(0, 5).map((r: TMDBResult) => ({ ...r, media_type: 'tv' })),
     ];
-    // Sort by vote_average desc, take 5
     all.sort((a: TMDBResult, b: TMDBResult) => (b.vote_average || 0) - (a.vote_average || 0));
     return all.slice(0, 5);
   } catch {
@@ -98,11 +93,20 @@ export async function fetchTrendingSeries(): Promise<TMDBResult[]> {
 
 export async function fetchOscarNominees(): Promise<TMDBResult[]> {
   try {
-    // Use TMDB's curated lists or search for recent award-winning films
+    // Search for actual Oscar-nominated films by using TMDB keyword for Oscar
+    // Keyword 293 = "oscar (award)" on TMDB
     const res = await fetch(
-      `${TMDB_BASE}/discover/movie?api_key=${TMDB_API_KEY}&language=pt-BR&primary_release_date.gte=2024-01-01&vote_average.gte=7.5&sort_by=vote_average.desc&with_original_language=en&page=1`
+      `${TMDB_BASE}/discover/movie?api_key=${TMDB_API_KEY}&language=pt-BR&primary_release_date.gte=2024-06-01&primary_release_date.lte=2026-03-31&vote_average.gte=7.0&sort_by=vote_average.desc&with_keywords=293&page=1`
     );
-    if (!res.ok) return [];
+    if (!res.ok) {
+      // Fallback: top rated recent English-language films
+      const fallback = await fetch(
+        `${TMDB_BASE}/discover/movie?api_key=${TMDB_API_KEY}&language=pt-BR&primary_release_date.gte=2024-06-01&vote_average.gte=7.5&sort_by=vote_average.desc&with_original_language=en&page=1`
+      );
+      if (!fallback.ok) return [];
+      const data = await fallback.json();
+      return (data.results || []).slice(0, 10);
+    }
     const data = await res.json();
     return (data.results || []).slice(0, 10);
   } catch {
@@ -115,7 +119,6 @@ function tmdbToStreamingItem(r: TMDBResult, movies: Movie[]): StreamingItem {
   const local = matchLocal(title, movies);
   const year = parseInt((r.release_date || r.first_air_date || '2024').substring(0, 4)) || 2024;
   
-  // Check novidade badge (added within last 24h) from localStorage
   const novidadeKey = `novidade-${normalizeTitle(title)}`;
   const novidadeTs = localStorage.getItem(novidadeKey);
   let badge: 'em_breve' | 'novidade' | null = null;
@@ -131,7 +134,6 @@ function tmdbToStreamingItem(r: TMDBResult, movies: Movie[]): StreamingItem {
     }
   }
 
-  // If local was just found (was previously em_breve), mark as novidade
   if (local) {
     const prevEmBreve = localStorage.getItem(`embreve-${normalizeTitle(title)}`);
     if (prevEmBreve) {
@@ -163,13 +165,11 @@ export function useStreamingTop5(movies: Movie[]) {
   const fetchAll = useCallback(async () => {
     if (movies.length === 0) return;
 
-    // Check cache
     try {
       const cached = localStorage.getItem(CACHE_KEY);
       if (cached) {
         const { ts, providers, series, oscar } = JSON.parse(cached);
         if (Date.now() - ts < CACHE_DURATION) {
-          // Re-match with current movies (they may have been updated)
           const rematched: Record<string, StreamingItem[]> = {};
           for (const [key, items] of Object.entries(providers as Record<string, StreamingItem[]>)) {
             rematched[key] = items.map(item => ({
@@ -197,7 +197,6 @@ export function useStreamingTop5(movies: Movie[]) {
 
     const results: Record<string, StreamingItem[]> = {};
     
-    // Fetch all providers in parallel
     const entries = Object.entries(PROVIDERS);
     const providerResults = await Promise.all(
       entries.map(([, id]) => fetchProviderTop5(id))
@@ -215,7 +214,6 @@ export function useStreamingTop5(movies: Movie[]) {
     setOscarNominees(oscar);
     setLoading(false);
 
-    // Cache
     try {
       localStorage.setItem(CACHE_KEY, JSON.stringify({
         ts: Date.now(),
@@ -228,7 +226,6 @@ export function useStreamingTop5(movies: Movie[]) {
 
   useEffect(() => {
     fetchAll();
-    // Re-fetch every 10 minutes to keep updated
     const id = setInterval(fetchAll, 10 * 60 * 1000);
     return () => clearInterval(id);
   }, [fetchAll]);

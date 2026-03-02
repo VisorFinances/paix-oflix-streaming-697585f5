@@ -25,11 +25,10 @@ const Top10Row = ({ title, movies, onPlay, onToggleFavorite, favorites, onShowDe
 
   if (movies.length === 0) return null;
 
-  // How much of the number peeks between cards
-  // Mobile: smaller peek, Desktop: bigger peek
-  const PEEK = isMobile ? 40 : 64;
-  const FONT_SIZE = isMobile ? 'clamp(3.5rem, 14vw, 5rem)' : 'clamp(5rem, 8vw, 8rem)';
-  const STROKE = isMobile ? '1.5px' : '2.5px';
+  const CARD_W = isMobile ? 140 : 220;
+  const NUM_W = isMobile ? 56 : 80;
+  const FONT_SIZE = isMobile ? '5rem' : '8rem';
+  const STROKE = isMobile ? '2px' : '3px';
 
   return (
     <section className="mb-6 sm:mb-8 animate-fade-in">
@@ -46,42 +45,35 @@ const Top10Row = ({ title, movies, onPlay, onToggleFavorite, favorites, onShowDe
 
         <div
           ref={scrollRef}
-          className="flex overflow-x-auto scrollbar-hide px-3 sm:px-4 md:px-12 pb-4"
-          style={{ gap: 0 }}
+          className="flex overflow-x-auto scrollbar-hide px-3 sm:px-4 md:px-12 pb-4 gap-0"
         >
           {movies.slice(0, 10).map((movie, index) => (
             <div
               key={movie.id}
               className="relative flex-shrink-0 flex items-end"
-              style={{
-                // First item: no extra left space needed (number floats left of card)
-                // Subsequent items: reserve PEEK px on the left so the number from
-                // the previous slot doesn't overlap the card
-                paddingLeft: index === 0 ? `${PEEK}px` : `${PEEK}px`,
-              }}
+              style={{ width: CARD_W + NUM_W }}
             >
-              {/* Big rank number — anchored to left edge, partially behind next card */}
-              <span
-                className="absolute bottom-0 z-0 font-black leading-none select-none pointer-events-none"
-                style={{
-                  // Position the number so its RIGHT edge aligns with the card's left edge
-                  // giving the "peek" effect: number is mostly behind the card
-                  right: '100%',
-                  // Shift it back a little so it partially overlaps with the card
-                  marginRight: `-${PEEK}px`,
-                  fontSize: FONT_SIZE,
-                  color: 'transparent',
-                  WebkitTextStroke: `${STROKE} hsl(var(--foreground) / 0.6)`,
-                  lineHeight: 1,
-                  textShadow: `0 2px 20px hsl(var(--background) / 0.8)`,
-                  whiteSpace: 'nowrap',
-                }}
+              {/* Big rank number */}
+              <div
+                className="absolute bottom-0 left-0 z-0 flex items-end justify-center select-none pointer-events-none"
+                style={{ width: NUM_W, height: '100%' }}
               >
-                {index + 1}
-              </span>
+                <span
+                  className="font-black leading-none"
+                  style={{
+                    fontSize: FONT_SIZE,
+                    color: 'transparent',
+                    WebkitTextStroke: `${STROKE} hsl(var(--foreground) / 0.7)`,
+                    textShadow: '0 2px 20px hsl(var(--background) / 0.8)',
+                    lineHeight: 0.85,
+                  }}
+                >
+                  {index + 1}
+                </span>
+              </div>
 
-              {/* Card — sits above the number */}
-              <div className="relative z-10">
+              {/* Card — offset to the right to reveal the number */}
+              <div className="relative z-10" style={{ marginLeft: NUM_W }}>
                 <PreviewCard
                   movie={movie}
                   onPlay={onPlay}
