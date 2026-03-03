@@ -10,13 +10,18 @@ interface HeroBannerProps {
 }
 
 const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
-  const heroMovies = useMemo(() => movies.slice(0, 8), [movies]);
+  const heroMovies = useMemo(() =>
+    movies.filter(m => m.image && m.description).slice(0, 8),
+    [movies]
+  );
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [imgLoaded, setImgLoaded] = useState(false);
 
   useEffect(() => {
     if (heroMovies.length <= 1) return;
     const interval = setInterval(() => {
       setCurrentIndex(prev => (prev + 1) % heroMovies.length);
+      setImgLoaded(false);
     }, 10000);
     return () => clearInterval(interval);
   }, [heroMovies.length]);
@@ -27,16 +32,23 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
   return (
     <div className="relative w-full h-[50vh] sm:h-[60vh] md:h-[70vh] lg:h-[80vh] overflow-hidden">
       <AnimatePresence mode="wait">
-        <motion.img
+        <motion.div
           key={movie.id}
-          src={movie.backdrop || movie.image}
-          alt={movie.title}
-          className="absolute inset-0 w-full h-full object-cover"
-          initial={{ opacity: 0, scale: 1.05 }}
-          animate={{ opacity: 1, scale: 1 }}
+          className="absolute inset-0"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 1 }}
-        />
+        >
+          {!imgLoaded && <div className="absolute inset-0 bg-muted animate-pulse" />}
+          <img
+            src={movie.backdrop || movie.image}
+            alt={movie.title}
+            className={`w-full h-full object-cover transition-opacity duration-500 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+            onLoad={() => setImgLoaded(true)}
+            fetchPriority="high"
+          />
+        </motion.div>
       </AnimatePresence>
       <div className="absolute inset-0" style={{ background: 'var(--hero-gradient)' }} />
       <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/40 to-transparent" />
@@ -50,13 +62,13 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-3xl sm:text-4xl md:text-6xl font-display tracking-wider mb-2 sm:mb-3">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-display tracking-wider mb-2 sm:mb-3 drop-shadow-lg">
               {movie.title}
             </h1>
-            <p className="text-xs sm:text-sm md:text-base text-secondary-foreground mb-1">
-              {movie.year} · {movie.genre.join(', ')} · {movie.rating}
+            <p className="text-xs sm:text-sm md:text-base text-secondary-foreground mb-1 drop-shadow">
+              {movie.year} · {movie.genre.join(', ')} {movie.rating ? `· ★ ${movie.rating}` : ''}
             </p>
-            <p className="text-xs sm:text-sm md:text-base text-muted-foreground mb-4 sm:mb-6 line-clamp-2 sm:line-clamp-3">
+            <p className="text-xs sm:text-sm md:text-base text-foreground/80 mb-4 sm:mb-6 line-clamp-2 sm:line-clamp-3 drop-shadow max-w-lg">
               {movie.description}
             </p>
             <div className="flex gap-3">
@@ -85,7 +97,7 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
           {heroMovies.map((_, i) => (
             <button
               key={i}
-              onClick={() => setCurrentIndex(i)}
+              onClick={() => { setCurrentIndex(i); setImgLoaded(false); }}
               className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full transition-all ${
                 i === currentIndex ? 'bg-foreground scale-125' : 'bg-foreground/40'
               }`}
