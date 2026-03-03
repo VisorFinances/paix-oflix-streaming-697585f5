@@ -26,8 +26,8 @@ const Top10Row = ({ title, movies, onPlay, onToggleFavorite, favorites, onShowDe
   if (movies.length === 0) return null;
 
   const CARD_W = isMobile ? 140 : 220;
-  const NUM_W = isMobile ? 56 : 80;
-  const FONT_SIZE = isMobile ? '5rem' : '8rem';
+  const NUM_W = isMobile ? 48 : 72;
+  const FONT_SIZE = isMobile ? '4.5rem' : '7rem';
   const STROKE = isMobile ? '2px' : '3px';
 
   return (
@@ -45,13 +45,14 @@ const Top10Row = ({ title, movies, onPlay, onToggleFavorite, favorites, onShowDe
 
         <div
           ref={scrollRef}
-          className="flex overflow-x-auto scrollbar-hide px-3 sm:px-4 md:px-12 pb-4 gap-0"
+          className="flex overflow-x-auto scrollbar-hide px-3 sm:px-4 md:px-12 pb-4"
+          style={{ gap: isMobile ? '4px' : '8px' }}
         >
           {movies.slice(0, 10).map((movie, index) => (
             <div
               key={movie.id}
               className="relative flex-shrink-0 flex items-end"
-              style={{ width: CARD_W + NUM_W }}
+              style={{ width: CARD_W + NUM_W, minWidth: CARD_W + NUM_W }}
             >
               {/* Big rank number */}
               <div
@@ -61,7 +62,7 @@ const Top10Row = ({ title, movies, onPlay, onToggleFavorite, favorites, onShowDe
                 <span
                   className="font-black leading-none"
                   style={{
-                    fontSize: FONT_SIZE,
+                    fontSize: index === 9 ? (isMobile ? '3.5rem' : '5.5rem') : FONT_SIZE,
                     color: 'transparent',
                     WebkitTextStroke: `${STROKE} hsl(var(--foreground) / 0.7)`,
                     textShadow: '0 2px 20px hsl(var(--background) / 0.8)',
@@ -72,7 +73,7 @@ const Top10Row = ({ title, movies, onPlay, onToggleFavorite, favorites, onShowDe
                 </span>
               </div>
 
-              {/* Card — offset to the right to reveal the number */}
+              {/* Card */}
               <div className="relative z-10" style={{ marginLeft: NUM_W }}>
                 <PreviewCard
                   movie={movie}

@@ -9,7 +9,6 @@ interface PreviewCardProps {
   isFavorite: boolean;
   progress?: number;
   onShowDetails?: (movie: Movie) => void;
-  videoUrl?: string;
 }
 
 const PreviewCard = ({
@@ -19,48 +18,43 @@ const PreviewCard = ({
   isFavorite,
   progress,
   onShowDetails,
-  videoUrl,
 }: PreviewCardProps) => {
-  const [isHovered, setIsHovered] = useState(false);
-  const [showVideo, setShowVideo] = useState(false);
-  const [videoLoaded, setVideoLoaded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [showTrailer, setShowTrailer] = useState(false);
+  const [trailerReady, setTrailerReady] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const dwellRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const trailerSrc = videoUrl || movie.trailer || '';
+  // Direct video URL for inline trailer (not YouTube embeds)
+  const trailerSrc = movie.streamUrl && !movie.streamUrl.includes('youtube') && !movie.streamUrl.includes('youtu.be')
+    ? movie.streamUrl
+    : '';
 
   const clearDwell = useCallback(() => {
-    if (dwellRef.current) {
-      clearTimeout(dwellRef.current);
-      dwellRef.current = null;
-    }
+    if (dwellRef.current) { clearTimeout(dwellRef.current); dwellRef.current = null; }
   }, []);
 
   const handleFocus = useCallback(() => {
-    setIsHovered(true);
+    setIsExpanded(true);
     if (!trailerSrc) return;
-    dwellRef.current = setTimeout(() => {
-      setShowVideo(true);
-    }, 500);
+    dwellRef.current = setTimeout(() => setShowTrailer(true), 500);
   }, [trailerSrc]);
 
   const handleBlur = useCallback(() => {
     clearDwell();
-    setIsHovered(false);
-    setShowVideo(false);
-    setVideoLoaded(false);
+    setIsExpanded(false);
+    setShowTrailer(false);
+    setTrailerReady(false);
     const v = videoRef.current;
-    if (v) {
-      v.pause();
-      v.currentTime = 0;
-    }
+    if (v) { v.pause(); v.currentTime = 0; }
   }, [clearDwell]);
 
   useEffect(() => {
     const v = videoRef.current;
     if (!v || !trailerSrc) return;
-    if (showVideo) {
+    if (showTrailer) {
       v.muted = true;
       v.playsInline = true;
       v.loop = true;
@@ -69,11 +63,10 @@ const PreviewCard = ({
       v.pause();
       v.currentTime = 0;
     }
-  }, [showVideo, trailerSrc]);
+  }, [showTrailer, trailerSrc]);
 
   useEffect(() => () => clearDwell(), [clearDwell]);
 
-  // Prime Video style: truncated synopsis
   const synopsis = movie.description
     ? movie.description.length > 80
       ? movie.description.slice(0, 80) + '…'
@@ -83,7 +76,7 @@ const PreviewCard = ({
   return (
     <div
       ref={cardRef}
-      className="movie-card group flex-shrink-0 w-[140px] sm:w-[160px] md:w-[200px] lg:w-[220px] relative"
+      className="relative flex-shrink-0 w-[140px] sm:w-[160px] md:w-[200px] lg:w-[220px]"
       data-nav="card"
       tabIndex={0}
       onMouseEnter={handleFocus}
@@ -91,34 +84,39 @@ const PreviewCard = ({
       onFocus={handleFocus}
       onBlur={handleBlur}
       onTouchStart={handleFocus}
-      onTouchEnd={handleBlur}
+      onTouchEnd={() => setTimeout(handleBlur, 3000)}
     >
-      <div className="relative aspect-[2/3] rounded-md overflow-hidden shadow-lg shadow-black/40">
-        {/* Thumbnail */}
+      {/* Main card */}
+      <div className="relative aspect-[2/3] rounded-md overflow-hidden shadow-lg shadow-black/40 cursor-pointer transition-transform duration-300"
+        style={{ transform: isExpanded ? 'scale(1.05)' : 'scale(1)' }}
+      >
+        {/* Lazy image with skeleton */}
+        {!imgLoaded && (
+          <div className="absolute inset-0 bg-muted animate-pulse rounded-md" />
+        )}
         <img
           src={movie.image}
           alt={movie.title}
           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
-            showVideo && videoLoaded ? 'opacity-0' : 'opacity-100'
+            showTrailer && trailerReady ? 'opacity-0' : imgLoaded ? 'opacity-100' : 'opacity-0'
           }`}
           loading="lazy"
+          onLoad={() => setImgLoaded(true)}
           onClick={() => onShowDetails?.(movie)}
           draggable={false}
         />
 
-        {/* Inline video preview — plays after 500ms dwell */}
+        {/* Inline video preview */}
         {trailerSrc && (
           <video
             ref={videoRef}
-            src={showVideo ? trailerSrc : undefined}
+            src={showTrailer ? trailerSrc : undefined}
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
-              showVideo && videoLoaded ? 'opacity-100' : 'opacity-0'
+              showTrailer && trailerReady ? 'opacity-100' : 'opacity-0'
             }`}
-            muted
-            playsInline
-            loop
-            onCanPlay={() => setVideoLoaded(true)}
-            onError={() => { setShowVideo(false); setVideoLoaded(false); }}
+            muted playsInline loop
+            onCanPlay={() => setTrailerReady(true)}
+            onError={() => { setShowTrailer(false); setTrailerReady(false); }}
           />
         )}
 
@@ -141,27 +139,25 @@ const PreviewCard = ({
         )}
       </div>
 
-      {/* Prime Video style expanded overlay — floats ABOVE other cards */}
-      {isHovered && (
+      {/* Expanded overlay — floats ABOVE other cards, fully visible */}
+      {isExpanded && (
         <div
-          className="absolute left-1/2 -translate-x-1/2 top-[calc(100%-20px)] z-[60] w-[180px] sm:w-[200px] md:w-[240px] lg:w-[260px] bg-card rounded-b-lg shadow-2xl shadow-black/70 p-2.5 sm:p-3 pointer-events-auto animate-fade-in"
-          onMouseEnter={() => setIsHovered(true)}
+          className="absolute left-1/2 -translate-x-1/2 top-[calc(100%-16px)] z-[60] w-[180px] sm:w-[200px] md:w-[240px] lg:w-[260px] bg-card rounded-b-lg shadow-2xl shadow-black/70 p-2.5 sm:p-3 pointer-events-auto animate-fade-in"
+          onMouseEnter={() => setIsExpanded(true)}
           onMouseLeave={handleBlur}
         >
           <h3 className="text-xs sm:text-sm font-semibold text-foreground truncate">{movie.title}</h3>
           <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
-            {movie.year} · {movie.genre[0]}
+            {movie.year} · {movie.genre[0] || ''}
             {movie.rating ? ` · ★ ${movie.rating}` : ''}
           </p>
 
-          {/* Synopsis — Prime Video style: small text below metadata */}
           {synopsis && (
             <p className="text-[10px] sm:text-[11px] text-muted-foreground/80 mt-1.5 leading-snug line-clamp-3">
               {synopsis}
             </p>
           )}
 
-          {/* Action buttons */}
           <div className="flex items-center gap-1.5 sm:gap-2 mt-2">
             <button
               onClick={(e) => {
@@ -175,10 +171,7 @@ const PreviewCard = ({
             </button>
             {movie.trailer && (
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onShowDetails?.(movie);
-                }}
+                onClick={(e) => { e.stopPropagation(); onShowDetails?.(movie); }}
                 className="flex items-center gap-1 px-2 py-1 rounded bg-muted/60 text-foreground text-[10px] sm:text-xs font-medium hover:bg-muted transition"
                 data-nav="card-action"
               >

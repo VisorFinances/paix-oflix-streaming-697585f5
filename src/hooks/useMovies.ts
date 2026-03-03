@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Movie } from '@/types';
+import { enrichFromTMDB } from '@/lib/tmdbEnrich';
 
 const BASE = 'https://raw.githubusercontent.com/VisorFinances/paix-oflix-streaming-697585f5/refs/heads/main/data';
 
@@ -79,7 +80,6 @@ function parseGenres(raw: RawFilme | RawSerie): string[] {
 
 function normalizeFilme(raw: RawFilme, idx: number, source: 'cinema' | 'filmeskids'): Movie {
   const genres = parseGenres(raw);
-
   const isKids = !!raw.kids || source === 'filmeskids' ||
     genres.some(g => /kids|infantil|crian/i.test(g));
 
@@ -96,12 +96,12 @@ function normalizeFilme(raw: RawFilme, idx: number, source: 'cinema' | 'filmeski
     trailer: raw.trailer || '',
     kids: isKids,
     source: isKids ? 'filmeskids' : 'cinema',
+    tmdbId: raw.tmdb_id,
   };
 }
 
 function normalizeSerie(raw: RawSerie, idx: number, source: 'series' | 'serieskids'): Movie {
   const genres = parseGenres(raw);
-
   const isKids = !!raw.kids || source === 'serieskids' ||
     genres.some(g => /kids|infantil|crian/i.test(g));
 
@@ -120,6 +120,29 @@ function normalizeSerie(raw: RawSerie, idx: number, source: 'series' | 'serieski
     trailer: raw.trailer || '',
     kids: isKids,
     source: isKids ? 'serieskids' : 'series',
+    tmdbId: raw.tmdb_id,
+  };
+}
+
+// ─── TMDB Enrichment ─────────────────────────────────────────────────────────
+
+async function enrichMovie(movie: Movie): Promise<Movie> {
+  if (!movie.tmdbId) return movie;
+  // Only enrich if missing poster or description
+  if (movie.image && movie.description) return movie;
+
+  const type = movie.type === 'series' ? 'tv' : 'movie';
+  const details = await enrichFromTMDB(movie.tmdbId, type);
+  if (!details) return movie;
+
+  return {
+    ...movie,
+    image: movie.image || details.poster,
+    backdrop: details.backdrop || movie.backdrop,
+    description: movie.description || details.description,
+    genre: movie.genre.length > 0 ? movie.genre : details.genres,
+    year: movie.year || parseInt(details.year) || movie.year,
+    rating: movie.rating || details.rating,
   };
 }
 
@@ -128,8 +151,6 @@ function normalizeSerie(raw: RawSerie, idx: number, source: 'series' | 'serieski
 export function useMovies() {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const [shuffleSeed] = useState(() => Math.random());
 
   const fetchData = useCallback(async () => {
     const [filmesRaw, seriesRaw, kidsFilmesRaw, kidsSeriesRaw, favoritosRaw] = await Promise.all([
@@ -145,7 +166,7 @@ export function useMovies() {
     if (Array.isArray(filmesRaw)) {
       filmesRaw.forEach((item, i) => {
         const raw = item as RawFilme;
-        if (raw.titulo && raw.poster) all.push(normalizeFilme(raw, i, 'cinema'));
+        if (raw.titulo) all.push(normalizeFilme(raw, i, 'cinema'));
       });
     }
 
@@ -159,7 +180,7 @@ export function useMovies() {
     if (Array.isArray(kidsFilmesRaw)) {
       kidsFilmesRaw.forEach((item, i) => {
         const raw = item as RawFilme;
-        if (raw.titulo && raw.poster) all.push(normalizeFilme(raw, i, 'filmeskids'));
+        if (raw.titulo) all.push(normalizeFilme(raw, i, 'filmeskids'));
       });
     }
 
@@ -173,11 +194,30 @@ export function useMovies() {
     if (Array.isArray(favoritosRaw) && favoritosRaw.length > 0) {
       favoritosRaw.forEach((item, i) => {
         const raw = item as RawFilme;
-        if (raw.titulo && raw.poster) {
+        if (raw.titulo) {
           const m = normalizeFilme(raw, i, 'cinema');
           all.push({ ...m, id: `favoritos-${i}`, source: 'favoritos' });
         }
       });
+    }
+
+    // Enrich items that need TMDB data (missing poster/desc)
+    const needsEnrich = all.filter(m => m.tmdbId && (!m.image || !m.description));
+    if (needsEnrich.length > 0) {
+      const enriched = await Promise.allSettled(
+        needsEnrich.map(m => enrichMovie(m))
+      );
+      const enrichedMap = new Map<string, Movie>();
+      enriched.forEach((result, i) => {
+        if (result.status === 'fulfilled') {
+          enrichedMap.set(needsEnrich[i].id, result.value);
+        }
+      });
+
+      for (let i = 0; i < all.length; i++) {
+        const e = enrichedMap.get(all[i].id);
+        if (e) all[i] = e;
+      }
     }
 
     setMovies(all);
@@ -189,12 +229,12 @@ export function useMovies() {
     // Re-fetch JSON every 27 minutes
     const id = setInterval(fetchData, 27 * 60 * 1000);
     return () => clearInterval(id);
-  }, [fetchData, shuffleSeed]);
+  }, [fetchData]);
 
   return { movies, loading };
 }
 
-// ─── Utility: pick random items ──────────────────────────────────────────────
+// ─── Utility ─────────────────────────────────────────────────────────────────
 
 export function pickRandom<T>(arr: T[], count: number): T[] {
   return shuffleArray(arr).slice(0, count);

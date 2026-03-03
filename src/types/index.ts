@@ -15,6 +15,7 @@ export interface Movie {
   trailer?: string;
   kids?: boolean;
   source: SourceFile;
+  tmdbId?: string;
 }
 
 // Raw shape from remote cinema/filmeskids JSON
