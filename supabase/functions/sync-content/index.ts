@@ -57,14 +57,17 @@ async function fetchTMDB(tmdbId: string, type: "movie" | "tv"): Promise<Partial<
   }
 }
 
+function ensureStringArray(val: unknown): string[] {
+  if (!val) return [];
+  if (Array.isArray(val)) return val.filter(v => typeof v === 'string' && v.trim()).map(v => String(v).trim());
+  if (typeof val === 'string' && val.trim()) return [val.trim()];
+  return [];
+}
+
 function parseGenres(raw: RawItem): string[] {
-  let genres: string[] = [];
-  if (raw.categories && raw.categories.length > 0) {
-    genres = [...raw.categories];
-  }
-  if (raw.genero) {
-    if (Array.isArray(raw.genero)) {
-      genres = [...genres, ...raw.genero];
+  const cats = ensureStringArray(raw.categories);
+  const gen = ensureStringArray(raw.genero);
+  const genres = [...cats, ...gen];
     } else {
       genres.push(raw.genero);
     }
