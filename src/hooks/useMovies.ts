@@ -1,41 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Movie } from '@/types';
-import { enrichFromTMDB } from '@/lib/tmdbEnrich';
-
-const BASE = 'https://raw.githubusercontent.com/VisorFinances/paix-oflix-streaming-697585f5/refs/heads/main/data';
-
-// ─── Raw types ───────────────────────────────────────────────────────────────
-
-interface RawFilme {
-  titulo: string;
-  url?: string;
-  tmdb_id?: string;
-  trailer?: string;
-  genero?: string | string[];
-  categories?: string[];
-  year?: string;
-  rating?: string;
-  desc?: string;
-  poster?: string;
-  type?: string;
-  kids?: boolean;
-}
-
-interface RawSerie {
-  titulo: string;
-  identificador_archive?: string;
-  url?: string;
-  tmdb_id?: string;
-  trailer?: string;
-  genero?: string | string[];
-  categories?: string[];
-  year?: string;
-  rating?: string;
-  desc?: string;
-  poster?: string;
-  type?: string;
-  kids?: boolean;
-}
+import { supabase } from '@/integrations/supabase/client';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -48,40 +13,57 @@ export function shuffleArray<T>(arr: T[]): T[] {
   return a;
 }
 
-async function safeFetch(url: string): Promise<unknown[]> {
+export function pickRandom<T>(arr: T[], count: number): T[] {
+  return shuffleArray(arr).slice(0, count);
+}
+
+// ─── GitHub JSON fallback (when Supabase is empty) ─────────────────────────
+
+const BASE = 'https://raw.githubusercontent.com/VisorFinances/paix-oflix-streaming-697585f5/refs/heads/main/data';
+
+interface RawItem {
+  titulo: string;
+  tmdb_id?: string;
+  url?: string;
+  identificador_archive?: string;
+  trailer?: string;
+  genero?: string | string[];
+  categories?: string[];
+  year?: string;
+  rating?: string;
+  desc?: string;
+  poster?: string;
+  type?: string;
+  kids?: boolean;
+}
+
+async function safeFetch(url: string): Promise<RawItem[]> {
   try {
     const res = await fetch(url, { cache: 'no-store' });
-    if (!res.ok) { console.warn(`Fetch failed: ${url} → HTTP ${res.status}`); return []; }
+    if (!res.ok) return [];
     const text = await res.text();
-    if (text.trim().startsWith('<')) { console.warn(`HTML instead of JSON: ${url}`); return []; }
+    if (text.trim().startsWith('<')) return [];
     const parsed = JSON.parse(text);
     return Array.isArray(parsed) ? parsed : [];
-  } catch (e) {
-    console.warn(`Error fetching ${url}:`, e);
+  } catch {
     return [];
   }
 }
 
-// ─── Normalizers ─────────────────────────────────────────────────────────────
-
-function parseGenres(raw: RawFilme | RawSerie): string[] {
+function parseGenres(raw: RawItem): string[] {
   let genres: string[] = [];
-  if (raw.categories && raw.categories.length > 0) {
-    genres = raw.categories;
-  } else if (raw.genero) {
-    if (Array.isArray(raw.genero)) {
-      genres = raw.genero;
-    } else {
-      genres = [raw.genero];
-    }
+  if (raw.categories?.length) genres = [...raw.categories];
+  if (raw.genero) {
+    if (Array.isArray(raw.genero)) genres = [...genres, ...raw.genero];
+    else genres.push(raw.genero);
   }
-  return genres;
+  return [...new Set(genres)];
 }
 
-function normalizeFilme(raw: RawFilme, idx: number, source: 'cinema' | 'filmeskids'): Movie {
+function normalizeRawItem(raw: RawItem, idx: number, source: string): Movie {
   const genres = parseGenres(raw);
-  const isKids = !!raw.kids || source === 'filmeskids' ||
-    genres.some(g => /kids|infantil|crian/i.test(g));
+  const tipo = raw.type === 'serie' || raw.type === 'series' ? 'series' : 'movie';
+  const isKids = !!raw.kids || source.includes('kids') || genres.some(g => /kids|infantil|crian/i.test(g));
 
   return {
     id: `${source}-${idx}`,
@@ -90,59 +72,86 @@ function normalizeFilme(raw: RawFilme, idx: number, source: 'cinema' | 'filmeski
     image: raw.poster || '',
     year: parseInt(raw.year || '2024') || 2024,
     genre: genres,
-    type: 'movie',
-    rating: raw.rating || '',
-    streamUrl: raw.url || '',
-    trailer: raw.trailer || '',
-    kids: isKids,
-    source: isKids ? 'filmeskids' : 'cinema',
-    tmdbId: raw.tmdb_id,
-  };
-}
-
-function normalizeSerie(raw: RawSerie, idx: number, source: 'series' | 'serieskids'): Movie {
-  const genres = parseGenres(raw);
-  const isKids = !!raw.kids || source === 'serieskids' ||
-    genres.some(g => /kids|infantil|crian/i.test(g));
-
-  return {
-    id: `${source}-${idx}`,
-    title: raw.titulo || '',
-    description: raw.desc || '',
-    image: raw.poster || '',
-    year: parseInt(raw.year || '2024') || 2024,
-    genre: genres,
-    type: 'series',
+    type: tipo as Movie['type'],
     rating: raw.rating || '',
     streamUrl: raw.identificador_archive
       ? `https://archive.org/download/${raw.identificador_archive}/`
       : (raw.url || ''),
     trailer: raw.trailer || '',
     kids: isKids,
-    source: isKids ? 'serieskids' : 'series',
+    source: isKids ? (tipo === 'series' ? 'serieskids' : 'filmeskids') : (tipo === 'series' ? 'series' : 'cinema'),
     tmdbId: raw.tmdb_id,
   };
 }
 
-// ─── TMDB Enrichment ─────────────────────────────────────────────────────────
+async function fetchFromGitHub(): Promise<Movie[]> {
+  const [cinema, series, kidsFilmes, kidsSeries, favoritos] = await Promise.all([
+    safeFetch(`${BASE}/cinema.json`),
+    safeFetch(`${BASE}/series.json`),
+    safeFetch(`${BASE}/kids_filmes.json`),
+    safeFetch(`${BASE}/kids_series.json`),
+    safeFetch(`${BASE}/Favoritos.json`),
+  ]);
 
-async function enrichMovie(movie: Movie): Promise<Movie> {
-  if (!movie.tmdbId) return movie;
-  // Only enrich if missing poster or description
-  if (movie.image && movie.description) return movie;
+  const all: Movie[] = [];
+  cinema.forEach((r, i) => r.titulo && all.push(normalizeRawItem(r, i, 'cinema')));
+  series.forEach((r, i) => r.titulo && all.push(normalizeRawItem(r, i, 'series')));
+  kidsFilmes.forEach((r, i) => r.titulo && all.push(normalizeRawItem(r, i, 'kids_filmes')));
+  kidsSeries.forEach((r, i) => r.titulo && all.push(normalizeRawItem(r, i, 'kids_series')));
+  favoritos.forEach((r, i) => {
+    if (r.titulo) {
+      const m = normalizeRawItem(r, i, 'cinema');
+      all.push({ ...m, id: `favoritos-${i}`, source: 'favoritos' });
+    }
+  });
+  return all;
+}
 
-  const type = movie.type === 'series' ? 'tv' : 'movie';
-  const details = await enrichFromTMDB(movie.tmdbId, type);
-  if (!details) return movie;
+// ─── Supabase → Movie mapper ─────────────────────────────────────────────────
+
+interface ConteudoRow {
+  id: string;
+  titulo: string;
+  tipo: string;
+  tmdb_id: string | null;
+  url: string | null;
+  identificador_archive: string | null;
+  trailer: string | null;
+  genero: string[] | null;
+  categories: string[] | null;
+  ano: string | null;
+  rating: string | null;
+  descricao: string | null;
+  poster: string | null;
+  backdrop: string | null;
+  kids: boolean | null;
+}
+
+function conteudoToMovie(row: ConteudoRow): Movie {
+  const genres = [...(row.genero || []), ...(row.categories || [])].filter(Boolean);
+  const uniqueGenres = [...new Set(genres)];
+  const isKids = !!row.kids || uniqueGenres.some(g => /kids|infantil|crian/i.test(g));
+  const tipo = row.tipo === 'series' ? 'series' : 'movie';
 
   return {
-    ...movie,
-    image: movie.image || details.poster,
-    backdrop: details.backdrop || movie.backdrop,
-    description: movie.description || details.description,
-    genre: movie.genre.length > 0 ? movie.genre : details.genres,
-    year: movie.year || parseInt(details.year) || movie.year,
-    rating: movie.rating || details.rating,
+    id: row.id,
+    title: row.titulo,
+    description: row.descricao || '',
+    image: row.poster || '',
+    backdrop: row.backdrop || undefined,
+    year: parseInt(row.ano || '2024') || 2024,
+    genre: uniqueGenres,
+    type: tipo as Movie['type'],
+    rating: row.rating || '',
+    streamUrl: row.identificador_archive
+      ? `https://archive.org/download/${row.identificador_archive}/`
+      : (row.url || ''),
+    trailer: row.trailer || '',
+    kids: isKids,
+    source: isKids
+      ? (tipo === 'series' ? 'serieskids' : 'filmeskids')
+      : (tipo === 'series' ? 'series' : 'cinema'),
+    tmdbId: row.tmdb_id || undefined,
   };
 }
 
@@ -153,89 +162,40 @@ export function useMovies() {
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
-    const [filmesRaw, seriesRaw, kidsFilmesRaw, kidsSeriesRaw, favoritosRaw] = await Promise.all([
-      safeFetch(`${BASE}/cinema.json`),
-      safeFetch(`${BASE}/series.json`),
-      safeFetch(`${BASE}/kids_filmes.json`),
-      safeFetch(`${BASE}/kids_series.json`),
-      safeFetch(`${BASE}/Favoritos.json`),
-    ]);
+    try {
+      // Try Supabase first
+      const { data, error } = await supabase
+        .from('conteudos')
+        .select('*')
+        .order('titulo');
 
-    const all: Movie[] = [];
-
-    if (Array.isArray(filmesRaw)) {
-      filmesRaw.forEach((item, i) => {
-        const raw = item as RawFilme;
-        if (raw.titulo) all.push(normalizeFilme(raw, i, 'cinema'));
-      });
-    }
-
-    if (Array.isArray(seriesRaw)) {
-      seriesRaw.forEach((item, i) => {
-        const raw = item as RawSerie;
-        if (raw.titulo) all.push(normalizeSerie(raw, i, 'series'));
-      });
-    }
-
-    if (Array.isArray(kidsFilmesRaw)) {
-      kidsFilmesRaw.forEach((item, i) => {
-        const raw = item as RawFilme;
-        if (raw.titulo) all.push(normalizeFilme(raw, i, 'filmeskids'));
-      });
-    }
-
-    if (Array.isArray(kidsSeriesRaw)) {
-      kidsSeriesRaw.forEach((item, i) => {
-        const raw = item as RawSerie;
-        if (raw.titulo) all.push(normalizeSerie(raw, i, 'serieskids'));
-      });
-    }
-
-    if (Array.isArray(favoritosRaw) && favoritosRaw.length > 0) {
-      favoritosRaw.forEach((item, i) => {
-        const raw = item as RawFilme;
-        if (raw.titulo) {
-          const m = normalizeFilme(raw, i, 'cinema');
-          all.push({ ...m, id: `favoritos-${i}`, source: 'favoritos' });
-        }
-      });
-    }
-
-    // Enrich items that need TMDB data (missing poster/desc)
-    const needsEnrich = all.filter(m => m.tmdbId && (!m.image || !m.description));
-    if (needsEnrich.length > 0) {
-      const enriched = await Promise.allSettled(
-        needsEnrich.map(m => enrichMovie(m))
-      );
-      const enrichedMap = new Map<string, Movie>();
-      enriched.forEach((result, i) => {
-        if (result.status === 'fulfilled') {
-          enrichedMap.set(needsEnrich[i].id, result.value);
-        }
-      });
-
-      for (let i = 0; i < all.length; i++) {
-        const e = enrichedMap.get(all[i].id);
-        if (e) all[i] = e;
+      if (!error && data && data.length > 0) {
+        const mapped = (data as ConteudoRow[]).map(conteudoToMovie);
+        setMovies(mapped);
+        setLoading(false);
+        return;
       }
-    }
 
-    setMovies(all);
-    setLoading(false);
+      // Fallback to GitHub JSON if Supabase is empty
+      console.warn('Supabase empty or error, falling back to GitHub JSON');
+      const githubMovies = await fetchFromGitHub();
+      setMovies(githubMovies);
+    } catch (e) {
+      console.error('Error fetching movies:', e);
+      // Final fallback
+      const githubMovies = await fetchFromGitHub();
+      setMovies(githubMovies);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
     fetchData();
-    // Re-fetch JSON every 27 minutes
-    const id = setInterval(fetchData, 27 * 60 * 1000);
+    // Re-fetch every 15 minutes
+    const id = setInterval(fetchData, 15 * 60 * 1000);
     return () => clearInterval(id);
   }, [fetchData]);
 
   return { movies, loading };
-}
-
-// ─── Utility ─────────────────────────────────────────────────────────────────
-
-export function pickRandom<T>(arr: T[], count: number): T[] {
-  return shuffleArray(arr).slice(0, count);
 }
