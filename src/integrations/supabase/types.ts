@@ -14,7 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      conteudos: {
+        Row: {
+          ano: string | null
+          backdrop: string | null
+          categories: string[] | null
+          created_at: string | null
+          descricao: string | null
+          genero: string[] | null
+          id: string
+          identificador_archive: string | null
+          kids: boolean | null
+          poster: string | null
+          rating: string | null
+          tipo: string
+          titulo: string
+          tmdb_id: string | null
+          trailer: string | null
+          updated_at: string | null
+          url: string | null
+        }
+        Insert: {
+          ano?: string | null
+          backdrop?: string | null
+          categories?: string[] | null
+          created_at?: string | null
+          descricao?: string | null
+          genero?: string[] | null
+          id?: string
+          identificador_archive?: string | null
+          kids?: boolean | null
+          poster?: string | null
+          rating?: string | null
+          tipo: string
+          titulo: string
+          tmdb_id?: string | null
+          trailer?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Update: {
+          ano?: string | null
+          backdrop?: string | null
+          categories?: string[] | null
+          created_at?: string | null
+          descricao?: string | null
+          genero?: string[] | null
+          id?: string
+          identificador_archive?: string | null
+          kids?: boolean | null
+          poster?: string | null
+          rating?: string | null
+          tipo?: string
+          titulo?: string
+          tmdb_id?: string | null
+          trailer?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
