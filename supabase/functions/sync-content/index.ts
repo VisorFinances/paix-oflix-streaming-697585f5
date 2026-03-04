@@ -149,7 +149,7 @@ serve(async (req) => {
         identificador_archive: raw.identificador_archive || null,
         trailer: raw.trailer || null,
         genero: genres,
-        categories: raw.categories || [],
+        categories: ensureStringArray(raw.categories),
         ano: year,
         rating,
         descricao: desc,
