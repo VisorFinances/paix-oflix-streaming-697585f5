@@ -67,13 +67,7 @@ function ensureStringArray(val: unknown): string[] {
 function parseGenres(raw: RawItem): string[] {
   const cats = ensureStringArray(raw.categories);
   const gen = ensureStringArray(raw.genero);
-  const genres = [...cats, ...gen];
-    } else {
-      genres.push(raw.genero);
-    }
-  }
-  // Deduplicate
-  return [...new Set(genres)];
+  return [...new Set([...cats, ...gen])];
 }
 
 function isKids(raw: RawItem, source: string): boolean {
