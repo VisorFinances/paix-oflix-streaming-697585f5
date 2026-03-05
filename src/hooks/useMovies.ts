@@ -171,6 +171,7 @@ export function useMovies() {
         .limit(500);
 
       if (!error && data && data.length > 0) {
+        console.log(`[useMovies] Loaded ${data.length} items from database`);
         const mapped = (data as ConteudoRow[]).map(conteudoToMovie);
         setMovies(mapped);
         setLoading(false);
@@ -178,7 +179,7 @@ export function useMovies() {
       }
 
       // Fallback to GitHub JSON if Supabase is empty
-      console.warn('Supabase empty or error, falling back to GitHub JSON');
+      console.warn('[useMovies] Database empty or error, falling back to GitHub JSON', error?.message);
       const githubMovies = await fetchFromGitHub();
       setMovies(githubMovies);
     } catch (e) {
