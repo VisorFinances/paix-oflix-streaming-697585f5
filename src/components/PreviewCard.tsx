@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Movie } from '@/types';
-import { Play, Plus, Check, Info } from 'lucide-react';
+import { Play, Plus, Check, Info, Volume2, VolumeX } from 'lucide-react';
 
 interface PreviewCardProps {
   movie: Movie;
@@ -55,10 +55,12 @@ const PreviewCard = ({
   const [showTrailer, setShowTrailer] = useState(false);
   const [trailerReady, setTrailerReady] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const dwellRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const cardId = useRef(movie.id);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const youtubeEmbedUrl = movie.trailer ? getYouTubeEmbedUrl(movie.trailer) : null;
   const directTrailerSrc = movie.trailer && isDirectVideo(movie.trailer) ? movie.trailer
@@ -88,7 +90,6 @@ const PreviewCard = ({
   const handleFocus = useCallback(() => {
     setIsExpanded(true);
     if (!hasTrailer) return;
-    // Check saveData for mobile
     const conn = (navigator as any).connection;
     if (conn?.saveData) return;
 
@@ -104,6 +105,7 @@ const PreviewCard = ({
     setIsExpanded(false);
     setShowTrailer(false);
     setTrailerReady(false);
+    setIsMuted(true);
     const v = videoRef.current;
     if (v) { v.pause(); v.currentTime = 0; }
     if (activeTrailerCardId === cardId.current) setActiveTrailer(null);
@@ -114,7 +116,7 @@ const PreviewCard = ({
     const v = videoRef.current;
     if (!v || !directTrailerSrc) return;
     if (showTrailer) {
-      v.muted = true;
+      v.muted = isMuted;
       v.playsInline = true;
       v.loop = true;
       v.play().catch(() => {});
@@ -122,15 +124,16 @@ const PreviewCard = ({
       v.pause();
       v.currentTime = 0;
     }
-  }, [showTrailer, directTrailerSrc]);
+  }, [showTrailer, directTrailerSrc, isMuted]);
 
   useEffect(() => () => clearDwell(), [clearDwell]);
 
-  const synopsis = movie.description
-    ? movie.description.length > 50
-      ? movie.description.slice(0, 50) + '…'
-      : movie.description
-    : '';
+  const toggleMute = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsMuted(prev => !prev);
+    const v = videoRef.current;
+    if (v) v.muted = !v.muted;
+  }, []);
 
   // Touch: 1st tap expands, 2nd tap opens
   const handleTouch = useCallback(() => {
@@ -143,6 +146,7 @@ const PreviewCard = ({
 
   return (
     <div
+      ref={containerRef}
       className="relative flex-shrink-0 w-[140px] sm:w-[160px] md:w-[200px] lg:w-[220px]"
       style={{ transform: 'translateZ(0)' }}
       data-nav="card"
@@ -153,13 +157,17 @@ const PreviewCard = ({
       onBlur={handleBlur}
       onTouchStart={handleTouch}
     >
-      {/* Main card */}
+      {/* Main card — uses absolute positioning when expanded to overlay neighbors */}
       <div
-        className="relative rounded-md overflow-hidden shadow-lg shadow-black/40 cursor-pointer transition-transform duration-300"
+        className="rounded-md overflow-hidden shadow-lg shadow-black/40 cursor-pointer transition-all duration-300 ease-out"
         style={{
           aspectRatio: '2/3',
-          transform: isExpanded ? 'scale(1.15)' : 'scale(1)',
-          zIndex: isExpanded ? 50 : 1,
+          position: isExpanded ? 'absolute' : 'relative',
+          top: isExpanded ? '-10%' : undefined,
+          left: isExpanded ? '-10%' : undefined,
+          width: isExpanded ? '120%' : '100%',
+          zIndex: isExpanded ? 100 : 1,
+          willChange: isExpanded ? 'transform' : undefined,
         }}
       >
         {/* Skeleton */}
@@ -198,10 +206,20 @@ const PreviewCard = ({
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
               showTrailer && trailerReady ? 'opacity-100' : 'opacity-0'
             }`}
-            muted playsInline loop
+            muted={isMuted} playsInline loop
             onCanPlay={() => setTrailerReady(true)}
             onError={() => { setShowTrailer(false); setTrailerReady(false); }}
           />
+        )}
+
+        {/* Mute/unmute button for direct video */}
+        {showTrailer && trailerReady && directTrailerSrc && (
+          <button
+            onClick={toggleMute}
+            className="absolute top-2 right-2 z-[110] w-7 h-7 flex items-center justify-center rounded-full bg-black/60 hover:bg-black/80 text-foreground transition"
+          >
+            {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+          </button>
         )}
 
         {/* Bottom gradient */}
@@ -223,66 +241,83 @@ const PreviewCard = ({
         )}
       </div>
 
+      {/* Placeholder to preserve layout when card is positioned absolutely */}
+      {isExpanded && (
+        <div style={{ aspectRatio: '2/3', width: '100%' }} />
+      )}
+
       {/* Expanded overlay — floats ABOVE other cards */}
       {isExpanded && (
         <div
-          className="absolute left-1/2 -translate-x-1/2 top-[calc(100%-16px)] z-[60] w-[180px] sm:w-[200px] md:w-[240px] lg:w-[260px] bg-card rounded-b-lg shadow-2xl shadow-black/70 p-2.5 sm:p-3 pointer-events-auto animate-fade-in"
+          className="absolute left-1/2 -translate-x-1/2 z-[110] w-[180px] sm:w-[200px] md:w-[240px] lg:w-[260px] bg-card rounded-b-lg shadow-2xl shadow-black/70 pointer-events-auto animate-fade-in"
+          style={{ top: 'calc(90% + 8px)' }}
           onMouseEnter={() => setIsExpanded(true)}
           onMouseLeave={handleBlur}
         >
-          <h3 className="text-xs sm:text-sm font-semibold text-foreground truncate">{movie.title}</h3>
-          <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
-            {movie.year} · {movie.genre[0] || ''}
-            {movie.rating ? ` · ★ ${movie.rating}` : ''}
-          </p>
+          <div className="p-2.5 sm:p-3">
+            {/* Metadata row */}
+            <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-primary font-semibold mb-1">
+              {movie.rating && <span>★ {movie.rating}</span>}
+              <span className="text-muted-foreground">{movie.year}</span>
+              {movie.genre[0] && <span className="text-muted-foreground">· {movie.genre[0]}</span>}
+            </div>
 
-          {synopsis && (
-            <p className="text-[10px] sm:text-[11px] text-muted-foreground/80 mt-1.5 leading-snug line-clamp-3">
-              {synopsis}
-            </p>
-          )}
+            <h3 className="text-xs sm:text-sm font-semibold text-foreground truncate">{movie.title}</h3>
 
-          <div className="flex items-center gap-1.5 sm:gap-2 mt-2">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                movie.type === 'series' && onShowDetails ? onShowDetails(movie) : onPlay(movie);
-              }}
-              className="flex items-center gap-1 px-2.5 py-1 rounded bg-foreground text-background text-[10px] sm:text-xs font-semibold hover:opacity-80 transition"
-              data-nav="card-action"
-            >
-              <Play className="w-3 h-3" /> Assistir
-            </button>
-            {movie.trailer && (
+            {/* Synopsis — exactly 3 lines */}
+            {movie.description && (
+              <p className="text-[10px] sm:text-[11px] text-muted-foreground/80 mt-1.5 leading-snug line-clamp-3">
+                {movie.description}
+              </p>
+            )}
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-1.5 sm:gap-2 mt-2.5">
               <button
-                onClick={(e) => { e.stopPropagation(); onShowDetails?.(movie); }}
-                className="flex items-center gap-1 px-2 py-1 rounded bg-muted/60 text-foreground text-[10px] sm:text-xs font-medium hover:bg-muted transition"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  movie.type === 'series' && onShowDetails ? onShowDetails(movie) : onPlay(movie);
+                }}
+                className="flex items-center gap-1 px-3 py-1.5 rounded bg-foreground text-background text-[10px] sm:text-xs font-semibold hover:opacity-80 transition"
                 data-nav="card-action"
               >
-                <Play className="w-3 h-3" /> Trailer
+                <Play className="w-3 h-3" fill="currentColor" /> Assistir
               </button>
-            )}
-            <button
-              onClick={(e) => { e.stopPropagation(); onToggleFavorite(movie.id); }}
-              className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full border border-muted-foreground/50 hover:border-foreground transition ml-auto"
-              data-nav="card-action"
-              title={isFavorite ? 'Remover da lista' : 'Adicionar à lista'}
-            >
-              {isFavorite
-                ? <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5" style={{ color: 'hsl(var(--primary))' }} />
-                : <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-              }
-            </button>
-            {onShowDetails && (
+
               <button
-                onClick={(e) => { e.stopPropagation(); onShowDetails(movie); }}
-                className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-full border border-muted-foreground/50 hover:border-foreground transition"
+                onClick={(e) => { e.stopPropagation(); onToggleFavorite(movie.id); }}
+                className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-muted-foreground/50 hover:border-foreground transition ml-auto"
                 data-nav="card-action"
-                title="Mais Informações"
+                title={isFavorite ? 'Remover da lista' : 'Adicionar à lista'}
               >
-                <Info className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                {isFavorite
+                  ? <Check className="w-3.5 h-3.5" style={{ color: 'hsl(var(--primary))' }} />
+                  : <Plus className="w-3.5 h-3.5" />
+                }
               </button>
-            )}
+
+              {movie.trailer && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onShowDetails?.(movie); }}
+                  className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-muted-foreground/50 hover:border-foreground transition"
+                  data-nav="card-action"
+                  title="Trailer"
+                >
+                  <Play className="w-3.5 h-3.5" />
+                </button>
+              )}
+
+              {onShowDetails && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onShowDetails(movie); }}
+                  className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-muted-foreground/50 hover:border-foreground transition"
+                  data-nav="card-action"
+                  title="Mais Informações"
+                >
+                  <Info className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
