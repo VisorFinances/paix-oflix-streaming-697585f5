@@ -167,7 +167,8 @@ export function useMovies() {
       const { data, error } = await supabase
         .from('conteudos')
         .select('*')
-        .order('titulo');
+        .order('titulo')
+        .limit(500);
 
       if (!error && data && data.length > 0) {
         const mapped = (data as ConteudoRow[]).map(conteudoToMovie);
