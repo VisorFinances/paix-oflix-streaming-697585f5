@@ -131,7 +131,7 @@ function conteudoToMovie(row: ConteudoRow): Movie {
   const genres = [...(row.genero || []), ...(row.categories || [])].filter(Boolean);
   const uniqueGenres = [...new Set(genres)];
   const isKids = !!row.kids || uniqueGenres.some(g => /kids|infantil|crian/i.test(g));
-  const tipo = row.tipo === 'series' ? 'series' : 'movie';
+  const tipo = (row.tipo === 'series' || row.tipo === 'serie') ? 'series' : 'movie';
 
   return {
     id: row.id,
@@ -167,9 +167,11 @@ export function useMovies() {
       const { data, error } = await supabase
         .from('conteudos')
         .select('*')
-        .order('titulo');
+        .order('titulo')
+        .limit(500);
 
       if (!error && data && data.length > 0) {
+        console.log(`[useMovies] Loaded ${data.length} items from database`);
         const mapped = (data as ConteudoRow[]).map(conteudoToMovie);
         setMovies(mapped);
         setLoading(false);
@@ -177,7 +179,7 @@ export function useMovies() {
       }
 
       // Fallback to GitHub JSON if Supabase is empty
-      console.warn('Supabase empty or error, falling back to GitHub JSON');
+      console.warn('[useMovies] Database empty or error, falling back to GitHub JSON', error?.message);
       const githubMovies = await fetchFromGitHub();
       setMovies(githubMovies);
     } catch (e) {
