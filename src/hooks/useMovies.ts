@@ -131,7 +131,7 @@ function conteudoToMovie(row: ConteudoRow): Movie {
   const genres = [...(row.genero || []), ...(row.categories || [])].filter(Boolean);
   const uniqueGenres = [...new Set(genres)];
   const isKids = !!row.kids || uniqueGenres.some(g => /kids|infantil|crian/i.test(g));
-  const tipo = row.tipo === 'series' ? 'series' : 'movie';
+  const tipo = (row.tipo === 'series' || row.tipo === 'serie') ? 'series' : 'movie';
 
   return {
     id: row.id,
