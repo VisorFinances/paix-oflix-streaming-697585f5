@@ -1,5 +1,6 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Movie, Channel } from '@/types';
+import { getSeasonalSections } from '@/lib/seasonalSections';
 import { useMovies, pickRandom, shuffleArray } from '@/hooks/useMovies';
 import { useChannels } from '@/hooks/useChannels';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -349,6 +350,24 @@ const Index = () => {
               {!loading && homeCategories && homeCategories.negritude.length > 0 && (
                 <MovieRow title="Negritude em destaque" movies={homeCategories.negritude} {...sharedRowProps} />
               )}
+
+              {/* Seasonal dynamic sections (position 2 = after Negritude) */}
+              {!loading && (() => {
+                const seasonal = getSeasonalSections(uniqueMovies);
+                // Cofre de Histórias goes after Negritude, others at position 2
+                const cofre = seasonal.filter(s => s.title.includes('Cofre'));
+                const others = seasonal.filter(s => !s.title.includes('Cofre'));
+                return (
+                  <>
+                    {cofre.map(s => (
+                      <MovieRow key={s.title} title={s.title} movies={s.movies} {...sharedRowProps} />
+                    ))}
+                    {others.map(s => (
+                      <MovieRow key={s.title} title={s.title} movies={s.movies} {...sharedRowProps} />
+                    ))}
+                  </>
+                );
+              })()}
 
               {/* 5. Indicados ao Oscar 25/26 */}
               {oscarNominees.length > 0 && (

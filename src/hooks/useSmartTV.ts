@@ -80,22 +80,33 @@ export function useSmartTV() {
         }
       }
 
-      // Within sidebar: up/down only
+      // Within sidebar: up/down with wrap-around
       if (isSidebar) {
         const idx = sidebarItems.indexOf(current);
         if (e.key === 'ArrowDown') {
           const next = idx < sidebarItems.length - 1 ? idx + 1 : 0;
           sidebarItems[next].focus();
+          sidebarItems[next].scrollIntoView({ block: 'center', behavior: 'smooth' });
         } else if (e.key === 'ArrowUp') {
           const prev = idx > 0 ? idx - 1 : sidebarItems.length - 1;
           sidebarItems[prev].focus();
+          sidebarItems[prev].scrollIntoView({ block: 'center', behavior: 'smooth' });
         }
         return;
       }
 
-      // Content spatial navigation — scroll focused element to center
+      // Content spatial navigation with wrap-around
       const direction = e.key.replace('Arrow', '').toLowerCase() as 'up' | 'down' | 'left' | 'right';
-      const target = findSpatialNearest(current, contentItems, direction);
+      let target = findSpatialNearest(current, contentItems, direction);
+      
+      // Wrap-around: if no target found, wrap to opposite end
+      if (!target && contentItems.length > 0) {
+        if (direction === 'right') target = contentItems[0];
+        else if (direction === 'left') target = contentItems[contentItems.length - 1];
+        else if (direction === 'down') target = contentItems[0];
+        else if (direction === 'up') target = contentItems[contentItems.length - 1];
+      }
+      
       if (target) {
         target.focus();
         target.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });

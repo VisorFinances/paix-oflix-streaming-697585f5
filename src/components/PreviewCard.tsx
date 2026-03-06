@@ -26,7 +26,7 @@ function getYouTubeEmbedUrl(url: string): string | null {
     else if (url.includes('youtube.com/embed/')) videoId = url.split('embed/')[1]?.split(/[?&#]/)[0] || '';
   } catch { return null; }
   if (!videoId) return null;
-  return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1`;
+  return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1`;
 }
 
 function isDirectVideo(url: string): boolean {
@@ -49,7 +49,7 @@ function setActiveTrailer(id: string | null) {
 const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, onShowDetails }: PreviewCardProps) => {
   const [state, setState] = useState<CardState>('IDLE');
   const [imgLoaded, setImgLoaded] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
   const [trailerReady, setTrailerReady] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -57,8 +57,7 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
   const cardId = useRef(movie.id);
 
   const youtubeUrl = movie.trailer ? getYouTubeEmbedUrl(movie.trailer) : null;
-  const directSrc = movie.trailer && isDirectVideo(movie.trailer) ? movie.trailer
-    : (movie.streamUrl && isDirectVideo(movie.streamUrl || '') ? movie.streamUrl : '');
+  const directSrc = movie.trailer && isDirectVideo(movie.trailer) ? movie.trailer : '';
   const hasTrailer = !!youtubeUrl || !!directSrc;
 
   const isFocused = state !== 'IDLE';
@@ -81,7 +80,7 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
     if (v) { v.pause(); v.removeAttribute('src'); v.load(); }
     setState('IDLE');
     setTrailerReady(false);
-    setIsMuted(true);
+    setIsMuted(false);
     if (activeTrailerId === cardId.current) setActiveTrailer(null);
   }, []);
 
@@ -223,7 +222,7 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
             transition: 'background 200ms ease',
           }}
         >
-          <div className="media-content relative z-[3] p-2 sm:p-2.5">
+          <div className="media-content relative z-[3] p-3 sm:p-4" style={{ padding: '18px' }}>
             {/* Mute button */}
             {showTrailer && trailerReady && directSrc && (
               <button
@@ -249,7 +248,7 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
 
                 {/* Synopsis — 3 lines */}
                 {movie.description && (
-                  <p className="text-[8px] sm:text-[9px] text-muted-foreground/80 mt-1 leading-snug line-clamp-3">
+                  <p className="text-[9px] sm:text-[11px] md:text-sm text-muted-foreground/80 mt-1 leading-[1.4] line-clamp-3">
                     {movie.description}
                   </p>
                 )}

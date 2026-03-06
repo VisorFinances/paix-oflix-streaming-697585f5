@@ -39,7 +39,7 @@ const MovieRow = ({ title, subtitle, movies, onPlay, onToggleFavorite, favorites
         >
           <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
-        <div ref={scrollRef} className="category-row px-3 sm:px-4 md:px-12 gap-2 sm:gap-3">
+        <div ref={scrollRef} className="category-row px-3 sm:px-4 md:px-12 gap-3 sm:gap-4 md:gap-6">
           {movies.map(movie => (
             <PreviewCard
               key={movie.id}
