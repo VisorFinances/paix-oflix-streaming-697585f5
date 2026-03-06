@@ -222,7 +222,7 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
             transition: 'background 200ms ease',
           }}
         >
-          <div className="media-content relative z-[3] p-2 sm:p-2.5">
+          <div className="media-content relative z-[3] p-3 sm:p-4" style={{ padding: '18px' }}>
             {/* Mute button */}
             {showTrailer && trailerReady && directSrc && (
               <button

@@ -351,6 +351,24 @@ const Index = () => {
                 <MovieRow title="Negritude em destaque" movies={homeCategories.negritude} {...sharedRowProps} />
               )}
 
+              {/* Seasonal dynamic sections (position 2 = after Negritude) */}
+              {!loading && (() => {
+                const seasonal = getSeasonalSections(uniqueMovies);
+                // Cofre de Histórias goes after Negritude, others at position 2
+                const cofre = seasonal.filter(s => s.title.includes('Cofre'));
+                const others = seasonal.filter(s => !s.title.includes('Cofre'));
+                return (
+                  <>
+                    {cofre.map(s => (
+                      <MovieRow key={s.title} title={s.title} movies={s.movies} {...sharedRowProps} />
+                    ))}
+                    {others.map(s => (
+                      <MovieRow key={s.title} title={s.title} movies={s.movies} {...sharedRowProps} />
+                    ))}
+                  </>
+                );
+              })()}
+
               {/* 5. Indicados ao Oscar 25/26 */}
               {oscarNominees.length > 0 && (
                 <StreamingRow title="Indicados ao Oscar 25/26" items={oscarNominees.slice(0, 5)} onPlay={handleStreamingPlay} onShowDetails={handleStreamingDetails} />
