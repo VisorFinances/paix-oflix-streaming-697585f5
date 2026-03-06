@@ -80,7 +80,7 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
     if (v) { v.pause(); v.removeAttribute('src'); v.load(); }
     setState('IDLE');
     setTrailerReady(false);
-    setIsMuted(true);
+    setIsMuted(false);
     if (activeTrailerId === cardId.current) setActiveTrailer(null);
   }, []);
 
