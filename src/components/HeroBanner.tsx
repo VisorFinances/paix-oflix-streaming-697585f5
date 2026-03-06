@@ -44,7 +44,7 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
           <img
             src={movie.backdrop || movie.image}
             alt={movie.title}
-            className={`w-full h-full object-cover transition-opacity duration-500 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+            className={`w-full h-full object-cover object-right-center transition-opacity duration-500 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
             onLoad={() => setImgLoaded(true)}
             fetchPriority="high"
           />

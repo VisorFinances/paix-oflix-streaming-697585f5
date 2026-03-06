@@ -22,7 +22,7 @@ const CategoryGrid = ({ title, movies, onPlay, onToggleFavorite, favorites, onBa
         </button>
         <h1 className="text-3xl md:text-4xl font-display tracking-wider">{title}</h1>
       </div>
-      <div className={`grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 ${isKids ? 'gap-3 sm:gap-4 md:gap-5' : 'gap-3 sm:gap-4'}`}>
+      <div className="media-grid">
         {movies.map(movie => (
           <PreviewCard
             key={movie.id}

@@ -248,7 +248,7 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
 
                 {/* Synopsis — 3 lines */}
                 {movie.description && (
-                  <p className="text-[8px] sm:text-[9px] text-muted-foreground/80 mt-1 leading-snug line-clamp-3">
+                  <p className="text-[9px] sm:text-[11px] md:text-sm text-muted-foreground/80 mt-1 leading-[1.4] line-clamp-3">
                     {movie.description}
                   </p>
                 )}
