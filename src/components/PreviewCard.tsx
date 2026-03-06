@@ -57,8 +57,7 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
   const cardId = useRef(movie.id);
 
   const youtubeUrl = movie.trailer ? getYouTubeEmbedUrl(movie.trailer) : null;
-  const directSrc = movie.trailer && isDirectVideo(movie.trailer) ? movie.trailer
-    : (movie.streamUrl && isDirectVideo(movie.streamUrl || '') ? movie.streamUrl : '');
+  const directSrc = movie.trailer && isDirectVideo(movie.trailer) ? movie.trailer : '';
   const hasTrailer = !!youtubeUrl || !!directSrc;
 
   const isFocused = state !== 'IDLE';
