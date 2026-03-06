@@ -1,5 +1,6 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Movie, Channel } from '@/types';
+import { getSeasonalSections } from '@/lib/seasonalSections';
 import { useMovies, pickRandom, shuffleArray } from '@/hooks/useMovies';
 import { useChannels } from '@/hooks/useChannels';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
