@@ -49,7 +49,7 @@ function setActiveTrailer(id: string | null) {
 const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, onShowDetails }: PreviewCardProps) => {
   const [state, setState] = useState<CardState>('IDLE');
   const [imgLoaded, setImgLoaded] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
   const [trailerReady, setTrailerReady] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
