@@ -107,7 +107,7 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
 
       {/* Poster */}
       <img
-        src={movie.image || placeholderImg}
+        src={posterSrc}
         alt={movie.title}
         className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
           imgLoaded ? (showTrailer ? 'opacity-0' : 'opacity-100') : 'opacity-0'
