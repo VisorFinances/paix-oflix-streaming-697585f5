@@ -90,6 +90,7 @@ body {
     position: relative;
     flex-shrink: 0;
     z-index: 1;
+    overflow: visible;
   }
 
   .pv-card-wrapper:hover,
