@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Movie } from '@/types';
 import { SeriesGroup, EpisodeData, findSeriesGroup } from '@/lib/seriesUtils';
-import { getArchiveFiles, getTrailerUrl } from '@/lib/tmdb';
+import { getArchiveFiles, getTrailerUrl, getTMDBSeasonEpisodes, TMDBEpisode } from '@/lib/tmdb';
 import { X, Play, Plus, Check, ChevronDown, Star, Calendar, Film } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
