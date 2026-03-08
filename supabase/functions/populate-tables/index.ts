@@ -22,7 +22,7 @@ interface RawItem {
   descricao?: string;
 }
 
-function mapItem(raw: RawItem, tableType: string): Record<string, unknown> {
+function mapItem(raw: RawItem): Record<string, unknown> {
   const mapped: Record<string, unknown> = {};
 
   if (raw.titulo) mapped.titulo = raw.titulo;
@@ -33,11 +33,13 @@ function mapItem(raw: RawItem, tableType: string): Record<string, unknown> {
   if (raw.poster) mapped.poster = raw.poster;
   if (raw.rating) mapped.rating = raw.rating;
 
-  // desc → descricao
-  mapped.descricao = raw.descricao || raw.desc || null;
+  // desc → descricao (only if value exists)
+  const descricao = raw.descricao || raw.desc;
+  if (descricao) mapped.descricao = descricao;
 
-  // year → ano
-  mapped.ano = raw.ano || raw.year || null;
+  // year → ano (only if value exists)
+  const ano = raw.ano || raw.year;
+  if (ano) mapped.ano = ano;
 
   // genero: keep as string for tables that have text column
   if (raw.genero) {
@@ -52,8 +54,6 @@ function mapItem(raw: RawItem, tableType: string): Record<string, unknown> {
       mapped.categories = [raw.categories];
     }
   }
-
-  // Don't pass 'type' field - tables have default 'tipo'
 
   return mapped;
 }
