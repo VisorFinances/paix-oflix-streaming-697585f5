@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Movie } from '@/types';
-import { Play, Info, Volume2, VolumeX } from 'lucide-react';
+import { Play, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface HeroBannerProps {
@@ -19,7 +19,7 @@ function getYouTubeEmbedUrl(url: string): string | null {
     else if (url.includes('youtube.com/embed/')) videoId = url.split('embed/')[1]?.split(/[?&#]/)[0] || '';
   } catch { return null; }
   if (!videoId) return null;
-  return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&start=30`;
+  return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&start=30&enablejsapi=1`;
 }
 
 function isDirectVideo(url: string): boolean {
@@ -27,18 +27,16 @@ function isDirectVideo(url: string): boolean {
   return /\.(mp4|m3u8|mpd|webm)(\?|$)/i.test(url) || (url.includes('archive.org') && !url.includes('youtube'));
 }
 
-const COVER_DURATION = 300;   // ms to show cover before trailer
-const TRAILER_DURATION = 700; // ms trailer plays
-const FADE_DURATION = 500;    // ms crossfade
-const STATIC_DURATION = 1500; // fallback for no trailer
-const TOTAL_WITH_TRAILER = COVER_DURATION + TRAILER_DURATION + FADE_DURATION;
+const COVER_DURATION = 3000;   // 3s to show cover before trailer
+const TRAILER_DURATION = 7000; // 7s trailer plays
+const FADE_DURATION = 800;     // crossfade
+const STATIC_DURATION = 5000;  // fallback for no trailer
 
 const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
   const heroMovies = useMemo(() => {
     const withTrailer = movies.filter(m => m.image && m.description && m.trailer);
     const withoutTrailer = movies.filter(m => m.image && m.description && !m.trailer);
-    // Prioritize movies with trailers, mix in some without
-    return [...withTrailer.slice(0, 6), ...withoutTrailer.slice(0, 2)].slice(0, 8);
+    return [...withTrailer.slice(0, 8), ...withoutTrailer.slice(0, 2)].slice(0, 10);
   }, [movies]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -47,8 +45,8 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [canPlayTrailer, setCanPlayTrailer] = useState(true);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Check connection quality
   useEffect(() => {
     const conn = (navigator as any).connection;
     if (conn?.saveData || conn?.effectiveType === '2g' || conn?.effectiveType === 'slow-2g') {
@@ -85,7 +83,6 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
         }
       }, duration);
     } else if (phase === 'trailer') {
-      // Start trailer playback
       if (directSrc && videoRef.current) {
         videoRef.current.currentTime = 0;
         videoRef.current.play().catch(() => {});
@@ -125,7 +122,7 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
           <img
             src={movie.backdrop || movie.image}
             alt={movie.title}
-            className={`absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-300 ${
+            className={`absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-500 ${
               imgLoaded ? (showTrailer ? 'opacity-0' : 'opacity-100') : 'opacity-0'
             }`}
             onLoad={() => setImgLoaded(true)}
@@ -137,7 +134,7 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
             <video
               ref={videoRef}
               src={directSrc}
-              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${showTrailer ? 'opacity-100' : 'opacity-0'}`}
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${showTrailer ? 'opacity-100' : 'opacity-0'}`}
               muted
               playsInline
               preload="none"
@@ -147,6 +144,7 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
           {/* YouTube trailer */}
           {youtubeUrl && !directSrc && showTrailer && (
             <iframe
+              ref={iframeRef}
               src={youtubeUrl}
               className="absolute inset-0 w-full h-full"
               allow="autoplay; encrypted-media"
@@ -213,6 +211,24 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
           ))}
         </div>
       )}
+
+      {/* Progress bar for current slide */}
+      <div className="absolute bottom-0 left-0 right-0 z-10 h-[2px] bg-foreground/10">
+        <motion.div
+          key={`progress-${currentIndex}-${phase}`}
+          className="h-full bg-primary"
+          initial={{ width: '0%' }}
+          animate={{ width: '100%' }}
+          transition={{
+            duration: phase === 'cover'
+              ? (hasTrailer ? COVER_DURATION : STATIC_DURATION) / 1000
+              : phase === 'trailer'
+              ? TRAILER_DURATION / 1000
+              : FADE_DURATION / 1000,
+            ease: 'linear',
+          }}
+        />
+      </div>
     </div>
   );
 };
