@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Movie } from '@/types';
-import { supabase } from '@/integrations/supabase/client';
+import { supabaseExternal } from '@/lib/supabaseExternal';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -17,7 +17,7 @@ export function pickRandom<T>(arr: T[], count: number): T[] {
   return shuffleArray(arr).slice(0, count);
 }
 
-// ─── GitHub JSON fallback (when Supabase is empty) ─────────────────────────
+// ─── GitHub JSON fallback (when external DB is empty) ─────────────────────────
 
 const BASE = 'https://raw.githubusercontent.com/VisorFinances/paix-oflix-streaming-697585f5/refs/heads/main/data';
 
@@ -107,7 +107,7 @@ async function fetchFromGitHub(): Promise<Movie[]> {
   return all;
 }
 
-// ─── Supabase → Movie mapper ─────────────────────────────────────────────────
+// ─── External Supabase → Movie mapper ────────────────────────────────────────
 
 interface ConteudoRow {
   id: string;
@@ -127,11 +127,15 @@ interface ConteudoRow {
   kids: boolean | null;
 }
 
-function conteudoToMovie(row: ConteudoRow): Movie {
+function conteudoToMovie(row: ConteudoRow, sourceOverride?: string): Movie {
   const genres = [...(row.genero || []), ...(row.categories || [])].filter(Boolean);
   const uniqueGenres = [...new Set(genres)];
   const isKids = !!row.kids || uniqueGenres.some(g => /kids|infantil|crian/i.test(g));
   const tipo = (row.tipo === 'series' || row.tipo === 'serie') ? 'series' : 'movie';
+
+  const source = sourceOverride || (isKids
+    ? (tipo === 'series' ? 'serieskids' : 'filmeskids')
+    : (tipo === 'series' ? 'series' : 'cinema'));
 
   return {
     id: row.id,
@@ -148,11 +152,68 @@ function conteudoToMovie(row: ConteudoRow): Movie {
       : (row.url || ''),
     trailer: row.trailer || '',
     kids: isKids,
-    source: isKids
-      ? (tipo === 'series' ? 'serieskids' : 'filmeskids')
-      : (tipo === 'series' ? 'series' : 'cinema'),
+    source: source as Movie['source'],
     tmdbId: row.tmdb_id || undefined,
   };
+}
+
+// ─── Fetch from external Supabase (tries separate tables, then conteudos) ────
+
+async function fetchFromExternalSupabase(): Promise<Movie[]> {
+  const all: Movie[] = [];
+
+  // Try separate tables first: filmes, series, kids_filmes, kids_series
+  const tableConfigs = [
+    { table: 'filmes', source: 'cinema' },
+    { table: 'series', source: 'series' },
+    { table: 'kids_filmes', source: 'filmeskids' },
+    { table: 'kids_series', source: 'serieskids' },
+  ];
+
+  let foundSeparateTables = false;
+
+  const results = await Promise.all(
+    tableConfigs.map(async ({ table, source }) => {
+      try {
+        const { data, error } = await supabaseExternal
+          .from(table)
+          .select('*')
+          .order('titulo')
+          .limit(1000);
+        if (!error && data && data.length > 0) {
+          return { source, data: data as ConteudoRow[] };
+        }
+      } catch { /* table doesn't exist */ }
+      return null;
+    })
+  );
+
+  for (const result of results) {
+    if (result) {
+      foundSeparateTables = true;
+      result.data.forEach(row => all.push(conteudoToMovie(row, result.source)));
+    }
+  }
+
+  if (foundSeparateTables && all.length > 0) {
+    console.log(`[useMovies] Loaded ${all.length} items from external DB (separate tables)`);
+    return all;
+  }
+
+  // Fallback: try single 'conteudos' table
+  const { data, error } = await supabaseExternal
+    .from('conteudos')
+    .select('*')
+    .order('titulo')
+    .limit(1000);
+
+  if (!error && data && data.length > 0) {
+    console.log(`[useMovies] Loaded ${data.length} items from external DB (conteudos table)`);
+    return (data as ConteudoRow[]).map(row => conteudoToMovie(row));
+  }
+
+  console.warn('[useMovies] External DB empty or error', error?.message);
+  return [];
 }
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
@@ -163,28 +224,20 @@ export function useMovies() {
 
   const fetchData = useCallback(async () => {
     try {
-      // Try Supabase first
-      const { data, error } = await supabase
-        .from('conteudos')
-        .select('*')
-        .order('titulo')
-        .limit(500);
-
-      if (!error && data && data.length > 0) {
-        console.log(`[useMovies] Loaded ${data.length} items from database`);
-        const mapped = (data as ConteudoRow[]).map(conteudoToMovie);
-        setMovies(mapped);
+      // Primary: external Supabase (Tv_Premium)
+      const externalMovies = await fetchFromExternalSupabase();
+      if (externalMovies.length > 0) {
+        setMovies(externalMovies);
         setLoading(false);
         return;
       }
 
-      // Fallback to GitHub JSON if Supabase is empty
-      console.warn('[useMovies] Database empty or error, falling back to GitHub JSON', error?.message);
+      // Fallback to GitHub JSON
+      console.warn('[useMovies] External DB empty, falling back to GitHub JSON');
       const githubMovies = await fetchFromGitHub();
       setMovies(githubMovies);
     } catch (e) {
       console.error('Error fetching movies:', e);
-      // Final fallback
       const githubMovies = await fetchFromGitHub();
       setMovies(githubMovies);
     } finally {
@@ -194,7 +247,6 @@ export function useMovies() {
 
   useEffect(() => {
     fetchData();
-    // Re-fetch every 15 minutes
     const id = setInterval(fetchData, 15 * 60 * 1000);
     return () => clearInterval(id);
   }, [fetchData]);
