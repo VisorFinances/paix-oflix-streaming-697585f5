@@ -22,9 +22,9 @@ const Top10Row = ({ title, items, onPlay, onShowDetails }: Top10RowProps) => {
 
   if (items.length === 0) return null;
 
-  const CARD_W = isMobile ? 110 : 220;
-  const NUM_W = isMobile ? 36 : 72;
-  const FONT_SIZE = isMobile ? '3.5rem' : '7rem';
+  const CARD_W = isMobile ? 100 : 200;
+  const NUM_W = isMobile ? 40 : 80;
+  const FONT_SIZE = isMobile ? '4rem' : '7.5rem';
   const STROKE = isMobile ? '1.5px' : '3px';
 
   return (
@@ -43,63 +43,72 @@ const Top10Row = ({ title, items, onPlay, onShowDetails }: Top10RowProps) => {
         <div
           ref={scrollRef}
           className="flex overflow-x-auto scrollbar-hide px-3 sm:px-4 md:px-12 pb-4"
-          style={{ gap: isMobile ? '4px' : '8px' }}
+          style={{ gap: isMobile ? '2px' : '6px' }}
         >
-          {items.slice(0, 10).map((item, index) => (
-            <div
-              key={`${item.tmdbTitle}-${index}`}
-              className="relative flex-shrink-0 flex items-end cursor-pointer"
-              style={{ width: CARD_W + NUM_W, minWidth: CARD_W + NUM_W }}
-              onClick={() => item.localMovie ? onShowDetails?.(item) : undefined}
-              data-nav="card"
-            >
-              {/* Big rank number */}
-              <div
-                className="absolute bottom-0 left-0 z-0 flex items-end justify-center select-none pointer-events-none"
-                style={{ width: NUM_W, height: '100%' }}
-              >
-                <span
-                  className="font-black leading-none"
-                  style={{
-                    fontSize: index === 9 ? (isMobile ? '3.5rem' : '5.5rem') : FONT_SIZE,
-                    color: 'transparent',
-                    WebkitTextStroke: `${STROKE} hsl(var(--foreground) / 0.7)`,
-                    textShadow: '0 2px 20px hsl(var(--background) / 0.8)',
-                    lineHeight: 0.85,
-                  }}
-                >
-                  {index + 1}
-                </span>
-              </div>
+          {items.slice(0, 10).map((item, index) => {
+            // Number "10" needs wider space
+            const isDoubleDigit = index >= 9;
+            const numWidth = isDoubleDigit ? (isMobile ? 56 : 100) : NUM_W;
+            const fontSize = isDoubleDigit
+              ? (isMobile ? '3.2rem' : '6.5rem')
+              : FONT_SIZE;
 
-              {/* Card */}
-              <div className="relative z-10 overflow-hidden rounded-md" style={{ marginLeft: NUM_W, width: CARD_W }}>
-                <div className="relative aspect-[2/3]">
-                  <img
-                    src={item.localMovie?.image || item.posterUrl}
-                    alt={item.tmdbTitle}
-                    className="absolute inset-0 w-full h-full object-cover"
-                    loading="lazy"
-                    draggable={false}
-                  />
-                  {/* Em Breve badge */}
-                  {item.badge === 'em_breve' && (
-                    <div className="absolute top-1 left-1 sm:top-2 sm:left-2 z-20 flex items-center gap-1 bg-muted/90 backdrop-blur-sm text-foreground text-[8px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-sm">
-                      <Clock className="w-2.5 h-2.5" />
-                      Em Breve
+            return (
+              <div
+                key={`${item.tmdbTitle}-${index}`}
+                className="relative flex-shrink-0 flex items-end cursor-pointer"
+                style={{ width: CARD_W + numWidth, minWidth: CARD_W + numWidth }}
+                onClick={() => item.localMovie ? onShowDetails?.(item) : undefined}
+                data-nav="card"
+              >
+                {/* Big rank number */}
+                <div
+                  className="absolute bottom-0 left-0 z-0 flex items-end justify-center select-none pointer-events-none"
+                  style={{ width: numWidth, height: '100%' }}
+                >
+                  <span
+                    className="font-black leading-none"
+                    style={{
+                      fontSize,
+                      color: 'transparent',
+                      WebkitTextStroke: `${STROKE} hsl(var(--foreground) / 0.7)`,
+                      textShadow: '0 2px 20px hsl(var(--background) / 0.8)',
+                      lineHeight: 0.85,
+                    }}
+                  >
+                    {index + 1}
+                  </span>
+                </div>
+
+                {/* Card */}
+                <div className="relative z-10 overflow-hidden rounded-md" style={{ marginLeft: numWidth, width: CARD_W }}>
+                  <div className="relative aspect-[2/3]">
+                    <img
+                      src={item.localMovie?.image || item.posterUrl}
+                      alt={item.tmdbTitle}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      loading="lazy"
+                      draggable={false}
+                    />
+                    {/* Em Breve badge */}
+                    {item.badge === 'em_breve' && (
+                      <div className="absolute top-1 left-1 sm:top-2 sm:left-2 z-20 flex items-center gap-1 bg-muted/90 backdrop-blur-sm text-foreground text-[8px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-sm">
+                        <Clock className="w-2.5 h-2.5" />
+                        Em Breve
+                      </div>
+                    )}
+                    {/* Bottom gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 right-0 p-1.5 z-[4]">
+                      <h3 className="text-[9px] sm:text-xs font-semibold text-foreground leading-tight line-clamp-2">
+                        {item.tmdbTitle}
+                      </h3>
                     </div>
-                  )}
-                  {/* Bottom gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
-                  <div className="absolute bottom-0 left-0 right-0 p-1.5 z-[4]">
-                    <h3 className="text-[9px] sm:text-xs font-semibold text-foreground leading-tight line-clamp-2">
-                      {item.tmdbTitle}
-                    </h3>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <button
