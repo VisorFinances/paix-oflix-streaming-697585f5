@@ -80,11 +80,17 @@ const VideoPlayer = ({ url, autoPlay = true, onTimeUpdate, className = '' }: Vid
 
       if (url.includes('.m3u8') && Hls.isSupported()) {
         const hls = new Hls({
-          maxBufferLength: 30,
-          maxMaxBufferLength: 60,
+          maxBufferLength: 60,
+          maxMaxBufferLength: 120,
           startLevel: -1, // auto quality
           capLevelToPlayerSize: true,
           enableWorker: true,
+          fragLoadingTimeOut: 20000,
+          manifestLoadingTimeOut: 15000,
+          levelLoadingTimeOut: 15000,
+          fragLoadingMaxRetry: 6,
+          levelLoadingMaxRetry: 4,
+          manifestLoadingMaxRetry: 4,
         });
         hlsRef.current = hls;
         hls.loadSource(url);
