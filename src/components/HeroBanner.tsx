@@ -101,7 +101,7 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
   const showTrailer = phase === 'trailer' && hasTrailer;
 
   return (
-    <div className="relative w-full h-[40vh] sm:h-[55vh] md:h-[65vh] lg:h-[75vh] overflow-hidden">
+    <div className="relative w-full h-[28vh] sm:h-[55vh] md:h-[65vh] lg:h-[75vh] overflow-hidden">
       <AnimatePresence mode="wait">
         <motion.div
           key={movie.id}
