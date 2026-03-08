@@ -83,9 +83,19 @@ Deno.serve(async (req) => {
     if (source_url && !data) {
       const res = await fetch(source_url);
       let text = await res.text();
-      // Fix trailing commas in JSON (common in hand-edited files)
-      text = text.replace(/,\s*([\]}])/g, '$1');
-      data = JSON.parse(text);
+      // Fix common JSON issues: trailing commas, stray text
+      text = text.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+      // Remove any non-JSON text that may appear in values (corrupted entries)
+      try {
+        data = JSON.parse(text);
+      } catch {
+        // More aggressive cleanup: use eval-like parsing for trailing commas
+        try {
+          data = (new Function('return ' + text))();
+        } catch (e2) {
+          throw new Error('JSON parse failed: ' + (e2 as Error).message);
+        }
+      }
     }
 
     if (!data || !Array.isArray(data)) {
