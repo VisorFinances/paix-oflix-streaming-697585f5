@@ -90,6 +90,7 @@ body {
     position: relative;
     flex-shrink: 0;
     z-index: 1;
+    overflow: visible;
   }
 
   .pv-card-wrapper:hover,
@@ -184,7 +185,9 @@ body {
 
   /* ─── Category Row (horizontal scroll) ─── */
   .category-row {
-    @apply flex overflow-x-auto pb-8;
+    @apply flex pb-8;
+    overflow-x: auto;
+    overflow-y: visible;
     -ms-overflow-style: none;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;

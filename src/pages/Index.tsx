@@ -457,12 +457,6 @@ const Index = () => {
               onShowDetails={setDetailMovie}
             />
             <div className="py-6">
-              <div className="px-4 md:px-12 mb-4 flex items-center gap-4">
-                <button onClick={() => setActiveView('home')} className="text-muted-foreground hover:text-foreground transition" data-nav="back">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
-                </button>
-                <h1 className="text-3xl md:text-4xl font-display tracking-wider">Cinema</h1>
-              </div>
               {loading && <><SkeletonRow /><SkeletonRow /></>}
               {genreCategories('cinema').map(([genre, genreMovies]) => (
                 <MovieRow key={genre} title={genre} movies={genreMovies} {...sharedRowProps} />
@@ -481,12 +475,6 @@ const Index = () => {
               onShowDetails={setDetailMovie}
             />
             <div className="py-6">
-              <div className="px-4 md:px-12 mb-4 flex items-center gap-4">
-                <button onClick={() => setActiveView('home')} className="text-muted-foreground hover:text-foreground transition" data-nav="back">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
-                </button>
-                <h1 className="text-3xl md:text-4xl font-display tracking-wider">Séries</h1>
-              </div>
               {loading && <><SkeletonRow /><SkeletonRow /></>}
               {(() => {
                 const cats = genreCategories('series');
@@ -517,12 +505,6 @@ const Index = () => {
               onShowDetails={setDetailMovie}
             />
             <div className="py-6">
-              <div className="px-4 md:px-12 mb-4 flex items-center gap-4">
-                <button onClick={() => setActiveView('home')} className="text-muted-foreground hover:text-foreground transition" data-nav="back">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
-                </button>
-                <h1 className="text-3xl md:text-4xl font-display tracking-wider">Kids</h1>
-              </div>
               {loading && <><SkeletonRow /><SkeletonRow /></>}
               {kidsFilmes.length > 0 && (
                 <MovieRow title="Filmes" movies={kidsFilmes} {...sharedRowProps} />
