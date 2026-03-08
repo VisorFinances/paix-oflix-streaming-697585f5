@@ -83,17 +83,32 @@ Deno.serve(async (req) => {
     if (source_url && !data) {
       const res = await fetch(source_url);
       let text = await res.text();
-      // Fix common JSON issues: trailing commas, stray text
-      text = text.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
-      // Remove any non-JSON text that may appear in values (corrupted entries)
+      // Aggressive JSON cleanup for hand-edited files
+      // 1. Remove BOM
+      text = text.replace(/^\uFEFF/, '');
+      // 2. Remove inline comments
+      text = text.replace(/\/\/[^\n]*/g, '');
+      // 3. Remove stray text after quoted values (corrupted entries)
+      text = text.replace(/"([^"]*)",([^"\n{}\[\]]+)\n/g, '"$1"\n');
+      // 4. Remove trailing commas before } or ]
+      text = text.replace(/,(\s*[}\]])/g, '$1');
+      // 5. Try parsing
       try {
         data = JSON.parse(text);
-      } catch {
-        // More aggressive cleanup: use eval-like parsing for trailing commas
-        try {
-          data = (new Function('return ' + text))();
-        } catch (e2) {
-          throw new Error('JSON parse failed: ' + (e2 as Error).message);
+      } catch (e) {
+        // If still fails, try line-by-line object extraction
+        const objects: Record<string, unknown>[] = [];
+        const matches = text.matchAll(/\{[^{}]*\}/g);
+        for (const m of matches) {
+          try {
+            let objText = m[0].replace(/,(\s*})/g, '$1');
+            objects.push(JSON.parse(objText));
+          } catch { /* skip malformed */ }
+        }
+        if (objects.length > 0) {
+          data = objects;
+        } else {
+          throw new Error('JSON parse failed: ' + (e as Error).message);
         }
       }
     }
