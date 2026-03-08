@@ -97,8 +97,10 @@ Deno.serve(async (req) => {
       .filter((item: RawItem) => item.titulo)
       .map((item: RawItem) => mapItem(item));
 
-    // Clear existing data
-    await supabase.from(table).delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    // Clear existing data (unless append mode)
+    if (!append) {
+      await supabase.from(table).delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    }
 
     // Insert in batches of 50
     const batchSize = 50;
