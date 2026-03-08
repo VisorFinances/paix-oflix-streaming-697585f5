@@ -91,17 +91,22 @@ body {
     aspect-ratio: 2/3;
     width: 100%;
     box-shadow: var(--card-shadow);
-    transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+    transition: transform 300ms ease, box-shadow 300ms ease, border-color 200ms ease;
     border: 2px solid transparent;
     will-change: transform;
   }
 
   .pv-card:hover,
   .pv-card:focus-visible {
-    transform: scale(1.05) translateZ(0);
-    z-index: 20;
+    transform: scale(1.12) translateZ(0);
+    z-index: 30;
     border-color: hsl(var(--foreground) / 0.15);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+  }
+
+  /* Expanded state with trailer */
+  .pv-card--expanded {
+    z-index: 30;
   }
 
   /* TV focus ring */
