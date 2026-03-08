@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useDeferredValue } from 'react';
 import { Movie, Channel } from '@/types';
 import PreviewCard from './PreviewCard';
 import { Search as SearchIcon, ArrowLeft } from 'lucide-react';
@@ -16,21 +16,24 @@ interface SearchViewProps {
 
 const SearchView = ({ movies, channels, onPlay, onToggleFavorite, favorites, onBack, onPlayChannel, onShowDetails }: SearchViewProps) => {
   const [query, setQuery] = useState('');
+  const deferredQuery = useDeferredValue(query);
 
   const filteredMovies = useMemo(() => {
-    if (!query.trim()) return [];
-    const q = query.toLowerCase();
+    if (!deferredQuery.trim()) return [];
+    const q = deferredQuery.toLowerCase();
     return movies.filter(m =>
       m.title.toLowerCase().includes(q) ||
-      m.genre.some(g => g.toLowerCase().includes(q))
-    );
-  }, [query, movies]);
+      m.genre.some(g => g.toLowerCase().includes(q)) ||
+      (m.description && m.description.toLowerCase().includes(q)) ||
+      (m.year && String(m.year).includes(q))
+    ).slice(0, 60);
+  }, [deferredQuery, movies]);
 
   const filteredChannels = useMemo(() => {
-    if (!query.trim()) return [];
-    const q = query.toLowerCase();
+    if (!deferredQuery.trim()) return [];
+    const q = deferredQuery.toLowerCase();
     return channels.filter(c => c.name.toLowerCase().includes(q));
-  }, [query, channels]);
+  }, [deferredQuery, channels]);
 
   return (
     <div className="min-h-screen px-4 md:px-12 py-8 animate-fade-in">
@@ -42,7 +45,7 @@ const SearchView = ({ movies, channels, onPlay, onToggleFavorite, favorites, onB
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Buscar filmes, séries, canais..."
+            placeholder="Buscar filmes, séries, canais, gêneros..."
             value={query}
             onChange={e => setQuery(e.target.value)}
             autoFocus
@@ -53,7 +56,7 @@ const SearchView = ({ movies, channels, onPlay, onToggleFavorite, favorites, onB
 
       {filteredMovies.length > 0 && (
         <>
-          <h3 className="text-xl font-display tracking-wider mb-4">Filmes & Séries</h3>
+          <h3 className="text-xl font-display tracking-wider mb-4">Filmes & Séries ({filteredMovies.length})</h3>
           <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4 mb-8">
             {filteredMovies.map(m => (
               <PreviewCard
@@ -87,11 +90,11 @@ const SearchView = ({ movies, channels, onPlay, onToggleFavorite, favorites, onB
         </>
       )}
 
-      {query && filteredMovies.length === 0 && filteredChannels.length === 0 && (
-        <p className="text-center text-muted-foreground mt-20">Nenhum resultado para "{query}"</p>
+      {deferredQuery && filteredMovies.length === 0 && filteredChannels.length === 0 && (
+        <p className="text-center text-muted-foreground mt-20">Nenhum resultado para "{deferredQuery}"</p>
       )}
 
-      {!query && (
+      {!deferredQuery && (
         <p className="text-center text-muted-foreground mt-20">Digite para buscar conteúdo</p>
       )}
     </div>

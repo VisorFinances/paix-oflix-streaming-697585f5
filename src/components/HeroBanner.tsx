@@ -225,11 +225,11 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
         </div>
       )}
 
-      {/* Progress bar */}
+      {/* Thin progress line (subtle, no color) */}
       <div className="absolute bottom-0 left-0 right-0 z-10 h-[2px] bg-foreground/10">
         <motion.div
           key={`progress-${currentIndex}-${phase}`}
-          className="h-full bg-primary"
+          className="h-full bg-foreground/30"
           initial={{ width: '0%' }}
           animate={{ width: '100%' }}
           transition={{

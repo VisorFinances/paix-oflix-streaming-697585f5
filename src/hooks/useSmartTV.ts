@@ -29,7 +29,7 @@ export function useSmartTV() {
     document.addEventListener('touchstart', showCursor);
     cursorTimer = setTimeout(hideCursor, 3000);
 
-    // D-Pad / Arrow key navigation with spatial awareness
+    // D-Pad / Arrow key navigation with row-aware spatial logic
     const handleDPad = (e: KeyboardEvent) => {
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
         e.preventDefault();
@@ -95,21 +95,76 @@ export function useSmartTV() {
         return;
       }
 
-      // Content spatial navigation with wrap-around
+      // Content: Row-aware navigation
       const direction = e.key.replace('Arrow', '').toLowerCase() as 'up' | 'down' | 'left' | 'right';
-      let target = findSpatialNearest(current, contentItems, direction);
       
-      // Wrap-around: if no target found, wrap to opposite end
-      if (!target && contentItems.length > 0) {
-        if (direction === 'right') target = contentItems[0];
-        else if (direction === 'left') target = contentItems[contentItems.length - 1];
-        else if (direction === 'down') target = contentItems[0];
-        else if (direction === 'up') target = contentItems[contentItems.length - 1];
-      }
-      
-      if (target) {
-        target.focus();
-        target.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+      if (direction === 'left' || direction === 'right') {
+        // Horizontal: find items in the same row (similar Y position)
+        const currentRect = current?.getBoundingClientRect();
+        if (!currentRect) return;
+        const cy = currentRect.top + currentRect.height / 2;
+        
+        // Items in the same row (within 40px vertically)
+        const rowItems = contentItems.filter(el => {
+          const r = el.getBoundingClientRect();
+          return Math.abs((r.top + r.height / 2) - cy) < 40;
+        }).sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left);
+        
+        const idx = rowItems.indexOf(current);
+        if (idx === -1) {
+          // Not found in row, use spatial
+          const target = findSpatialNearest(current, contentItems, direction);
+          if (target) { target.focus(); target.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' }); }
+          return;
+        }
+        
+        let nextIdx: number;
+        if (direction === 'right') {
+          nextIdx = idx < rowItems.length - 1 ? idx + 1 : 0; // wrap
+        } else {
+          nextIdx = idx > 0 ? idx - 1 : rowItems.length - 1; // wrap
+        }
+        rowItems[nextIdx].focus();
+        rowItems[nextIdx].scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+      } else {
+        // Vertical: find the nearest item in the target direction
+        // Group items by rows
+        const rows = groupByRows(contentItems);
+        const currentRect = current?.getBoundingClientRect();
+        if (!currentRect) return;
+        const cy = currentRect.top + currentRect.height / 2;
+        const cx = currentRect.left + currentRect.width / 2;
+        
+        // Find which row the current element is in
+        let currentRowIdx = -1;
+        for (let i = 0; i < rows.length; i++) {
+          if (rows[i].includes(current)) { currentRowIdx = i; break; }
+        }
+        
+        let targetRowIdx: number;
+        if (direction === 'down') {
+          targetRowIdx = currentRowIdx < rows.length - 1 ? currentRowIdx + 1 : 0; // wrap
+        } else {
+          targetRowIdx = currentRowIdx > 0 ? currentRowIdx - 1 : rows.length - 1; // wrap
+        }
+        
+        // In the target row, find the element closest horizontally
+        const targetRow = rows[targetRowIdx];
+        if (!targetRow || targetRow.length === 0) return;
+        
+        let bestEl = targetRow[0];
+        let bestDist = Infinity;
+        for (const el of targetRow) {
+          const r = el.getBoundingClientRect();
+          const dist = Math.abs((r.left + r.width / 2) - cx);
+          if (dist < bestDist) {
+            bestDist = dist;
+            bestEl = el;
+          }
+        }
+        
+        bestEl.focus();
+        bestEl.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
       }
     };
 
@@ -125,6 +180,39 @@ export function useSmartTV() {
       document.body.style.cursor = '';
     };
   }, []);
+}
+
+/** Group elements into rows based on vertical position */
+function groupByRows(elements: HTMLElement[]): HTMLElement[][] {
+  if (elements.length === 0) return [];
+  
+  const sorted = [...elements].sort((a, b) => {
+    const ar = a.getBoundingClientRect();
+    const br = b.getBoundingClientRect();
+    return (ar.top + ar.height / 2) - (br.top + br.height / 2);
+  });
+  
+  const rows: HTMLElement[][] = [];
+  let currentRow: HTMLElement[] = [sorted[0]];
+  let currentY = sorted[0].getBoundingClientRect().top + sorted[0].getBoundingClientRect().height / 2;
+  
+  for (let i = 1; i < sorted.length; i++) {
+    const r = sorted[i].getBoundingClientRect();
+    const y = r.top + r.height / 2;
+    if (Math.abs(y - currentY) < 40) {
+      currentRow.push(sorted[i]);
+    } else {
+      // Sort the completed row by X
+      currentRow.sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left);
+      rows.push(currentRow);
+      currentRow = [sorted[i]];
+      currentY = y;
+    }
+  }
+  currentRow.sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left);
+  rows.push(currentRow);
+  
+  return rows;
 }
 
 function findSpatialNearest(
