@@ -103,6 +103,7 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
         data-nav="card"
         tabIndex={0}
         onClick={handleClick}
+        style={{ overflow: 'hidden' }}
       >
         {/* Skeleton */}
         {!imgLoaded && <div className="absolute inset-0 bg-muted animate-pulse rounded-lg" />}
@@ -126,7 +127,7 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
           }}
         />
 
-        {/* YouTube trailer — nothing overlaps it */}
+        {/* YouTube trailer — fills entire card */}
         {ytUrl && (
           <iframe
             src={ytUrl}
@@ -138,14 +139,14 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
 
         {/* NEW badge — only when no trailer */}
         {isNew && !showTrailer && (
-          <div className="absolute top-2 left-2 z-[5] px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-accent-blue text-white">
+          <div className="absolute top-2 left-2 z-[5] px-1.5 py-0.5 rounded text-[10px] sm:text-xs font-bold uppercase tracking-wider bg-accent-blue text-white">
             Novo
           </div>
         )}
 
         {/* Rating pill — only when no trailer */}
         {movie.rating && !showTrailer && (
-          <div className="absolute top-2 right-2 z-[5] flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-semibold bg-black/60 text-foreground backdrop-blur-sm">
+          <div className="absolute top-2 right-2 z-[5] flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] sm:text-xs font-semibold bg-black/60 text-foreground backdrop-blur-sm">
             ★ {movie.rating}
           </div>
         )}
@@ -161,12 +162,12 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
         )}
 
         {/* Title overlay on poster (when NOT expanded) */}
-        {!expanded && (
+        {!expanded && !showTrailer && (
           <div className="absolute bottom-0 left-0 right-0 z-[4] p-2.5 sm:p-3">
-            <h3 className="text-[11px] sm:text-[13px] font-semibold text-foreground leading-tight line-clamp-2">
+            <h3 className="text-xs sm:text-sm font-semibold text-foreground leading-tight line-clamp-2">
               {movie.title}
             </h3>
-            <p className="text-[9px] sm:text-[11px] text-muted-foreground mt-0.5 truncate">
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 truncate">
               {movie.year} {movie.genre[0] && `· ${movie.genre[0]}`}
             </p>
           </div>
@@ -188,37 +189,37 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
       {/* Metadata BELOW the card — appears on hover/expand */}
       {expanded && (
         <div className="pv-card-meta">
-          <h3 className="text-[11px] sm:text-[13px] font-semibold text-foreground leading-tight line-clamp-2">
+          <h3 className="text-xs sm:text-sm font-semibold text-foreground leading-tight line-clamp-2">
             {movie.title}
           </h3>
-          <p className="text-[9px] sm:text-[11px] text-muted-foreground mt-0.5 truncate">
+          <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 truncate">
             {movie.year} {movie.genre[0] && `· ${movie.genre[0]}`}
           </p>
           {movie.description && (
-            <p className="text-[8px] sm:text-[10px] text-foreground/70 mt-1 line-clamp-2">
+            <p className="text-[9px] sm:text-[11px] text-foreground/70 mt-1.5 line-clamp-3">
               {movie.description}
             </p>
           )}
-          <div className="flex items-center gap-1.5 mt-1.5">
+          <div className="flex items-center gap-2 mt-2">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 movie.type === 'series' && onShowDetails ? onShowDetails(movie) : onPlay(movie);
               }}
-              className="flex items-center gap-1 px-2.5 py-1 rounded bg-foreground text-background text-[9px] sm:text-[11px] font-semibold hover:opacity-80 transition"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-foreground text-background text-[10px] sm:text-xs font-semibold hover:opacity-80 transition"
               data-nav="card-action"
             >
-              <Play className="w-3 h-3" fill="currentColor" /> Assistir
+              <Play className="w-3.5 h-3.5" fill="currentColor" /> Assistir
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onToggleFavorite(movie.id); }}
-              className="flex items-center justify-center w-6 h-6 rounded-full border border-muted-foreground/40 hover:border-foreground bg-black/40 backdrop-blur-sm transition"
+              className="flex items-center justify-center w-7 h-7 rounded-full border border-muted-foreground/40 hover:border-foreground bg-black/40 backdrop-blur-sm transition"
               data-nav="card-action"
               title={isFavorite ? 'Remover da lista' : 'Minha Lista'}
             >
               {isFavorite
-                ? <Check className="w-3 h-3 text-primary" />
-                : <Plus className="w-3 h-3" />}
+                ? <Check className="w-3.5 h-3.5 text-primary" />
+                : <Plus className="w-3.5 h-3.5" />}
             </button>
           </div>
         </div>
