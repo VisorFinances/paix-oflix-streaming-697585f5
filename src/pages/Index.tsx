@@ -150,23 +150,26 @@ const Index = () => {
     if (item.localMovie) setDetailMovie(item.localMovie);
   };
 
-  // Top 10 Brazil - use uniqueMovies with valid posters
+  // Top 10 Brazil - use all movies (not just unique) with valid posters
   const computeTop10 = useCallback(() => {
-    if (uniqueMovies.length === 0) return;
-    const withPoster = uniqueMovies.filter(m =>
+    if (movies.length === 0) return;
+    const candidates = movies.filter(m =>
       m.image && m.image.length > 10 && !m.kids &&
-      !m.image.includes('placeholder') && m.description
+      !m.image.includes('placeholder') &&
+      m.source !== 'filmeskids' && m.source !== 'serieskids'
     );
-    if (withPoster.length === 0) {
-      // Fallback: any movie with an image
-      const fallback = uniqueMovies.filter(m => m.image && m.image.length > 5 && !m.kids);
+    if (candidates.length === 0) {
+      const fallback = movies.filter(m => m.image && !m.kids);
       if (fallback.length > 0) {
         setTop10Movies(shuffleArray(fallback).slice(0, 10));
       }
       return;
     }
-    setTop10Movies(shuffleArray(withPoster).slice(0, 10));
-  }, [uniqueMovies]);
+    // Prefer movies with descriptions and ratings
+    const withDesc = candidates.filter(m => m.description);
+    const pool = withDesc.length >= 10 ? withDesc : candidates;
+    setTop10Movies(shuffleArray(pool).slice(0, 10));
+  }, [movies]);
 
   useEffect(() => {
     computeTop10();
