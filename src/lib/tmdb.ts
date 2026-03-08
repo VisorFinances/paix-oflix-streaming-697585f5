@@ -60,6 +60,60 @@ export async function getTrailerUrl(title: string, mediaType: 'movie' | 'tv' = '
   return trailer ? `https://www.youtube.com/embed/${trailer.key}?autoplay=1` : null;
 }
 
+export interface TMDBEpisode {
+  episode_number: number;
+  name: string;
+  overview: string;
+  still_path: string | null;
+  runtime: number | null;
+}
+
+export async function getTMDBSeasonEpisodes(
+  title: string,
+  seasonNumber: number
+): Promise<TMDBEpisode[]> {
+  try {
+    const tmdbId = await searchTMDB(title);
+    if (!tmdbId) return [];
+
+    // First try pt-BR
+    let res = await fetch(
+      `${TMDB_BASE}/tv/${tmdbId}/season/${seasonNumber}?api_key=${TMDB_API_KEY}&language=pt-BR`
+    );
+    if (!res.ok) return [];
+    let data = await res.json();
+    let episodes: TMDBEpisode[] = data.episodes || [];
+
+    // If no episodes or names are generic, try en-US
+    if (episodes.length === 0 || episodes.every(e => !e.name || e.name.startsWith('Episode'))) {
+      res = await fetch(
+        `${TMDB_BASE}/tv/${tmdbId}/season/${seasonNumber}?api_key=${TMDB_API_KEY}&language=en-US`
+      );
+      if (res.ok) {
+        data = await res.json();
+        const enEpisodes: TMDBEpisode[] = data.episodes || [];
+        if (enEpisodes.length > 0) {
+          // Merge: prefer pt-BR name if available, else use en-US
+          episodes = enEpisodes.map((en, i) => {
+            const pt = episodes[i];
+            return {
+              ...en,
+              name: (pt?.name && !pt.name.startsWith('Episode') && !pt.name.startsWith('Episódio'))
+                ? pt.name
+                : en.name,
+              overview: pt?.overview || en.overview,
+            };
+          });
+        }
+      }
+    }
+
+    return episodes;
+  } catch {
+    return [];
+  }
+}
+
 export interface ArchiveFile {
   name: string;
   size?: string;
@@ -75,7 +129,6 @@ export async function getArchiveFiles(identifier: string): Promise<ArchiveFile[]
     const files: ArchiveFile[] = data.files || [];
     return files.filter(f => {
       const name = f.name.toLowerCase();
-      // Only video files, exclude .ia.mp4 and other non-video artifacts
       const isVideo = name.endsWith('.mp4') || name.endsWith('.mkv') || name.endsWith('.avi');
       const isIAFile = name.endsWith('.ia.mp4') || name.includes('.ia.');
       return isVideo && !isIAFile;

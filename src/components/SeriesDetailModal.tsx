@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Movie } from '@/types';
 import { SeriesGroup, EpisodeData, findSeriesGroup } from '@/lib/seriesUtils';
-import { getArchiveFiles, getTrailerUrl } from '@/lib/tmdb';
+import { getArchiveFiles, getTrailerUrl, getTMDBSeasonEpisodes, TMDBEpisode } from '@/lib/tmdb';
 import { X, Play, Plus, Check, ChevronDown, Star, Calendar, Film } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -45,7 +45,7 @@ const SeriesDetailModal = ({
   const seasons = seriesGroup?.seasons || [];
   const currentSeason = seasons[selectedSeason];
 
-  // Fetch episodes from Archive.org
+  // Fetch episodes from Archive.org + TMDB names
   const fetchEpisodes = useCallback(async () => {
     if (!currentSeason?.archiveId) {
       setEpisodes([]);
@@ -53,7 +53,14 @@ const SeriesDetailModal = ({
     }
     setLoadingEpisodes(true);
     try {
-      const files = await getArchiveFiles(currentSeason.archiveId);
+      // Fetch archive files and TMDB episode names in parallel
+      const seriesTitle = seriesGroup?.title || movie.title;
+      const seasonNum = currentSeason.number || 1;
+
+      const [files, tmdbEpisodes] = await Promise.all([
+        getArchiveFiles(currentSeason.archiveId),
+        getTMDBSeasonEpisodes(seriesTitle, seasonNum),
+      ]);
       
       // Deduplicate episodes by cleaned name
       const seen = new Set<string>();
@@ -64,19 +71,33 @@ const SeriesDetailModal = ({
         return true;
       });
 
-      const eps: EpisodeData[] = uniqueFiles.map((f, i) => ({
-        number: i + 1,
-        title: cleanEpisodeTitle(f.name) || `Episódio ${i + 1}`,
-        fileName: f.name,
-        streamUrl: `https://archive.org/download/${currentSeason.archiveId}/${encodeURIComponent(f.name)}`,
-        duration: f.length ? formatDuration(parseFloat(f.length)) : undefined,
-      }));
+      const eps: EpisodeData[] = uniqueFiles.map((f, i) => {
+        const tmdbEp: TMDBEpisode | undefined = tmdbEpisodes[i];
+        const tmdbName = tmdbEp?.name && !tmdbEp.name.startsWith('Episode') && !tmdbEp.name.startsWith('Episódio')
+          ? tmdbEp.name
+          : null;
+
+        return {
+          number: i + 1,
+          title: tmdbName || cleanEpisodeTitle(f.name) || `Episódio ${i + 1}`,
+          fileName: f.name,
+          streamUrl: `https://archive.org/download/${currentSeason.archiveId}/${encodeURIComponent(f.name)}`,
+          duration: tmdbEp?.runtime
+            ? formatDuration(tmdbEp.runtime * 60)
+            : f.length
+            ? formatDuration(parseFloat(f.length))
+            : undefined,
+          thumbnail: tmdbEp?.still_path
+            ? `https://image.tmdb.org/t/p/w300${tmdbEp.still_path}`
+            : undefined,
+        };
+      });
       setEpisodes(eps);
     } catch {
       setEpisodes([]);
     }
     setLoadingEpisodes(false);
-  }, [currentSeason?.archiveId]);
+  }, [currentSeason?.archiveId, currentSeason?.number, seriesGroup?.title, movie.title]);
 
   useEffect(() => {
     fetchEpisodes();
@@ -296,7 +317,7 @@ const SeriesDetailModal = ({
                           <div className="relative flex-shrink-0 w-[140px] sm:w-[200px] md:w-[240px] rounded-md overflow-hidden bg-muted">
                             <div className="aspect-video">
                               <img
-                                src={displayPoster}
+                                src={ep.thumbnail || displayPoster}
                                 alt={ep.title}
                                 className="w-full h-full object-cover"
                               />
