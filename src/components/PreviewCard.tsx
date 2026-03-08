@@ -97,9 +97,9 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
       onFocus={startPreview}
       onBlur={stopPreview}
     >
-      {/* Main card (poster + trailer area only) */}
+      {/* Main card */}
       <div
-        className={`pv-card group ${expanded ? 'pv-card--expanded' : ''}`}
+        className={`pv-card group ${expanded && !isMobile ? 'pv-card--expanded' : ''}`}
         data-nav="card"
         tabIndex={0}
         onClick={handleClick}
@@ -127,8 +127,8 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
           }}
         />
 
-        {/* YouTube trailer — fills entire card */}
-        {ytUrl && (
+        {/* YouTube trailer — desktop only */}
+        {ytUrl && !isMobile && (
           <iframe
             src={ytUrl}
             className="absolute inset-0 w-full h-full z-[3]"
@@ -137,21 +137,21 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
           />
         )}
 
-        {/* NEW badge — only when no trailer */}
+        {/* NEW badge */}
         {isNew && !showTrailer && (
-          <div className="absolute top-2 left-2 z-[5] px-1.5 py-0.5 rounded text-[10px] sm:text-xs font-bold uppercase tracking-wider bg-accent-blue text-white">
+          <div className="absolute top-1 left-1 sm:top-2 sm:left-2 z-[5] px-1 py-0.5 sm:px-1.5 rounded text-[8px] sm:text-xs font-bold uppercase tracking-wider bg-accent-blue text-white">
             Novo
           </div>
         )}
 
-        {/* Rating pill — only when no trailer */}
+        {/* Rating pill */}
         {movie.rating && !showTrailer && (
-          <div className="absolute top-2 right-2 z-[5] flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] sm:text-xs font-semibold bg-black/60 text-foreground backdrop-blur-sm">
+          <div className="absolute top-1 right-1 sm:top-2 sm:right-2 z-[5] flex items-center gap-0.5 px-1 py-0.5 sm:px-1.5 rounded text-[8px] sm:text-xs font-semibold bg-black/60 text-foreground backdrop-blur-sm">
             ★ {movie.rating}
           </div>
         )}
 
-        {/* Bottom gradient — only when no trailer */}
+        {/* Bottom gradient */}
         {!showTrailer && (
           <div
             className="absolute inset-0 z-[2] pointer-events-none"
@@ -161,13 +161,13 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
           />
         )}
 
-        {/* Title overlay on poster (when NOT expanded) */}
-        {!expanded && !showTrailer && (
-          <div className="absolute bottom-0 left-0 right-0 z-[4] p-2.5 sm:p-3">
-            <h3 className="text-xs sm:text-sm font-semibold text-foreground leading-tight line-clamp-2">
+        {/* Title overlay — always visible on mobile, visible when NOT expanded on desktop */}
+        {(isMobile || (!expanded && !showTrailer)) && (
+          <div className="absolute bottom-0 left-0 right-0 z-[4] p-1.5 sm:p-2.5 md:p-3">
+            <h3 className="text-[10px] sm:text-xs md:text-sm font-semibold text-foreground leading-tight line-clamp-2">
               {movie.title}
             </h3>
-            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 truncate">
+            <p className="text-[8px] sm:text-[10px] md:text-xs text-muted-foreground mt-0.5 truncate">
               {movie.year} {movie.genre[0] && `· ${movie.genre[0]}`}
             </p>
           </div>
@@ -176,7 +176,7 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
         {/* Progress bar */}
         {progress !== undefined && progress > 0 && (
           <div className="absolute bottom-0 left-0 right-0 z-[5]">
-            <div className="h-[3px] bg-muted/50">
+            <div className="h-[2px] sm:h-[3px] bg-muted/50">
               <div
                 className="h-full transition-all bg-primary"
                 style={{ width: `${progress}%` }}
@@ -186,8 +186,8 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
         )}
       </div>
 
-      {/* Metadata BELOW the card — appears on hover/expand */}
-      {expanded && (
+      {/* Metadata BELOW the card — desktop/TV only */}
+      {expanded && !isMobile && (
         <div className="pv-card-meta">
           <h3 className="text-xs sm:text-sm font-semibold text-foreground leading-tight line-clamp-2">
             {movie.title}

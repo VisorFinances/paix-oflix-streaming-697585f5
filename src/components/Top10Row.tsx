@@ -25,10 +25,10 @@ const Top10Row = ({ title, movies, onPlay, onToggleFavorite, favorites, onShowDe
 
   if (movies.length === 0) return null;
 
-  const CARD_W = isMobile ? 140 : 220;
-  const NUM_W = isMobile ? 48 : 72;
-  const FONT_SIZE = isMobile ? '4.5rem' : '7rem';
-  const STROKE = isMobile ? '2px' : '3px';
+  const CARD_W = isMobile ? 110 : 220;
+  const NUM_W = isMobile ? 36 : 72;
+  const FONT_SIZE = isMobile ? '3.5rem' : '7rem';
+  const STROKE = isMobile ? '1.5px' : '3px';
 
   return (
     <section className="mb-6 sm:mb-8 animate-fade-in">

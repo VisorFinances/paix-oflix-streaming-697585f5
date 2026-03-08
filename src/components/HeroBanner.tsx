@@ -154,7 +154,7 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
 
       {/* Content — FULLY LEFT, hidden during trailer */}
       {!showTrailer && (
-        <div className="absolute bottom-0 left-0 z-10 flex flex-col justify-end h-full px-4 md:px-12 max-w-2xl pb-12 sm:pb-16">
+        <div className="absolute bottom-0 left-0 z-10 flex flex-col justify-end h-full px-3 sm:px-4 md:px-12 max-w-2xl pb-8 sm:pb-12 md:pb-16">
           {/* Bottom gradient for readability */}
           <div className="absolute inset-x-0 bottom-0 h-[60%] z-[-1]" style={{
             background: 'linear-gradient(to top, hsl(var(--background)) 0%, hsl(var(--background) / 0.8) 40%, transparent 100%)',
@@ -168,29 +168,29 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.5 }}
             >
-              <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-display tracking-wider mb-1.5 sm:mb-2 drop-shadow-lg">
+              <h1 className="text-lg sm:text-3xl md:text-5xl lg:text-6xl font-display tracking-wider mb-1 sm:mb-2 drop-shadow-lg line-clamp-1 sm:line-clamp-none">
                 {movie.title}
               </h1>
-              <p className="text-[10px] sm:text-xs md:text-sm text-secondary-foreground mb-1 drop-shadow">
-                {movie.year} · {movie.genre.join(', ')} {movie.rating ? `· ★ ${movie.rating}` : ''}
+              <p className="text-[9px] sm:text-xs md:text-sm text-secondary-foreground mb-0.5 sm:mb-1 drop-shadow">
+                {movie.year} · {movie.genre.slice(0, 2).join(', ')} {movie.rating ? `· ★ ${movie.rating}` : ''}
               </p>
-              <p className="text-[10px] sm:text-xs md:text-sm text-foreground/80 mb-3 sm:mb-5 drop-shadow max-w-lg line-clamp-2 sm:line-clamp-3">
+              <p className="hidden sm:block text-[10px] sm:text-xs md:text-sm text-foreground/80 mb-3 sm:mb-5 drop-shadow max-w-lg line-clamp-2 sm:line-clamp-3">
                 {movie.description}
               </p>
-              <div className="flex gap-2 sm:gap-3">
+              <div className="flex gap-1.5 sm:gap-3">
                 <button
                   onClick={() => onPlay(movie)}
-                  className="flex items-center gap-1.5 px-3 sm:px-5 py-1.5 sm:py-2 rounded-md bg-foreground text-background font-semibold hover:opacity-80 transition text-[10px] sm:text-xs md:text-sm"
+                  className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-5 py-1 sm:py-2 rounded-md bg-foreground text-background font-semibold hover:opacity-80 transition text-[9px] sm:text-xs md:text-sm"
                   data-nav="hero"
                 >
-                  <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="currentColor" /> Assistir
+                  <Play className="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" /> Assistir
                 </button>
                 <button
                   onClick={() => onShowDetails?.(movie)}
-                  className="flex items-center gap-1.5 px-3 sm:px-5 py-1.5 sm:py-2 rounded-md bg-muted/60 text-foreground font-semibold hover:bg-muted transition text-[10px] sm:text-xs md:text-sm backdrop-blur-sm"
+                  className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-5 py-1 sm:py-2 rounded-md bg-muted/60 text-foreground font-semibold hover:bg-muted transition text-[9px] sm:text-xs md:text-sm backdrop-blur-sm"
                   data-nav="hero"
                 >
-                  <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Mais Info
+                  <Info className="w-3 h-3 sm:w-4 sm:h-4" /> Info
                 </button>
               </div>
             </motion.div>

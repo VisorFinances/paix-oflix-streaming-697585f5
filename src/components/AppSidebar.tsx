@@ -22,21 +22,21 @@ const AppSidebar = ({ activeView, onNavigate }: AppSidebarProps) => {
   return (
     <>
       {/* Mobile bottom nav — ALL 7 menus */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-sidebar border-t border-sidebar-border sm:hidden">
-        <div className="flex justify-around py-1.5 px-1 overflow-x-auto scrollbar-hide">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-sidebar/95 backdrop-blur-md border-t border-sidebar-border sm:hidden safe-area-bottom">
+        <div className="flex justify-around py-1 px-0.5">
           {navItems.map(item => {
             const isActive = activeView === item.id;
             return (
               <button
                 key={item.id}
                 onClick={() => onNavigate(item.id)}
-                className={`flex flex-col items-center gap-0.5 px-1.5 py-1 transition-colors min-w-0 flex-shrink-0 ${
+                className={`flex flex-col items-center gap-0.5 px-1 py-1.5 transition-colors min-w-0 flex-shrink-0 rounded-lg active:scale-95 ${
                   isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground'
                 }`}
                 data-nav="sidebar"
               >
-                <item.icon className="w-4 h-4" />
-                <span className="text-[8px] leading-tight whitespace-nowrap">{item.label}</span>
+                <item.icon className={`w-5 h-5 ${isActive ? 'drop-shadow-sm' : ''}`} />
+                <span className="text-[9px] leading-tight whitespace-nowrap font-medium">{item.label}</span>
               </button>
             );
           })}

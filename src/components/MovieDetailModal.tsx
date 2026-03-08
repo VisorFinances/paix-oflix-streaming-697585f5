@@ -70,10 +70,10 @@ const MovieDetailModal = ({ movie, onClose, onPlay, onToggleFavorite, isFavorite
           </div>
 
           <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               <button
                 onClick={() => onPlay(movie)}
-                className="flex items-center gap-2 px-8 py-3 rounded-md bg-foreground text-background font-semibold hover:opacity-80 transition text-sm"
+                className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-8 py-2 sm:py-3 rounded-md bg-foreground text-background font-semibold hover:opacity-80 transition text-xs sm:text-sm"
               >
                 <Play className="w-5 h-5" /> Assistir Agora
               </button>

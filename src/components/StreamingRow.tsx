@@ -36,7 +36,7 @@ const StreamingRow = ({ title, items, onPlay, onShowDetails }: StreamingRowProps
           {items.slice(0, 5).map((item, idx) => (
             <div
               key={`${item.tmdbTitle}-${idx}`}
-              className="movie-card group flex-shrink-0 w-[140px] sm:w-[160px] md:w-[200px] lg:w-[220px]"
+              className="movie-card group flex-shrink-0 w-[110px] sm:w-[160px] md:w-[200px] lg:w-[220px]"
               data-nav="card"
             >
               <div className="relative aspect-[2/3] rounded-md overflow-hidden shadow-lg shadow-black/40">

@@ -54,7 +54,7 @@ const SearchView = ({ movies, channels, onPlay, onToggleFavorite, favorites, onB
       {filteredMovies.length > 0 && (
         <>
           <h3 className="text-xl font-display tracking-wider mb-4">Filmes & Séries</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
+          <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4 mb-8">
             {filteredMovies.map(m => (
               <PreviewCard
                 key={m.id}

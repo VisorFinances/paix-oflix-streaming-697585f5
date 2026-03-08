@@ -108,7 +108,7 @@ const SeriesDetailModal = ({
         <div className="fixed inset-0 bg-black/85 backdrop-blur-sm" onClick={onClose} />
 
         <motion.div
-          className="relative w-full max-w-4xl bg-card rounded-xl shadow-2xl overflow-hidden"
+          className="relative w-full max-w-4xl bg-card rounded-none sm:rounded-xl shadow-2xl overflow-hidden"
           initial={{ scale: 0.9, opacity: 0, y: 40 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.9, opacity: 0, y: 40 }}
