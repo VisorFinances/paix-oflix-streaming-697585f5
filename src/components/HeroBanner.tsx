@@ -9,7 +9,6 @@ interface HeroBannerProps {
   onShowDetails?: (movie: Movie) => void;
 }
 
-/* ── YouTube helpers ── */
 function getYouTubeEmbedUrl(url: string): string | null {
   if (!url) return null;
   let videoId = '';
@@ -45,7 +44,6 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [canPlayTrailer, setCanPlayTrailer] = useState(true);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     const conn = (navigator as any).connection;
@@ -55,11 +53,12 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
   }, []);
 
   const movie = heroMovies[currentIndex];
-  const hasTrailer = canPlayTrailer && movie?.trailer;
+  const hasTrailer = canPlayTrailer && !!movie?.trailer;
   const youtubeUrl = hasTrailer ? getYouTubeEmbedUrl(movie.trailer!) : null;
   const directSrc = hasTrailer && isDirectVideo(movie.trailer!) ? movie.trailer! : '';
 
   const advanceToNext = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
     setPhase('fade');
     timerRef.current = setTimeout(() => {
       setCurrentIndex(prev => (prev + 1) % heroMovies.length);
@@ -68,10 +67,10 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
     }, FADE_DURATION);
   }, [heroMovies.length]);
 
-  // Phase state machine — infinite loop
   useEffect(() => {
-    if (heroMovies.length <= 1 && !hasTrailer) return;
-    if (!movie) return;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (heroMovies.length === 0 || !movie) return;
+    if (heroMovies.length === 1 && !hasTrailer) return;
 
     if (phase === 'cover') {
       const duration = hasTrailer ? COVER_DURATION : STATIC_DURATION;
@@ -95,12 +94,7 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [phase, movie, hasTrailer, directSrc, advanceToNext, heroMovies.length]);
-
-  // Reset phase when index changes
-  useEffect(() => {
-    setPhase('cover');
-  }, [currentIndex]);
+  }, [phase, currentIndex, hasTrailer, directSrc, advanceToNext, heroMovies.length, movie]);
 
   if (!movie) return null;
 
@@ -117,7 +111,6 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
           exit={{ opacity: 0 }}
           transition={{ duration: FADE_DURATION / 1000 }}
         >
-          {/* Poster */}
           {!imgLoaded && <div className="absolute inset-0 bg-muted animate-pulse" />}
           <img
             src={movie.backdrop || movie.image}
@@ -129,7 +122,6 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
             fetchPriority="high"
           />
 
-          {/* Direct video trailer — FULL SIZE */}
           {directSrc && (
             <video
               ref={videoRef}
@@ -141,10 +133,8 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
             />
           )}
 
-          {/* YouTube trailer — FULL SIZE */}
           {youtubeUrl && !directSrc && showTrailer && (
             <iframe
-              ref={iframeRef}
               src={youtubeUrl}
               className="absolute inset-0 w-full h-full z-[2]"
               allow="autoplay; encrypted-media"
@@ -154,68 +144,67 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
         </motion.div>
       </AnimatePresence>
 
-      {/* Gradients */}
-      <div className="absolute inset-0 z-[1]" style={{ background: 'var(--hero-gradient)' }} />
-      <div className="absolute inset-0 z-[1] bg-gradient-to-r from-background/90 via-background/40 to-transparent" />
+      {/* Gradients — hide during trailer so nothing covers it */}
+      {!showTrailer && (
+        <>
+          <div className="absolute inset-0 z-[1]" style={{ background: 'var(--hero-gradient)' }} />
+          <div className="absolute inset-0 z-[1] bg-gradient-to-r from-background/90 via-background/40 to-transparent" />
+        </>
+      )}
 
-      {/* Content — left aligned, moves down during trailer */}
-      <div className={`relative z-10 flex flex-col justify-end h-full px-4 md:px-12 max-w-2xl transition-all duration-500 ${
-        showTrailer ? 'pb-4 sm:pb-6' : 'pb-12 sm:pb-16'
-      }`}>
-        {/* Dark backdrop behind text when trailer is playing */}
-        {showTrailer && (
-          <div className="absolute inset-x-0 bottom-0 h-[40%] z-[-1]" style={{
-            background: 'linear-gradient(to top, hsl(var(--background)) 0%, hsl(var(--background) / 0.85) 40%, transparent 100%)',
+      {/* Content — FULLY LEFT, hidden during trailer */}
+      {!showTrailer && (
+        <div className="absolute bottom-0 left-0 z-10 flex flex-col justify-end h-full px-4 md:px-12 max-w-2xl pb-12 sm:pb-16">
+          {/* Bottom gradient for readability */}
+          <div className="absolute inset-x-0 bottom-0 h-[60%] z-[-1]" style={{
+            background: 'linear-gradient(to top, hsl(var(--background)) 0%, hsl(var(--background) / 0.8) 40%, transparent 100%)',
           }} />
-        )}
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={movie.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.5 }}
-            className="text-left"
-          >
-            <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-display tracking-wider mb-1.5 sm:mb-2 drop-shadow-lg text-left">
-              {movie.title}
-            </h1>
-            <p className="text-[10px] sm:text-xs md:text-sm text-secondary-foreground mb-1 drop-shadow text-left">
-              {movie.year} · {movie.genre.join(', ')} {movie.rating ? `· ★ ${movie.rating}` : ''}
-            </p>
-            <p className={`text-[10px] sm:text-xs md:text-sm text-foreground/80 mb-3 sm:mb-5 drop-shadow max-w-lg text-left ${
-              showTrailer ? 'line-clamp-1' : 'line-clamp-2 sm:line-clamp-3'
-            }`}>
-              {movie.description}
-            </p>
-            <div className="flex gap-2 sm:gap-3 justify-start">
-              <button
-                onClick={() => onPlay(movie)}
-                className="flex items-center gap-1.5 px-3 sm:px-5 py-1.5 sm:py-2 rounded-md bg-foreground text-background font-semibold hover:opacity-80 transition text-[10px] sm:text-xs md:text-sm"
-                data-nav="hero"
-              >
-                <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="currentColor" /> Assistir
-              </button>
-              <button
-                onClick={() => onShowDetails?.(movie)}
-                className="flex items-center gap-1.5 px-3 sm:px-5 py-1.5 sm:py-2 rounded-md bg-muted/60 text-foreground font-semibold hover:bg-muted transition text-[10px] sm:text-xs md:text-sm backdrop-blur-sm"
-                data-nav="hero"
-              >
-                <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Mais Info
-              </button>
-            </div>
-          </motion.div>
-        </AnimatePresence>
-      </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={movie.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.5 }}
+            >
+              <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-display tracking-wider mb-1.5 sm:mb-2 drop-shadow-lg">
+                {movie.title}
+              </h1>
+              <p className="text-[10px] sm:text-xs md:text-sm text-secondary-foreground mb-1 drop-shadow">
+                {movie.year} · {movie.genre.join(', ')} {movie.rating ? `· ★ ${movie.rating}` : ''}
+              </p>
+              <p className="text-[10px] sm:text-xs md:text-sm text-foreground/80 mb-3 sm:mb-5 drop-shadow max-w-lg line-clamp-2 sm:line-clamp-3">
+                {movie.description}
+              </p>
+              <div className="flex gap-2 sm:gap-3">
+                <button
+                  onClick={() => onPlay(movie)}
+                  className="flex items-center gap-1.5 px-3 sm:px-5 py-1.5 sm:py-2 rounded-md bg-foreground text-background font-semibold hover:opacity-80 transition text-[10px] sm:text-xs md:text-sm"
+                  data-nav="hero"
+                >
+                  <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="currentColor" /> Assistir
+                </button>
+                <button
+                  onClick={() => onShowDetails?.(movie)}
+                  className="flex items-center gap-1.5 px-3 sm:px-5 py-1.5 sm:py-2 rounded-md bg-muted/60 text-foreground font-semibold hover:bg-muted transition text-[10px] sm:text-xs md:text-sm backdrop-blur-sm"
+                  data-nav="hero"
+                >
+                  <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Mais Info
+                </button>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      )}
 
       {/* Dots */}
-      {heroMovies.length > 1 && (
+      {heroMovies.length > 1 && !showTrailer && (
         <div className="absolute bottom-3 sm:bottom-5 right-4 sm:right-8 z-10 flex gap-1.5">
           {heroMovies.map((_, i) => (
             <button
               key={i}
-              onClick={() => { setCurrentIndex(i); setImgLoaded(false); }}
+              onClick={() => { setCurrentIndex(i); setImgLoaded(false); setPhase('cover'); }}
               className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-all ${
                 i === currentIndex ? 'bg-foreground scale-125' : 'bg-foreground/30'
               }`}

@@ -85,6 +85,12 @@ body {
 
 @layer components {
 
+  /* ─── Card Wrapper ─── */
+  .pv-card-wrapper {
+    position: relative;
+    flex-shrink: 0;
+  }
+
   /* ─── Prime Video-style Card ─── */
   .pv-card {
     @apply relative rounded-lg overflow-hidden cursor-pointer;
@@ -98,26 +104,36 @@ body {
 
   .pv-card:hover,
   .pv-card:focus-visible {
-    transform: scale(1.25) translateZ(0);
+    transform: scale(1.08) translateZ(0);
     z-index: 30;
     border-color: hsl(var(--foreground) / 0.2);
     box-shadow: 0 16px 60px rgba(0, 0, 0, 0.9);
   }
 
-  /* Expanded state with trailer */
   .pv-card--expanded {
     z-index: 40;
-    transform: scale(1.35) translateZ(0);
+    transform: scale(1.08) translateZ(0);
     box-shadow: 0 20px 80px rgba(0, 0, 0, 0.95);
   }
 
-  /* TV focus ring */
+  /* Metadata panel below card */
+  .pv-card-meta {
+    @apply rounded-b-lg p-2 sm:p-2.5;
+    background: hsl(var(--card));
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8);
+    animation: fadeIn 0.2s ease-out;
+  }
+
   .pv-card:focus-visible {
     border-color: hsl(45 100% 55%);
     outline: none;
   }
 
-  /* Disable scale on mobile/TV for performance */
   @media (hover: none) {
     .pv-card:hover {
       transform: none;
