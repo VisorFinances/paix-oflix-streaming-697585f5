@@ -62,8 +62,8 @@ const MovieDetailModal = ({ movie, onClose, onPlay, onToggleFavorite, isFavorite
               <X className="w-5 h-5" />
             </button>
 
-            <div className="absolute bottom-6 left-6 right-6">
-              <h2 className="text-3xl md:text-5xl font-display tracking-wider text-foreground">
+            <div className="absolute bottom-3 left-3 right-3 sm:bottom-6 sm:left-6 sm:right-6">
+              <h2 className="text-xl sm:text-3xl md:text-5xl font-display tracking-wider text-foreground">
                 {movie.title}
               </h2>
             </div>
