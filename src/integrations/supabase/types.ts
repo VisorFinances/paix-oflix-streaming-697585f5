@@ -125,6 +125,8 @@ export type Database = {
       kids_filmes: {
         Row: {
           ano: string | null
+          backdrop: string | null
+          categories: string[] | null
           created_at: string | null
           descricao: string | null
           genero: string | null
@@ -139,6 +141,8 @@ export type Database = {
         }
         Insert: {
           ano?: string | null
+          backdrop?: string | null
+          categories?: string[] | null
           created_at?: string | null
           descricao?: string | null
           genero?: string | null
@@ -153,6 +157,8 @@ export type Database = {
         }
         Update: {
           ano?: string | null
+          backdrop?: string | null
+          categories?: string[] | null
           created_at?: string | null
           descricao?: string | null
           genero?: string | null
