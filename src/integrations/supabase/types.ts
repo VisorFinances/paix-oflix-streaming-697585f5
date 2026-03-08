@@ -74,6 +74,123 @@ export type Database = {
         }
         Relationships: []
       }
+      filmes: {
+        Row: {
+          ano: string | null
+          categories: string[] | null
+          created_at: string | null
+          descricao: string | null
+          genero: string | null
+          id: string
+          poster: string | null
+          rating: string | null
+          tipo: string
+          titulo: string
+          tmdb_id: string | null
+          trailer: string | null
+          url: string | null
+        }
+        Insert: {
+          ano?: string | null
+          categories?: string[] | null
+          created_at?: string | null
+          descricao?: string | null
+          genero?: string | null
+          id?: string
+          poster?: string | null
+          rating?: string | null
+          tipo?: string
+          titulo: string
+          tmdb_id?: string | null
+          trailer?: string | null
+          url?: string | null
+        }
+        Update: {
+          ano?: string | null
+          categories?: string[] | null
+          created_at?: string | null
+          descricao?: string | null
+          genero?: string | null
+          id?: string
+          poster?: string | null
+          rating?: string | null
+          tipo?: string
+          titulo?: string
+          tmdb_id?: string | null
+          trailer?: string | null
+          url?: string | null
+        }
+        Relationships: []
+      }
+      kids_series: {
+        Row: {
+          ano: string | null
+          created_at: string | null
+          descricao: string | null
+          genero: string | null
+          id: string
+          identificador_archive: string | null
+          poster: string | null
+          rating: string | null
+          tipo: string
+          titulo: string
+        }
+        Insert: {
+          ano?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          genero?: string | null
+          id?: string
+          identificador_archive?: string | null
+          poster?: string | null
+          rating?: string | null
+          tipo?: string
+          titulo: string
+        }
+        Update: {
+          ano?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          genero?: string | null
+          id?: string
+          identificador_archive?: string | null
+          poster?: string | null
+          rating?: string | null
+          tipo?: string
+          titulo?: string
+        }
+        Relationships: []
+      }
+      series: {
+        Row: {
+          created_at: string | null
+          id: string
+          identificador_archive: string | null
+          tipo: string
+          titulo: string
+          tmdb_id: string | null
+          trailer: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          identificador_archive?: string | null
+          tipo?: string
+          titulo: string
+          tmdb_id?: string | null
+          trailer?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          identificador_archive?: string | null
+          tipo?: string
+          titulo?: string
+          tmdb_id?: string | null
+          trailer?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
