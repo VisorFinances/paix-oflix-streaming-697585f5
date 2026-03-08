@@ -143,7 +143,9 @@ const VideoPlayer = ({ url, autoPlay = true, onTimeUpdate, className = '' }: Vid
 
       video.addEventListener('error', () => {
         clearTimeout(loadTimeout.current);
-        if (retryCount.current < 3) {
+        const mediaError = video.error;
+        console.warn('[Player] Video error:', mediaError?.code, mediaError?.message);
+        if (retryCount.current < 5) {
           retryCount.current++;
           setTimeout(loadSource, 2000);
         } else {
