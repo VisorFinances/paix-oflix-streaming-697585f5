@@ -66,24 +66,31 @@ const VideoPlayer = ({ url, autoPlay = true, onTimeUpdate, className = '' }: Vid
     const loadSource = () => {
       cleanup();
 
-      // 5s loading timeout
+      // 8s loading timeout with more retries
       loadTimeout.current = setTimeout(() => {
-        if (video.readyState < 2 && retryCount.current < 3) {
+        if (video.readyState < 2 && retryCount.current < 5) {
           retryCount.current++;
+          console.log(`[Player] Retry ${retryCount.current}/5...`);
           loadSource();
         } else if (video.readyState < 2) {
           setError('Não foi possível carregar o vídeo. Tente novamente.');
           setIsLoading(false);
         }
-      }, 5000);
+      }, 8000);
 
       if (url.includes('.m3u8') && Hls.isSupported()) {
         const hls = new Hls({
-          maxBufferLength: 30,
-          maxMaxBufferLength: 60,
+          maxBufferLength: 60,
+          maxMaxBufferLength: 120,
           startLevel: -1, // auto quality
           capLevelToPlayerSize: true,
           enableWorker: true,
+          fragLoadingTimeOut: 20000,
+          manifestLoadingTimeOut: 15000,
+          levelLoadingTimeOut: 15000,
+          fragLoadingMaxRetry: 6,
+          levelLoadingMaxRetry: 4,
+          manifestLoadingMaxRetry: 4,
         });
         hlsRef.current = hls;
         hls.loadSource(url);
@@ -95,14 +102,22 @@ const VideoPlayer = ({ url, autoPlay = true, onTimeUpdate, className = '' }: Vid
         });
         hls.on(Hls.Events.ERROR, (_, data) => {
           if (data.fatal) {
-            if (data.type === Hls.ErrorTypes.NETWORK_ERROR && retryCount.current < 3) {
+            console.warn('[Player] Fatal HLS error:', data.type, data.details);
+            if (data.type === Hls.ErrorTypes.NETWORK_ERROR && retryCount.current < 5) {
               retryCount.current++;
-              hls.startLoad();
+              console.log(`[Player] Network retry ${retryCount.current}/5`);
+              setTimeout(() => hls.startLoad(), 1000);
+            } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR && retryCount.current < 5) {
+              retryCount.current++;
+              console.log(`[Player] Media recovery ${retryCount.current}/5`);
+              hls.recoverMediaError();
             } else {
-              setError('Erro ao carregar stream. Tentando novamente...');
-              if (retryCount.current < 3) {
+              if (retryCount.current < 5) {
                 retryCount.current++;
                 setTimeout(loadSource, 2000);
+              } else {
+                setError('Erro ao carregar stream.');
+                setIsLoading(false);
               }
             }
           }
@@ -128,7 +143,9 @@ const VideoPlayer = ({ url, autoPlay = true, onTimeUpdate, className = '' }: Vid
 
       video.addEventListener('error', () => {
         clearTimeout(loadTimeout.current);
-        if (retryCount.current < 3) {
+        const mediaError = video.error;
+        console.warn('[Player] Video error:', mediaError?.code, mediaError?.message);
+        if (retryCount.current < 5) {
           retryCount.current++;
           setTimeout(loadSource, 2000);
         } else {

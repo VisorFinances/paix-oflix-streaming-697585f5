@@ -7,6 +7,7 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useSmartTV } from '@/hooks/useSmartTV';
 import { useStreamingTop5, StreamingItem } from '@/hooks/useStreamingTop5';
 import AppSidebar from '@/components/AppSidebar';
+import TopBar from '@/components/TopBar';
 import HeroBanner from '@/components/HeroBanner';
 import MovieRow from '@/components/MovieRow';
 import Top10Row from '@/components/Top10Row';
@@ -26,6 +27,19 @@ const ORDER_LIST = [
   'Romance', 'Terror', 'Suspense', 'Adulto', 'Negritude',
 ];
 
+/** Deduplicate series by title (e.g. remove "- S01E01") */
+function deduplicateSeries(movies: Movie[]): Movie[] {
+  const seen = new Map<string, Movie>();
+  for (const m of movies) {
+    if (m.type !== 'series') continue;
+    const base = m.title.replace(/\s*-\s*\d+ª\s*Temporada/i, '').replace(/\s*Temporada\s*\d+/i, '').replace(/\s*-\s*Todos os episódios/i, '').replace(/\s*-\s*Completo/i, '').trim();
+    if (!seen.has(base)) {
+      seen.set(base, m);
+    }
+  }
+  return Array.from(seen.values());
+}
+
 /** Deduplicate by normalized title */
 function deduplicateByTitle(movies: Movie[]): Movie[] {
   const seen = new Set<string>();
@@ -37,7 +51,6 @@ function deduplicateByTitle(movies: Movie[]): Movie[] {
   });
 }
 
-/** Check if Saturday >= 16:59 → Sunday 12:00 */
 function isSabadoNoite(): boolean {
   const now = new Date();
   const day = now.getDay();
@@ -49,11 +62,9 @@ function isSabadoNoite(): boolean {
   return false;
 }
 
-/** Personalized recommendations */
 function getPersonalized(movies: Movie[], watchHistory: Record<string, number>): Movie[] {
   const watchedIds = Object.keys(watchHistory);
   if (watchedIds.length === 0) return pickRandom(movies, 5);
-
   const genreCount: Record<string, number> = {};
   const watchedMovies = movies.filter(m => watchedIds.includes(m.id));
   for (const m of watchedMovies) {
@@ -61,21 +72,13 @@ function getPersonalized(movies: Movie[], watchHistory: Record<string, number>):
       genreCount[g] = (genreCount[g] || 0) + 1;
     }
   }
-
-  const topGenres = Object.entries(genreCount)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
-    .map(([g]) => g);
-
+  const topGenres = Object.entries(genreCount).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([g]) => g);
   const candidates = movies.filter(m =>
-    !watchedIds.includes(m.id) &&
-    m.genre.some(g => topGenres.some(tg => g.toLowerCase() === tg.toLowerCase()))
+    !watchedIds.includes(m.id) && m.genre.some(g => topGenres.some(tg => g.toLowerCase() === tg.toLowerCase()))
   );
-
   return pickRandom(candidates.length > 0 ? candidates : movies, 5);
 }
 
-/** Pick random items excluding already used IDs */
 function pickExcluding(movies: Movie[], count: number, usedIds: Set<string>): Movie[] {
   const available = movies.filter(m => !usedIds.has(m.id));
   const picked = pickRandom(available.length > 0 ? available : movies, count);
@@ -83,17 +86,10 @@ function pickExcluding(movies: Movie[], count: number, usedIds: Set<string>): Mo
   return picked;
 }
 
-/** Extract base series title for grouping */
 function getBaseSeriesTitle(title: string): string {
-  return title
-    .replace(/\s*-\s*\d+ª\s*Temporada/i, '')
-    .replace(/\s*Temporada\s*\d+/i, '')
-    .replace(/\s*-\s*Todos os episódios/i, '')
-    .replace(/\s*-\s*Completo/i, '')
-    .trim();
+  return title.replace(/\s*-\s*\d+ª\s*Temporada/i, '').replace(/\s*Temporada\s*\d+/i, '').replace(/\s*-\s*Todos os episódios/i, '').replace(/\s*-\s*Completo/i, '').trim();
 }
 
-/** Extract season number from title */
 function getSeasonNumber(title: string): number {
   const match = title.match(/(\d+)ª\s*Temporada/i);
   if (match) return parseInt(match[1]);
@@ -111,11 +107,10 @@ const Index = () => {
   const [favorites, setFavorites] = useLocalStorage<string[]>('paixaoflix-favorites', []);
   const [continueWatching, setContinueWatching] = useLocalStorage<Record<string, number>>('paixaoflix-progress', {});
   const [showSabado, setShowSabado] = useState(isSabadoNoite());
-  const [top10Movies, setTop10Movies] = useState<Movie[]>([]);
   const [personalizedTs, setPersonalizedTs] = useLocalStorage<number>('paixaoflix-personalized-ts', 0);
 
   const uniqueMovies = useMemo(() => deduplicateByTitle(movies), [movies]);
-  const { streamingData, trendingSeries, oscarNominees } = useStreamingTop5(uniqueMovies);
+  const { streamingData, trendingSeries, oscarNominees, top10Brazil } = useStreamingTop5(uniqueMovies);
 
   useSmartTV();
 
@@ -150,33 +145,6 @@ const Index = () => {
     if (item.localMovie) setDetailMovie(item.localMovie);
   };
 
-  // Top 10 Brazil - use all movies (not just unique) with valid posters
-  const computeTop10 = useCallback(() => {
-    if (movies.length === 0) return;
-    const candidates = movies.filter(m =>
-      m.image && m.image.length > 10 && !m.kids &&
-      !m.image.includes('placeholder') &&
-      m.source !== 'filmeskids' && m.source !== 'serieskids'
-    );
-    if (candidates.length === 0) {
-      const fallback = movies.filter(m => m.image && !m.kids);
-      if (fallback.length > 0) {
-        setTop10Movies(shuffleArray(fallback).slice(0, 10));
-      }
-      return;
-    }
-    // Prefer movies with descriptions and ratings
-    const withDesc = candidates.filter(m => m.description);
-    const pool = withDesc.length >= 10 ? withDesc : candidates;
-    setTop10Movies(shuffleArray(pool).slice(0, 10));
-  }, [movies]);
-
-  useEffect(() => {
-    computeTop10();
-    const id = setInterval(computeTop10, 5 * 60 * 1000);
-    return () => clearInterval(id);
-  }, [computeTop10]);
-
   const continueWatchingMovies = useMemo(() => {
     const ids = Object.entries(continueWatching)
       .filter(([, p]) => p > 0 && p < 95)
@@ -188,10 +156,8 @@ const Index = () => {
 
   const favoriteMovies = useMemo(() => movies.filter(m => favorites.includes(m.id)), [movies, favorites]);
 
-  // ─── Home sections with global deduplication ─────────────────────────
   const homeCategories = useMemo(() => {
     if (uniqueMovies.length === 0) return null;
-
     const usedIds = new Set<string>();
 
     const pick1Genre = (rx: RegExp) => {
@@ -201,9 +167,7 @@ const Index = () => {
       return picked;
     };
 
-    const lancamentos = pickExcluding(
-      uniqueMovies.filter(m => m.year >= 2025), 5, usedIds
-    );
+    const lancamentos = pickExcluding(uniqueMovies.filter(m => m.year >= 2025), 5, usedIds);
 
     const sabadoList = [
       ...pick1Genre(/com[eé]dia/i), ...pick1Genre(/aventura/i), ...pick1Genre(/a[çc][aã]o/i),
@@ -214,48 +178,22 @@ const Index = () => {
       ? sabadoList.concat(pickExcluding(uniqueMovies, Math.max(0, 10 - sabadoList.length), usedIds))
       : pickExcluding(uniqueMovies, 10, usedIds);
 
-    const negritude = pickExcluding(
-      uniqueMovies.filter(m => m.genre.some(g => /negritude/i.test(g))), 5, usedIds
-    );
-
-    const nacionais = pickExcluding(
-      uniqueMovies.filter(m => m.genre.some(g => /nacional/i.test(g))), 5, usedIds
-    );
-
-    const animacoes = pickExcluding(
-      uniqueMovies.filter(m => m.genre.some(g => /anima[çc][aã]o/i.test(g))), 5, usedIds
-    );
-
-    const romance = pickExcluding(
-      uniqueMovies.filter(m => m.genre.some(g => /romance/i.test(g))), 5, usedIds
-    );
-
-    const novelas = pickExcluding(
-      uniqueMovies.filter(m => m.type === 'novela' || m.genre.some(g => /novela/i.test(g))), 5, usedIds
-    );
-
-    const kids = pickExcluding(
-      uniqueMovies.filter(m => m.kids), 6, usedIds
-    );
-
-    const nostalgia = pickExcluding(
-      uniqueMovies.filter(m => m.genre.some(g => /cl[áa]ssic/i.test(g))), 6, usedIds
-    );
+    const negritude = pickExcluding(uniqueMovies.filter(m => m.genre.some(g => /negritude/i.test(g))), 5, usedIds);
+    const nacionais = pickExcluding(uniqueMovies.filter(m => m.genre.some(g => /nacional/i.test(g))), 5, usedIds);
+    const animacoes = pickExcluding(uniqueMovies.filter(m => m.genre.some(g => /anima[çc][aã]o/i.test(g))), 5, usedIds);
+    const romance = pickExcluding(uniqueMovies.filter(m => m.genre.some(g => /romance/i.test(g))), 5, usedIds);
+    const novelas = pickExcluding(uniqueMovies.filter(m => m.type === 'novela' || m.genre.some(g => /novela/i.test(g))), 5, usedIds);
+    const kids = pickExcluding(uniqueMovies.filter(m => m.kids), 6, usedIds);
+    const nostalgia = pickExcluding(uniqueMovies.filter(m => m.genre.some(g => /cl[áa]ssic/i.test(g))), 6, usedIds);
 
     const shouldRefreshPersonalized = Date.now() - personalizedTs > 48 * 60 * 60 * 1000;
-    const personalized = getPersonalized(
-      uniqueMovies.filter(m => !usedIds.has(m.id)), continueWatching
-    );
+    const personalized = getPersonalized(uniqueMovies.filter(m => !usedIds.has(m.id)), continueWatching);
     personalized.forEach(m => usedIds.add(m.id));
-
-    if (shouldRefreshPersonalized) {
-      setPersonalizedTs(Date.now());
-    }
+    if (shouldRefreshPersonalized) setPersonalizedTs(Date.now());
 
     return { lancamentos, sabado, negritude, nacionais, animacoes, romance, novelas, kids, nostalgia, personalized };
   }, [uniqueMovies, continueWatching, personalizedTs]);
 
-  // Genre-based categories for Cinema/Series views
   const genreCategories = useMemo(() => {
     return (source: 'cinema' | 'series') => {
       const sourceFilter = source === 'cinema'
@@ -264,40 +202,28 @@ const Index = () => {
       const sourceMovies = movies.filter(sourceFilter);
 
       if (source === 'series') {
-        // Group series by base title, sort seasons, assign one category per series group
         const seriesGroups = new Map<string, Movie[]>();
         for (const m of sourceMovies) {
           const base = getBaseSeriesTitle(m.title);
           if (!seriesGroups.has(base)) seriesGroups.set(base, []);
           seriesGroups.get(base)!.push(m);
         }
-
-        // Sort each group by season number
         for (const [, group] of seriesGroups) {
           group.sort((a, b) => getSeasonNumber(a.title) - getSeasonNumber(b.title));
         }
-
-        // Assign each series group to ONE category (first genre)
         const genreMap = new Map<string, Movie[]>();
         const assignedSeries = new Set<string>();
-
-        // Sort groups alphabetically
-        const sortedGroups = Array.from(seriesGroups.entries()).sort((a, b) =>
-          a[0].localeCompare(b[0], 'pt-BR')
-        );
+        const sortedGroups = Array.from(seriesGroups.entries()).sort((a, b) => a[0].localeCompare(b[0], 'pt-BR'));
 
         for (const [baseTitle, group] of sortedGroups) {
           if (assignedSeries.has(baseTitle)) continue;
           assignedSeries.add(baseTitle);
-
           const allGenres = group.flatMap(m => m.genre).filter(Boolean);
           const primaryGenre = allGenres[0] || 'Outros';
-
           if (!genreMap.has(primaryGenre)) genreMap.set(primaryGenre, []);
           genreMap.get(primaryGenre)!.push(...group);
         }
 
-        // Also add year-based categories
         const launch2026 = sourceMovies.filter(m => m.year >= 2026);
         if (launch2026.length > 0) genreMap.set('Lançamento 2026', launch2026);
         const launch2025 = sourceMovies.filter(m => m.year === 2025);
@@ -310,7 +236,6 @@ const Index = () => {
         });
       }
 
-      // Cinema: original logic
       const genreMap = new Map<string, Movie[]>();
       for (const m of sourceMovies) {
         for (const g of m.genre) {
@@ -320,7 +245,6 @@ const Index = () => {
           genreMap.get(normalized)!.push(m);
         }
       }
-
       const launch2026 = sourceMovies.filter(m => m.year >= 2026);
       if (launch2026.length > 0) genreMap.set('Lançamento 2026', launch2026);
       const launch2025 = sourceMovies.filter(m => m.year === 2025);
@@ -334,7 +258,6 @@ const Index = () => {
     };
   }, [movies]);
 
-  // Kids: split into Filmes and Séries, sorted alphabetically
   const kidsFilmes = useMemo(() =>
     movies.filter(m => m.kids && m.type === 'movie').sort((a, b) => a.title.localeCompare(b.title, 'pt-BR')),
     [movies]
@@ -408,6 +331,7 @@ const Index = () => {
         {/* ── HOME ── */}
         {activeView === 'home' && (
           <>
+            <TopBar movies={movies} />
             <HeroBanner movies={uniqueMovies.filter(m => m.source !== 'filmeskids' && m.source !== 'serieskids')} onPlay={handlePlay} onShowDetails={setDetailMovie} />
 
             <div className="mt-4 relative z-10">
@@ -484,8 +408,9 @@ const Index = () => {
                 <MovieRow title="Indicações exclusiva para você" movies={homeCategories.personalized} {...sharedRowProps} />
               )}
 
-              {!loading && top10Movies.length > 0 && (
-                <Top10Row title="Top 10 do Brasileiro" movies={top10Movies} {...sharedRowProps} />
+              {/* Top 10 do Brasileiro - from TMDB trending */}
+              {top10Brazil.length > 0 && (
+                <Top10Row title="Top 10 do Brasileiro" items={top10Brazil} onPlay={handleStreamingPlay} onShowDetails={handleStreamingDetails} />
               )}
 
               {streamingData.netflix && streamingData.netflix.length > 0 && (
@@ -525,6 +450,7 @@ const Index = () => {
         {/* ── CINEMA ── */}
         {activeView === 'cinema' && (
           <div className="min-h-screen animate-fade-in">
+            <TopBar movies={movies} />
             <HeroBanner
               movies={uniqueMovies.filter(m => m.source === 'cinema' || m.source === 'favoritos')}
               onPlay={handlePlay}
@@ -533,7 +459,7 @@ const Index = () => {
             <div className="py-6">
               <div className="px-4 md:px-12 mb-4 flex items-center gap-4">
                 <button onClick={() => setActiveView('home')} className="text-muted-foreground hover:text-foreground transition" data-nav="back">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
                 </button>
                 <h1 className="text-3xl md:text-4xl font-display tracking-wider">Cinema</h1>
               </div>
@@ -548,6 +474,7 @@ const Index = () => {
         {/* ── SÉRIES ── */}
         {activeView === 'series' && (
           <div className="min-h-screen animate-fade-in">
+            <TopBar movies={movies} />
             <HeroBanner
               movies={movies.filter(m => m.source === 'series')}
               onPlay={handlePlay}
@@ -556,7 +483,7 @@ const Index = () => {
             <div className="py-6">
               <div className="px-4 md:px-12 mb-4 flex items-center gap-4">
                 <button onClick={() => setActiveView('home')} className="text-muted-foreground hover:text-foreground transition" data-nav="back">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
                 </button>
                 <h1 className="text-3xl md:text-4xl font-display tracking-wider">Séries</h1>
               </div>
@@ -583,6 +510,7 @@ const Index = () => {
         {/* ── KIDS ── */}
         {activeView === 'kids' && (
           <div className="min-h-screen animate-fade-in">
+            <TopBar movies={movies} />
             <HeroBanner
               movies={kidsMovies}
               onPlay={handlePlay}
@@ -591,7 +519,7 @@ const Index = () => {
             <div className="py-6">
               <div className="px-4 md:px-12 mb-4 flex items-center gap-4">
                 <button onClick={() => setActiveView('home')} className="text-muted-foreground hover:text-foreground transition" data-nav="back">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
                 </button>
                 <h1 className="text-3xl md:text-4xl font-display tracking-wider">Kids</h1>
               </div>
