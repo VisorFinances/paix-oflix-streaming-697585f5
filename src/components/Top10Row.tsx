@@ -1,19 +1,16 @@
 import { useRef } from 'react';
-import { Movie } from '@/types';
-import PreviewCard from './PreviewCard';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { StreamingItem } from '@/hooks/useStreamingTop5';
+import { ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Top10RowProps {
   title: string;
-  movies: Movie[];
-  onPlay: (movie: Movie) => void;
-  onToggleFavorite: (movieId: string) => void;
-  favorites: string[];
-  onShowDetails?: (movie: Movie) => void;
+  items: StreamingItem[];
+  onPlay: (item: StreamingItem) => void;
+  onShowDetails?: (item: StreamingItem) => void;
 }
 
-const Top10Row = ({ title, movies, onPlay, onToggleFavorite, favorites, onShowDetails }: Top10RowProps) => {
+const Top10Row = ({ title, items, onPlay, onShowDetails }: Top10RowProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
@@ -23,7 +20,7 @@ const Top10Row = ({ title, movies, onPlay, onToggleFavorite, favorites, onShowDe
     }
   };
 
-  if (movies.length === 0) return null;
+  if (items.length === 0) return null;
 
   const CARD_W = isMobile ? 110 : 220;
   const NUM_W = isMobile ? 36 : 72;
@@ -48,11 +45,13 @@ const Top10Row = ({ title, movies, onPlay, onToggleFavorite, favorites, onShowDe
           className="flex overflow-x-auto scrollbar-hide px-3 sm:px-4 md:px-12 pb-4"
           style={{ gap: isMobile ? '4px' : '8px' }}
         >
-          {movies.slice(0, 10).map((movie, index) => (
+          {items.slice(0, 10).map((item, index) => (
             <div
-              key={movie.id}
-              className="relative flex-shrink-0 flex items-end"
+              key={`${item.tmdbTitle}-${index}`}
+              className="relative flex-shrink-0 flex items-end cursor-pointer"
               style={{ width: CARD_W + NUM_W, minWidth: CARD_W + NUM_W }}
+              onClick={() => item.localMovie ? onShowDetails?.(item) : undefined}
+              data-nav="card"
             >
               {/* Big rank number */}
               <div
@@ -74,14 +73,30 @@ const Top10Row = ({ title, movies, onPlay, onToggleFavorite, favorites, onShowDe
               </div>
 
               {/* Card */}
-              <div className="relative z-10" style={{ marginLeft: NUM_W }}>
-                <PreviewCard
-                  movie={movie}
-                  onPlay={onPlay}
-                  onToggleFavorite={onToggleFavorite}
-                  isFavorite={favorites.includes(movie.id)}
-                  onShowDetails={onShowDetails}
-                />
+              <div className="relative z-10 overflow-hidden rounded-md" style={{ marginLeft: NUM_W, width: CARD_W }}>
+                <div className="relative aspect-[2/3]">
+                  <img
+                    src={item.localMovie?.image || item.posterUrl}
+                    alt={item.tmdbTitle}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    loading="lazy"
+                    draggable={false}
+                  />
+                  {/* Em Breve badge */}
+                  {item.badge === 'em_breve' && (
+                    <div className="absolute top-1 left-1 sm:top-2 sm:left-2 z-20 flex items-center gap-1 bg-muted/90 backdrop-blur-sm text-foreground text-[8px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-sm">
+                      <Clock className="w-2.5 h-2.5" />
+                      Em Breve
+                    </div>
+                  )}
+                  {/* Bottom gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
+                  <div className="absolute bottom-0 left-0 right-0 p-1.5 z-[4]">
+                    <h3 className="text-[9px] sm:text-xs font-semibold text-foreground leading-tight line-clamp-2">
+                      {item.tmdbTitle}
+                    </h3>
+                  </div>
+                </div>
               </div>
             </div>
           ))}
