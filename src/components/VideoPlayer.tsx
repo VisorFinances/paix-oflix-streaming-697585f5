@@ -66,16 +66,17 @@ const VideoPlayer = ({ url, autoPlay = true, onTimeUpdate, className = '' }: Vid
     const loadSource = () => {
       cleanup();
 
-      // 5s loading timeout
+      // 8s loading timeout with more retries
       loadTimeout.current = setTimeout(() => {
-        if (video.readyState < 2 && retryCount.current < 3) {
+        if (video.readyState < 2 && retryCount.current < 5) {
           retryCount.current++;
+          console.log(`[Player] Retry ${retryCount.current}/5...`);
           loadSource();
         } else if (video.readyState < 2) {
           setError('Não foi possível carregar o vídeo. Tente novamente.');
           setIsLoading(false);
         }
-      }, 5000);
+      }, 8000);
 
       if (url.includes('.m3u8') && Hls.isSupported()) {
         const hls = new Hls({

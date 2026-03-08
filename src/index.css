@@ -193,13 +193,17 @@ body {
     display: none;
   }
 
-  /* Row card sizing — MOBILE: compact Prime Video style */
+  /* Row card sizing — MOBILE: 3 cards visible */
   .category-row .pv-card {
     flex-shrink: 0;
-    width: 120px;
+    width: calc((100vw - 24px - 16px) / 3); /* 3 cards, accounting for padding and gaps */
+    min-width: calc((100vw - 24px - 16px) / 3);
   }
   @media (min-width: 400px) {
-    .category-row .pv-card { width: 130px; }
+    .category-row .pv-card { 
+      width: calc((100vw - 24px - 16px) / 3);
+      min-width: calc((100vw - 24px - 16px) / 3);
+    }
   }
   @media (min-width: 640px) {
     .category-row .pv-card { width: 220px; }
