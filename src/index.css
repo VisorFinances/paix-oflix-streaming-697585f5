@@ -91,22 +91,24 @@ body {
     aspect-ratio: 2/3;
     width: 100%;
     box-shadow: var(--card-shadow);
-    transition: transform 300ms ease, box-shadow 300ms ease, border-color 200ms ease;
+    transition: transform 350ms cubic-bezier(0.25, 0.1, 0.25, 1), box-shadow 300ms ease, border-color 200ms ease;
     border: 2px solid transparent;
     will-change: transform;
   }
 
   .pv-card:hover,
   .pv-card:focus-visible {
-    transform: scale(1.12) translateZ(0);
+    transform: scale(1.25) translateZ(0);
     z-index: 30;
-    border-color: hsl(var(--foreground) / 0.15);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+    border-color: hsl(var(--foreground) / 0.2);
+    box-shadow: 0 16px 60px rgba(0, 0, 0, 0.9);
   }
 
   /* Expanded state with trailer */
   .pv-card--expanded {
-    z-index: 30;
+    z-index: 40;
+    transform: scale(1.35) translateZ(0);
+    box-shadow: 0 20px 80px rgba(0, 0, 0, 0.95);
   }
 
   /* TV focus ring */
@@ -126,6 +128,9 @@ body {
       transform: none;
       border-color: hsl(45 100% 55%);
     }
+    .pv-card--expanded {
+      transform: none;
+    }
   }
 
   /* ─── Category Row (horizontal scroll) ─── */
@@ -138,22 +143,22 @@ body {
     display: none;
   }
 
-  /* Row card sizing */
+  /* Row card sizing — LARGER cards like Kids section */
   .category-row .pv-card {
     flex-shrink: 0;
-    width: 130px;
+    width: 150px;
   }
   @media (min-width: 640px) {
-    .category-row .pv-card { width: 150px; }
+    .category-row .pv-card { width: 180px; }
   }
   @media (min-width: 768px) {
-    .category-row .pv-card { width: 170px; }
+    .category-row .pv-card { width: 200px; }
   }
   @media (min-width: 1024px) {
-    .category-row .pv-card { width: 190px; }
+    .category-row .pv-card { width: 220px; }
   }
   @media (min-width: 1400px) {
-    .category-row .pv-card { width: 210px; }
+    .category-row .pv-card { width: 240px; }
   }
 
   /* ─── Media Grid (category/search pages) ─── */

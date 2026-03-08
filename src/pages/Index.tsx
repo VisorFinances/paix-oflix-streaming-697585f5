@@ -150,13 +150,14 @@ const Index = () => {
     if (item.localMovie) setDetailMovie(item.localMovie);
   };
 
-  // Top 10 Brazil - use movies with posters
+  // Top 10 Brazil - include ALL movies with posters (not just uniqueMovies which deduplicates too aggressively)
   const computeTop10 = useCallback(() => {
-    if (uniqueMovies.length === 0) return;
-    const withPoster = uniqueMovies.filter(m => m.image);
-    const shuffled = shuffleArray(withPoster.length >= 10 ? withPoster : uniqueMovies);
+    if (movies.length === 0) return;
+    const withPoster = movies.filter(m => m.image && m.image.length > 5 && !m.kids);
+    if (withPoster.length === 0) return;
+    const shuffled = shuffleArray(withPoster);
     setTop10Movies(shuffled.slice(0, 10));
-  }, [uniqueMovies]);
+  }, [movies]);
 
   useEffect(() => {
     computeTop10();
@@ -243,7 +244,6 @@ const Index = () => {
   }, [uniqueMovies, continueWatching, personalizedTs]);
 
   // Genre-based categories for Cinema/Series views
-  // For series: organize alphabetically, group by base title, sort seasons, unique category per series
   const genreCategories = useMemo(() => {
     return (source: 'cinema' | 'series') => {
       const sourceFilter = source === 'cinema'
@@ -278,7 +278,6 @@ const Index = () => {
           if (assignedSeries.has(baseTitle)) continue;
           assignedSeries.add(baseTitle);
 
-          // Find best category from genres
           const allGenres = group.flatMap(m => m.genre).filter(Boolean);
           const primaryGenre = allGenres[0] || 'Outros';
 
@@ -331,14 +330,12 @@ const Index = () => {
 
   const kidsSeries = useMemo(() => {
     const series = movies.filter(m => m.kids && m.type === 'series');
-    // Group by base title, sort seasons within each group
     const groups = new Map<string, Movie[]>();
     for (const m of series) {
       const base = getBaseSeriesTitle(m.title);
       if (!groups.has(base)) groups.set(base, []);
       groups.get(base)!.push(m);
     }
-    // Sort each group by season, then flatten alphabetically
     const sorted: Movie[] = [];
     const sortedKeys = Array.from(groups.keys()).sort((a, b) => a.localeCompare(b, 'pt-BR'));
     for (const key of sortedKeys) {
@@ -540,7 +537,7 @@ const Index = () => {
         {activeView === 'series' && (
           <div className="min-h-screen animate-fade-in">
             <HeroBanner
-              movies={uniqueMovies.filter(m => m.source === 'series')}
+              movies={movies.filter(m => m.source === 'series')}
               onPlay={handlePlay}
               onShowDetails={setDetailMovie}
             />
@@ -555,7 +552,6 @@ const Index = () => {
               {(() => {
                 const cats = genreCategories('series');
                 if (cats.length === 0) {
-                  // Fallback: show all series alphabetically if no genres assigned
                   const allSeries = movies
                     .filter(m => m.source === 'series')
                     .sort((a, b) => a.title.localeCompare(b.title, 'pt-BR'));
