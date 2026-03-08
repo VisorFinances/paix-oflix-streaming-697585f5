@@ -488,16 +488,23 @@ const Index = () => {
 
         {/* ── KIDS ── */}
         {activeView === 'kids' && (
-          <CategoryGrid
-            title="Kids"
-            movies={kidsMovies}
-            onPlay={handlePlay}
-            onToggleFavorite={toggleFavorite}
-            favorites={favorites}
-            onBack={() => setActiveView('home')}
-            onShowDetails={(m) => setDetailMovie(m)}
-            isKids
-          />
+          <div className="min-h-screen animate-fade-in">
+            <HeroBanner
+              movies={kidsMovies}
+              onPlay={handlePlay}
+              onShowDetails={setDetailMovie}
+            />
+            <CategoryGrid
+              title="Kids"
+              movies={kidsMovies}
+              onPlay={handlePlay}
+              onToggleFavorite={toggleFavorite}
+              favorites={favorites}
+              onBack={() => setActiveView('home')}
+              onShowDetails={(m) => setDetailMovie(m)}
+              isKids
+            />
+          </div>
         )}
 
         {/* ── LIVE TV ── */}
