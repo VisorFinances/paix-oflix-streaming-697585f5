@@ -102,14 +102,22 @@ const VideoPlayer = ({ url, autoPlay = true, onTimeUpdate, className = '' }: Vid
         });
         hls.on(Hls.Events.ERROR, (_, data) => {
           if (data.fatal) {
-            if (data.type === Hls.ErrorTypes.NETWORK_ERROR && retryCount.current < 3) {
+            console.warn('[Player] Fatal HLS error:', data.type, data.details);
+            if (data.type === Hls.ErrorTypes.NETWORK_ERROR && retryCount.current < 5) {
               retryCount.current++;
-              hls.startLoad();
+              console.log(`[Player] Network retry ${retryCount.current}/5`);
+              setTimeout(() => hls.startLoad(), 1000);
+            } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR && retryCount.current < 5) {
+              retryCount.current++;
+              console.log(`[Player] Media recovery ${retryCount.current}/5`);
+              hls.recoverMediaError();
             } else {
-              setError('Erro ao carregar stream. Tentando novamente...');
-              if (retryCount.current < 3) {
+              if (retryCount.current < 5) {
                 retryCount.current++;
                 setTimeout(loadSource, 2000);
+              } else {
+                setError('Erro ao carregar stream.');
+                setIsLoading(false);
               }
             }
           }
