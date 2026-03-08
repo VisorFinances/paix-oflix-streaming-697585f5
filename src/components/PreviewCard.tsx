@@ -89,7 +89,7 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
   }, [movie, onShowDetails]);
 
   const ytUrl = showTrailer ? getYTEmbed(movie.trailer!) : null;
-  const placeholderImg = `https://image.tmdb.org/t/p/w500/placeholder.jpg`;
+  const posterSrc = movie.image && movie.image.length > 5 ? movie.image : '/placeholder.svg';
 
   return (
     <div
