@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceKey);
 
     const body = await req.json();
-    const { table, source_url } = body;
+    const { table, source_url, append } = body;
     let { data } = body;
 
     if (!table) {
