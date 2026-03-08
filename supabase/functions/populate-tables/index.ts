@@ -82,7 +82,10 @@ Deno.serve(async (req) => {
     // Fetch from URL if source_url provided
     if (source_url && !data) {
       const res = await fetch(source_url);
-      data = await res.json();
+      let text = await res.text();
+      // Fix trailing commas in JSON (common in hand-edited files)
+      text = text.replace(/,\s*([\]}])/g, '$1');
+      data = JSON.parse(text);
     }
 
     if (!data || !Array.isArray(data)) {
