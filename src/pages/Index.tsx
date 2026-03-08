@@ -453,39 +453,58 @@ const Index = () => {
 
         {/* ── CINEMA / SERIES ── */}
         {(activeView === 'cinema' || activeView === 'series') && (
-          <div className="min-h-screen py-8 animate-fade-in">
-            <div className="px-4 md:px-12 mb-6 flex items-center gap-4">
-              <button onClick={() => setActiveView('home')} className="text-muted-foreground hover:text-foreground transition" data-nav="back">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-              </button>
-              <h1 className="text-3xl md:text-4xl font-display tracking-wider">
-                {activeView === 'cinema' ? 'Cinema' : 'Séries'}
-              </h1>
+          <div className="min-h-screen animate-fade-in">
+            {/* Hero Banner for Cinema/Series */}
+            <HeroBanner
+              movies={
+                activeView === 'cinema'
+                  ? uniqueMovies.filter(m => m.source === 'cinema' || m.source === 'favoritos')
+                  : uniqueMovies.filter(m => m.source === 'series')
+              }
+              onPlay={handlePlay}
+              onShowDetails={setDetailMovie}
+            />
+            <div className="py-6">
+              <div className="px-4 md:px-12 mb-4 flex items-center gap-4">
+                <button onClick={() => setActiveView('home')} className="text-muted-foreground hover:text-foreground transition" data-nav="back">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <h1 className="text-3xl md:text-4xl font-display tracking-wider">
+                  {activeView === 'cinema' ? 'Cinema' : 'Séries'}
+                </h1>
+              </div>
+              {loading && (
+                <>
+                  <SkeletonRow />
+                  <SkeletonRow />
+                </>
+              )}
+              {genreCategories(activeView as 'cinema' | 'series').map(([genre, genreMovies]) => (
+                <MovieRow key={genre} title={genre} movies={genreMovies} {...sharedRowProps} />
+              ))}
             </div>
-            {loading && (
-              <>
-                <SkeletonRow />
-                <SkeletonRow />
-              </>
-            )}
-            {genreCategories(activeView as 'cinema' | 'series').map(([genre, genreMovies]) => (
-              <MovieRow key={genre} title={genre} movies={genreMovies} {...sharedRowProps} />
-            ))}
           </div>
         )}
 
         {/* ── KIDS ── */}
         {activeView === 'kids' && (
-          <CategoryGrid
-            title="Kids"
-            movies={kidsMovies}
-            onPlay={handlePlay}
-            onToggleFavorite={toggleFavorite}
-            favorites={favorites}
-            onBack={() => setActiveView('home')}
-            onShowDetails={(m) => setDetailMovie(m)}
-            isKids
-          />
+          <div className="min-h-screen animate-fade-in">
+            <HeroBanner
+              movies={kidsMovies}
+              onPlay={handlePlay}
+              onShowDetails={setDetailMovie}
+            />
+            <CategoryGrid
+              title="Kids"
+              movies={kidsMovies}
+              onPlay={handlePlay}
+              onToggleFavorite={toggleFavorite}
+              favorites={favorites}
+              onBack={() => setActiveView('home')}
+              onShowDetails={(m) => setDetailMovie(m)}
+              isKids
+            />
+          </div>
         )}
 
         {/* ── LIVE TV ── */}

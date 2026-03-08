@@ -62,6 +62,7 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
         progress: "hsl(var(--progress-bar))",
+        "accent-blue": "hsl(var(--accent-blue))",
       },
       borderRadius: {
         lg: "var(--radius)",

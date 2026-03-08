@@ -82,7 +82,37 @@ Deno.serve(async (req) => {
     // Fetch from URL if source_url provided
     if (source_url && !data) {
       const res = await fetch(source_url);
-      data = await res.json();
+      let text = await res.text();
+      // Aggressive JSON cleanup
+      text = text.replace(/^\uFEFF/, '');
+      // Remove control chars except \n \r \t
+      text = text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+      // Remove stray text after quoted values (corrupted lines like: "value",SomeText)
+      text = text.replace(/("[^"]*"),([^"\s{}\[\],][^\n]*)\n/g, '"$1"\n');
+      // Remove trailing commas
+      text = text.replace(/,(\s*[}\]])/g, '$1');
+      
+      try {
+        data = JSON.parse(text);
+      } catch {
+        // Fallback: extract objects manually using balanced braces
+        const objects: Record<string, unknown>[] = [];
+        let depth = 0, start = -1;
+        for (let i = 0; i < text.length; i++) {
+          if (text[i] === '{') { if (depth === 0) start = i; depth++; }
+          else if (text[i] === '}') { 
+            depth--; 
+            if (depth === 0 && start >= 0) {
+              let obj = text.slice(start, i + 1);
+              obj = obj.replace(/,(\s*})/g, '$1');
+              try { objects.push(JSON.parse(obj)); } catch { /* skip */ }
+              start = -1;
+            }
+          }
+        }
+        if (objects.length > 0) data = objects;
+        else throw new Error('Could not parse any objects');
+      }
     }
 
     if (!data || !Array.isArray(data)) {
