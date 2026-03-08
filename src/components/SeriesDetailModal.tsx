@@ -317,7 +317,7 @@ const SeriesDetailModal = ({
                           <div className="relative flex-shrink-0 w-[140px] sm:w-[200px] md:w-[240px] rounded-md overflow-hidden bg-muted">
                             <div className="aspect-video">
                               <img
-                                src={displayPoster}
+                                src={ep.thumbnail || displayPoster}
                                 alt={ep.title}
                                 className="w-full h-full object-cover"
                               />
