@@ -35,6 +35,7 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
   const [imgLoaded, setImgLoaded] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [showTrailer, setShowTrailer] = useState(false);
+  const [mobileTapState, setMobileTapState] = useState<'idle' | 'trailer'>('idle');
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMobile = useIsMobile();
 
@@ -82,12 +83,44 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
     };
   }, [movie.id]);
 
+  // Mobile: 1st tap = trailer, 2nd tap = play (movie) or details (series)
   const handleClick = useCallback(() => {
+    if (isMobile) {
+      if (mobileTapState === 'idle' && hasTrailer) {
+        // 1st tap: show trailer
+        if (activeCardId && activeCardId !== movie.id && activeCardCleanup) {
+          activeCardCleanup();
+        }
+        activeCardId = movie.id;
+        activeCardCleanup = () => {
+          setShowTrailer(false);
+          setMobileTapState('idle');
+        };
+        setShowTrailer(true);
+        setMobileTapState('trailer');
+        return;
+      }
+      // 2nd tap (or no trailer): movie → play, series → details
+      setShowTrailer(false);
+      setMobileTapState('idle');
+      if (activeCardId === movie.id) {
+        activeCardId = null;
+        activeCardCleanup = null;
+      }
+      if (movie.type === 'series') {
+        onShowDetails?.(movie);
+      } else {
+        onPlay(movie);
+      }
+      return;
+    }
+    // Desktop: always open details
     onShowDetails?.(movie);
-  }, [movie, onShowDetails]);
+  }, [isMobile, mobileTapState, hasTrailer, movie, onShowDetails, onPlay]);
 
   const ytUrl = showTrailer ? getYTEmbed(movie.trailer!) : null;
   const posterSrc = movie.image && movie.image.length > 5 ? movie.image : '/placeholder.svg';
+  const mobileShowingTrailer = isMobile && showTrailer;
 
   return (
     <div
@@ -99,7 +132,7 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
     >
       {/* Main card */}
       <div
-        className={`pv-card group ${expanded && !isMobile ? 'pv-card--expanded' : ''}`}
+        className={`pv-card group ${expanded && !isMobile ? 'pv-card--expanded' : ''} ${mobileShowingTrailer ? 'ring-2 ring-primary' : ''}`}
         data-nav="card"
         tabIndex={0}
         onClick={handleClick}
@@ -127,8 +160,8 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
           }}
         />
 
-        {/* YouTube trailer — desktop only */}
-        {ytUrl && !isMobile && (
+        {/* YouTube trailer — mobile + desktop */}
+        {ytUrl && (
           <iframe
             src={ytUrl}
             className="absolute inset-0 w-full h-full z-[3]"
@@ -161,8 +194,17 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
           />
         )}
 
-        {/* Title overlay — always visible on mobile, visible when NOT expanded on desktop */}
-        {(isMobile || (!expanded && !showTrailer)) && (
+        {/* Mobile: "Toque para assistir" hint when trailer is playing */}
+        {mobileShowingTrailer && (
+          <div className="absolute bottom-0 left-0 right-0 z-[6] p-1.5 bg-background/80 backdrop-blur-sm">
+            <p className="text-[9px] font-semibold text-center text-foreground">
+              ▶ Toque para {movie.type === 'series' ? 'ver episódios' : 'assistir'}
+            </p>
+          </div>
+        )}
+
+        {/* Title overlay — visible when NOT showing trailer */}
+        {!showTrailer && (isMobile || (!expanded)) && (
           <div className="absolute bottom-0 left-0 right-0 z-[4] p-1.5 sm:p-2.5 md:p-3">
             <h3 className="text-[10px] sm:text-xs md:text-sm font-semibold text-foreground leading-tight line-clamp-2">
               {movie.title}
@@ -174,7 +216,7 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
         )}
 
         {/* Progress bar */}
-        {progress !== undefined && progress > 0 && (
+        {progress !== undefined && progress > 0 && !showTrailer && (
           <div className="absolute bottom-0 left-0 right-0 z-[5]">
             <div className="h-[2px] sm:h-[3px] bg-muted/50">
               <div
