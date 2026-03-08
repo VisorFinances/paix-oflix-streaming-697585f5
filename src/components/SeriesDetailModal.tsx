@@ -16,6 +16,20 @@ interface SeriesDetailModalProps {
 
 type TabType = 'episodes' | 'trailers' | 'suggestions';
 
+const TMDB_API_KEY = 'b275ce8e1a6b3d5d879bb0907e4f56ad';
+
+// Clean episode title from filename
+function cleanEpisodeTitle(fileName: string): string {
+  return fileName
+    .replace(/\.(mp4|mkv|avi)$/i, '')
+    .replace(/CONV_/g, '')
+    .replace(/%20/g, ' ')
+    .replace(/_/g, ' ')
+    .replace(/\+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 const SeriesDetailModal = ({
   movie, allMovies, onClose, onPlay, onToggleFavorite, isFavorite,
 }: SeriesDetailModalProps) => {
@@ -40,20 +54,23 @@ const SeriesDetailModal = ({
     setLoadingEpisodes(true);
     try {
       const files = await getArchiveFiles(currentSeason.archiveId);
-      const eps: EpisodeData[] = files.map((f, i) => {
-        const cleanName = f.name
-          .replace(/\.(mp4|mkv|avi)$/i, '')
-          .replace(/CONV_/g, '')
-          .replace(/%20/g, ' ')
-          .replace(/_/g, ' ');
-        return {
-          number: i + 1,
-          title: cleanName || `Episódio ${i + 1}`,
-          fileName: f.name,
-          streamUrl: `https://archive.org/download/${currentSeason.archiveId}/${encodeURIComponent(f.name)}`,
-          duration: f.length ? formatDuration(parseFloat(f.length)) : undefined,
-        };
+      
+      // Deduplicate episodes by cleaned name
+      const seen = new Set<string>();
+      const uniqueFiles = files.filter(f => {
+        const clean = cleanEpisodeTitle(f.name).toLowerCase();
+        if (seen.has(clean)) return false;
+        seen.add(clean);
+        return true;
       });
+
+      const eps: EpisodeData[] = uniqueFiles.map((f, i) => ({
+        number: i + 1,
+        title: cleanEpisodeTitle(f.name) || `Episódio ${i + 1}`,
+        fileName: f.name,
+        streamUrl: `https://archive.org/download/${currentSeason.archiveId}/${encodeURIComponent(f.name)}`,
+        duration: f.length ? formatDuration(parseFloat(f.length)) : undefined,
+      }));
       setEpisodes(eps);
     } catch {
       setEpisodes([]);
@@ -88,10 +105,8 @@ const SeriesDetailModal = ({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
       >
-        {/* Backdrop */}
         <div className="fixed inset-0 bg-black/85 backdrop-blur-sm" onClick={onClose} />
 
-        {/* Modal */}
         <motion.div
           className="relative w-full max-w-4xl bg-card rounded-xl shadow-2xl overflow-hidden"
           initial={{ scale: 0.9, opacity: 0, y: 40 }}
@@ -132,7 +147,6 @@ const SeriesDetailModal = ({
               {displayTitle}
             </h2>
 
-            {/* Actions */}
             <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 flex-wrap">
               <button
                 onClick={() => {
@@ -164,7 +178,6 @@ const SeriesDetailModal = ({
               </button>
             </div>
 
-            {/* Metadata */}
             <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground mb-3">
               <span className="flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
@@ -182,7 +195,6 @@ const SeriesDetailModal = ({
               </span>
             </div>
 
-            {/* Genres */}
             <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3 sm:mb-4">
               {(seriesGroup?.genre || movie.genre).map(g => (
                 <span key={g} className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-secondary text-secondary-foreground">
@@ -191,7 +203,6 @@ const SeriesDetailModal = ({
               ))}
             </div>
 
-            {/* Synopsis */}
             <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground mb-4 sm:mb-6">
               {displayDesc}
             </p>
@@ -229,7 +240,6 @@ const SeriesDetailModal = ({
           {/* Tab Content */}
           <div className="px-4 sm:px-6 py-4 max-h-[50vh] overflow-y-auto">
             <AnimatePresence mode="wait">
-              {/* Episodes Tab */}
               {activeTab === 'episodes' && (
                 <motion.div
                   key="episodes"
@@ -237,7 +247,6 @@ const SeriesDetailModal = ({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                 >
-                  {/* Season Selector */}
                   {seasons.length > 1 && (
                     <div className="relative mb-4">
                       <button
@@ -265,7 +274,6 @@ const SeriesDetailModal = ({
                     </div>
                   )}
 
-                  {/* Episode List */}
                   {loadingEpisodes ? (
                     <div className="flex items-center justify-center py-12">
                       <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -281,12 +289,10 @@ const SeriesDetailModal = ({
                           className="w-full flex items-start gap-3 sm:gap-5 p-3 sm:p-4 rounded-lg hover:bg-accent/50 transition group text-left"
                           whileHover={{ scale: 1.01 }}
                         >
-                          {/* Episode Number */}
                           <span className="text-xl sm:text-2xl font-display text-muted-foreground w-6 sm:w-8 text-center flex-shrink-0 mt-1">
                             {ep.number}
                           </span>
 
-                          {/* Thumbnail - proper 16:9 with full visibility */}
                           <div className="relative flex-shrink-0 w-[140px] sm:w-[200px] md:w-[240px] rounded-md overflow-hidden bg-muted">
                             <div className="aspect-video">
                               <img
@@ -300,7 +306,6 @@ const SeriesDetailModal = ({
                             </div>
                           </div>
 
-                          {/* Info - non-truncated description */}
                           <div className="flex-1 min-w-0 py-1">
                             <div className="flex items-center justify-between gap-2">
                               <h4 className="text-xs sm:text-sm font-semibold text-foreground line-clamp-2">
@@ -323,7 +328,6 @@ const SeriesDetailModal = ({
                 </motion.div>
               )}
 
-              {/* Trailers Tab */}
               {activeTab === 'trailers' && (
                 <motion.div
                   key="trailers"
@@ -349,7 +353,6 @@ const SeriesDetailModal = ({
                 </motion.div>
               )}
 
-              {/* Suggestions Tab */}
               {activeTab === 'suggestions' && (
                 <motion.div
                   key="suggestions"
@@ -391,7 +394,6 @@ const SeriesDetailModal = ({
 
 function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60);
-  const s = Math.round(seconds % 60);
   if (m >= 60) {
     const h = Math.floor(m / 60);
     return `${h}h ${m % 60}min`;

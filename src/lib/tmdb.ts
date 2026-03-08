@@ -10,7 +10,6 @@ export interface TMDBVideo {
 
 export async function searchTMDB(title: string): Promise<number | null> {
   try {
-    // Clean title - remove season indicators
     const cleanTitle = title
       .replace(/\s*-\s*\d+ª\s*Temporada/i, '')
       .replace(/\s*Temporada\s*\d+/i, '')
@@ -36,7 +35,6 @@ export async function getTMDBVideos(tmdbId: number, mediaType: 'movie' | 'tv' = 
     const data = await res.json();
     let videos: TMDBVideo[] = data.results || [];
 
-    // If no PT-BR videos, try English
     if (videos.length === 0) {
       const resEn = await fetch(
         `${TMDB_BASE}/${mediaType}/${tmdbId}/videos?api_key=${TMDB_API_KEY}&language=en-US`
@@ -75,9 +73,13 @@ export async function getArchiveFiles(identifier: string): Promise<ArchiveFile[]
     if (!res.ok) return [];
     const data = await res.json();
     const files: ArchiveFile[] = data.files || [];
-    return files.filter(f =>
-      f.name.endsWith('.mp4') || f.name.endsWith('.mkv') || f.name.endsWith('.avi')
-    );
+    return files.filter(f => {
+      const name = f.name.toLowerCase();
+      // Only video files, exclude .ia.mp4 and other non-video artifacts
+      const isVideo = name.endsWith('.mp4') || name.endsWith('.mkv') || name.endsWith('.avi');
+      const isIAFile = name.endsWith('.ia.mp4') || name.includes('.ia.');
+      return isVideo && !isIAFile;
+    });
   } catch {
     return [];
   }
