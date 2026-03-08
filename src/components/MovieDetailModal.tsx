@@ -31,7 +31,7 @@ const MovieDetailModal = ({ movie, onClose, onPlay, onToggleFavorite, isFavorite
         <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
 
         <motion.div
-          className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-xl bg-card shadow-2xl"
+          className="relative w-full max-w-3xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto rounded-none sm:rounded-xl bg-card shadow-2xl"
           initial={{ scale: 0.9, opacity: 0, y: 40 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.9, opacity: 0, y: 40 }}
