@@ -122,6 +122,51 @@ export type Database = {
         }
         Relationships: []
       }
+      kids_filmes: {
+        Row: {
+          ano: string | null
+          created_at: string | null
+          descricao: string | null
+          genero: string | null
+          id: string
+          poster: string | null
+          rating: string | null
+          tipo: string
+          titulo: string
+          tmdb_id: string | null
+          trailer: string | null
+          url: string | null
+        }
+        Insert: {
+          ano?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          genero?: string | null
+          id?: string
+          poster?: string | null
+          rating?: string | null
+          tipo?: string
+          titulo: string
+          tmdb_id?: string | null
+          trailer?: string | null
+          url?: string | null
+        }
+        Update: {
+          ano?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          genero?: string | null
+          id?: string
+          poster?: string | null
+          rating?: string | null
+          tipo?: string
+          titulo?: string
+          tmdb_id?: string | null
+          trailer?: string | null
+          url?: string | null
+        }
+        Relationships: []
+      }
       kids_series: {
         Row: {
           ano: string | null
