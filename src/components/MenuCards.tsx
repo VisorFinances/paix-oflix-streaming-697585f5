@@ -15,15 +15,15 @@ const tiles = [
 const MenuCards = ({ onNavigate }: MenuCardsProps) => {
   return (
     <section className="px-4 md:px-12 mb-10">
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
         {tiles.map(tile => (
           <button
             key={tile.id}
             onClick={() => onNavigate(tile.id)}
-            className={`menu-tile relative h-28 md:h-36 bg-gradient-to-br ${tile.gradient} flex flex-col items-center justify-center gap-2 rounded-lg border border-border/30`}
+            className={`menu-tile relative h-20 sm:h-28 md:h-36 bg-gradient-to-br ${tile.gradient} flex flex-col items-center justify-center gap-1 sm:gap-2 rounded-lg border border-border/30 active:scale-95 transition-transform`}
           >
-            <tile.icon className="w-8 h-8 text-foreground/90" />
-            <span className="font-display text-lg tracking-wider text-foreground">{tile.label}</span>
+            <tile.icon className="w-5 h-5 sm:w-8 sm:h-8 text-foreground/90" />
+            <span className="font-display text-xs sm:text-lg tracking-wider text-foreground">{tile.label}</span>
           </button>
         ))}
       </div>

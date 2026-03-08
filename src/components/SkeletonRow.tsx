@@ -16,7 +16,7 @@ const SkeletonRow = ({ title, count = 5 }: SkeletonRowProps) => (
     </div>
     <div className="flex gap-2 sm:gap-3 px-3 sm:px-4 md:px-12 overflow-hidden">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="flex-shrink-0 w-[140px] sm:w-[160px] md:w-[200px] lg:w-[220px]">
+        <div key={i} className="flex-shrink-0 w-[110px] sm:w-[160px] md:w-[200px] lg:w-[220px]">
           <Skeleton className="aspect-[2/3] rounded-md" />
           <Skeleton className="h-3 w-3/4 mt-2 rounded" />
           <Skeleton className="h-2.5 w-1/2 mt-1 rounded" />

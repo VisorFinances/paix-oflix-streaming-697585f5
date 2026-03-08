@@ -108,21 +108,47 @@ body {
     will-change: transform;
   }
 
-  .pv-card:hover,
-  .pv-card:focus-visible {
-    transform: scale(1.35) translateZ(0);
-    z-index: 100;
-    border-color: hsl(var(--foreground) / 0.2);
-    box-shadow: 0 20px 80px rgba(0, 0, 0, 0.95);
+  /* ─── MOBILE: No hover scale, tap-friendly ─── */
+  @media (max-width: 639px) {
+    .pv-card {
+      border-width: 1px;
+    }
+    .pv-card:hover,
+    .pv-card:focus-visible {
+      transform: none;
+      border-color: transparent;
+      box-shadow: var(--card-shadow);
+    }
+    .pv-card--expanded {
+      transform: none;
+    }
+    .pv-card-wrapper:hover,
+    .pv-card-wrapper:focus-within {
+      z-index: 1;
+    }
+    .pv-card-meta {
+      display: none !important;
+    }
   }
 
-  .pv-card--expanded {
-    z-index: 100;
-    transform: scale(1.35) translateZ(0);
-    box-shadow: 0 24px 100px rgba(0, 0, 0, 0.98);
+  /* ─── DESKTOP/TV: Full hover effects ─── */
+  @media (min-width: 640px) {
+    .pv-card:hover,
+    .pv-card:focus-visible {
+      transform: scale(1.35) translateZ(0);
+      z-index: 100;
+      border-color: hsl(var(--foreground) / 0.2);
+      box-shadow: 0 20px 80px rgba(0, 0, 0, 0.95);
+    }
+
+    .pv-card--expanded {
+      z-index: 100;
+      transform: scale(1.35) translateZ(0);
+      box-shadow: 0 24px 100px rgba(0, 0, 0, 0.98);
+    }
   }
 
-  /* Metadata panel below card */
+  /* Metadata panel below card (desktop only) */
   .pv-card-meta {
     @apply rounded-b-lg p-3 sm:p-4;
     background: hsl(var(--background) / 0.95);
@@ -141,7 +167,7 @@ body {
     outline: none;
   }
 
-  @media (hover: none) {
+  @media (hover: none) and (min-width: 640px) {
     .pv-card:hover {
       transform: none;
       border-color: transparent;
@@ -161,15 +187,19 @@ body {
     @apply flex overflow-x-auto pb-8;
     -ms-overflow-style: none;
     scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
   }
   .category-row::-webkit-scrollbar {
     display: none;
   }
 
-  /* Row card sizing — 22% larger than before */
+  /* Row card sizing — MOBILE: compact Prime Video style */
   .category-row .pv-card {
     flex-shrink: 0;
-    width: 183px;
+    width: 120px;
+  }
+  @media (min-width: 400px) {
+    .category-row .pv-card { width: 130px; }
   }
   @media (min-width: 640px) {
     .category-row .pv-card { width: 220px; }
@@ -184,11 +214,19 @@ body {
     .category-row .pv-card { width: 293px; }
   }
 
+  /* Mobile: less bottom padding for rows */
+  @media (max-width: 639px) {
+    .category-row {
+      pb: 4;
+      padding-bottom: 1rem;
+    }
+  }
+
   /* ─── Media Grid (category/search pages) ─── */
   .media-grid {
     display: grid;
-    gap: 16px;
-    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    grid-template-columns: repeat(3, 1fr);
   }
   @media (min-width: 640px) {
     .media-grid { grid-template-columns: repeat(3, 1fr); gap: 18px; }
@@ -251,11 +289,21 @@ body {
     transform: scale(1.05);
     z-index: 20;
   }
+  @media (max-width: 639px) {
+    .movie-card:hover {
+      transform: none;
+    }
+  }
   .movie-card-info {
     @apply absolute bottom-0 left-0 right-0 p-2 sm:p-3 opacity-0 translate-y-2 transition-all duration-300;
     background: linear-gradient(to top, hsl(0 0% 5% / 0.95), transparent);
   }
   .movie-card:hover .movie-card-info {
     @apply opacity-100 translate-y-0;
+  }
+  @media (max-width: 639px) {
+    .movie-card-info {
+      @apply opacity-100 translate-y-0;
+    }
   }
 }

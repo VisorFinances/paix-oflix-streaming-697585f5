@@ -31,7 +31,7 @@ const MovieDetailModal = ({ movie, onClose, onPlay, onToggleFavorite, isFavorite
         <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
 
         <motion.div
-          className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-xl bg-card shadow-2xl"
+          className="relative w-full max-w-3xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto rounded-none sm:rounded-xl bg-card shadow-2xl"
           initial={{ scale: 0.9, opacity: 0, y: 40 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.9, opacity: 0, y: 40 }}
@@ -62,18 +62,18 @@ const MovieDetailModal = ({ movie, onClose, onPlay, onToggleFavorite, isFavorite
               <X className="w-5 h-5" />
             </button>
 
-            <div className="absolute bottom-6 left-6 right-6">
-              <h2 className="text-3xl md:text-5xl font-display tracking-wider text-foreground">
+            <div className="absolute bottom-3 left-3 right-3 sm:bottom-6 sm:left-6 sm:right-6">
+              <h2 className="text-xl sm:text-3xl md:text-5xl font-display tracking-wider text-foreground">
                 {movie.title}
               </h2>
             </div>
           </div>
 
-          <div className="p-6 space-y-6">
-            <div className="flex items-center gap-3">
+          <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               <button
                 onClick={() => onPlay(movie)}
-                className="flex items-center gap-2 px-8 py-3 rounded-md bg-foreground text-background font-semibold hover:opacity-80 transition text-sm"
+                className="flex items-center gap-1.5 sm:gap-2 px-4 sm:px-8 py-2 sm:py-3 rounded-md bg-foreground text-background font-semibold hover:opacity-80 transition text-xs sm:text-sm"
               >
                 <Play className="w-5 h-5" /> Assistir Agora
               </button>
