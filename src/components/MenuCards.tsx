@@ -15,7 +15,7 @@ const tiles = [
 const MenuCards = ({ onNavigate }: MenuCardsProps) => {
   return (
     <section className="px-4 md:px-12 mb-10">
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
         {tiles.map(tile => (
           <button
             key={tile.id}
