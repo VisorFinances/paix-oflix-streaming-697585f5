@@ -55,27 +55,65 @@ function matchesKeywords(movie: Movie, keywords: RegExp[]): boolean {
 const MOTHER_KEYWORDS = [/mãe/i, /mae/i, /matern/i, /mother/i, /mamãe/i, /mama/i, /família/i];
 const FATHER_KEYWORDS = [/pai/i, /patern/i, /father/i, /papai/i, /dad/i, /família/i];
 
-// Enhanced finance/success keywords - much broader coverage
-const FINANCE_KEYWORDS = [
-  // Finance & Money
-  /dinheiro/i, /financ/i, /wall street/i, /bilion/i, /billion/i, /milion/i, /million/i,
-  /banco/i, /bank/i, /invest/i, /econom/i, /money/i, /capital/i, /bolsa/i, /trader/i,
-  /cripto/i, /bitcoin/i, /forex/i, /ações/i, /stock/i, /lucro/i, /profit/i,
-  // Business & Entrepreneurship
-  /negóci/i, /business/i, /empres/i, /empreend/i, /startup/i, /ceo/i, /corporat/i,
-  /empresa/i, /magnata/i, /mogul/i, /tycoon/i, /empire/i, /império/i,
-  // Success & Wealth
-  /rico/i, /riq/i, /fortune/i, /fortuna/i, /sucesso/i, /success/i, /wealth/i,
-  /milionár/i, /billionair/i, /bilionár/i, /milionari/i, /prosper/i,
-  // Empowerment & Overcoming
-  /superação/i, /superar/i, /empoderam/i, /empower/i, /inspira/i, /motivac/i,
-  /conquist/i, /vitória/i, /triumph/i, /determinaç/i, /resiliên/i,
-  // Specific titles commonly about finance/success
-  /wolf/i, /lobo/i, /pursuit.*happyness/i, /à procura/i, /wall\s*street/i,
-  /big\s*short/i, /grande\s*aposta/i, /margin\s*call/i, /inside\s*job/i,
-  /social\s*network/i, /rede\s*social/i, /jobs/i, /steve\s*jobs/i,
-  /fundador/i, /founder/i, /self[\s-]*made/i, /rags.*riches/i,
+// STRICT finance/success keywords — only content truly about financial success, entrepreneurship, overcoming
+const COFRE_TITLE_KEYWORDS = [
+  // Direct finance titles
+  /wall\s*street/i, /wolf.*wall/i, /lobo.*wall/i,
+  /big\s*short/i, /grande\s*aposta/i,
+  /margin\s*call/i, /inside\s*job/i,
+  /money\s*ball/i, /moneyball/i,
+  /trading/i, /trader/i,
+  /bitcoin/i, /cripto/i, /crypto/i,
+  /bilion/i, /billion/i,
+  /pursuit.*happyness/i, /à\s*procura.*felicidade/i,
+  /social\s*network/i, /rede\s*social/i,
+  /steve\s*jobs/i, /jobs/i,
+  /founder/i, /fundador/i,
+  /self[\s-]*made/i,
+  /mogul/i, /magnata/i, /tycoon/i,
+  // Portuguese finance
+  /dinheiro/i, /milionár/i, /bilionár/i,
+  /empreendedor/i, /startup/i,
+  /investidor/i, /investimento/i,
+  /fortuna/i, /riqueza/i,
+  /bolsa\s*de\s*valores/i,
+  /negócios/i, /business/i,
+  /imperio\s*financ/i, /império/i,
+  /corporaç/i, /corporate/i,
 ];
+
+// Description-level keywords that MUST appear in context of finance/business
+const COFRE_DESC_KEYWORDS = [
+  /financ/i, /wall\s*street/i, /bolsa\s*de\s*valores/i,
+  /empreend/i, /empresa/i, /negócio/i, /business/i,
+  /investi/i, /lucro/i, /profit/i, /capital/i,
+  /bilion/i, /billion/i, /milion/i, /million/i,
+  /rico/i, /riqueza/i, /wealth/i, /fortune/i,
+  /sucesso\s*(financ|profission|empres)/i,
+  /self[\s-]*made/i, /empreendedorismo/i,
+  /startup/i, /ceo/i, /fundador/i,
+  /superação.*vida/i, /história.*real.*sucesso/i,
+];
+
+// Genres that should EXCLUDE content from Cofre (not about finance)
+const COFRE_EXCLUDE_GENRES = [/terror/i, /horror/i, /infantil/i, /kids/i, /animação/i, /anime/i];
+
+function isCofreContent(movie: Movie): boolean {
+  // Exclude kids content and horror
+  if (movie.kids) return false;
+  if (movie.genre.some(g => COFRE_EXCLUDE_GENRES.some(rx => rx.test(g)))) return false;
+
+  const title = movie.title.toLowerCase();
+  const desc = (movie.description || '').toLowerCase();
+
+  // Check if title matches any finance-related title
+  if (COFRE_TITLE_KEYWORDS.some(rx => rx.test(title))) return true;
+
+  // Check if description has finance/business keywords
+  if (COFRE_DESC_KEYWORDS.some(rx => rx.test(desc))) return true;
+
+  return false;
+}
 
 export function getSeasonalSections(movies: Movie[], now: Date = new Date()): SeasonalSection[] {
   const year = now.getFullYear();
@@ -140,7 +178,7 @@ export function getSeasonalSections(movies: Movie[], now: Date = new Date()): Se
   }
 
   // 6. Cofre de Histórias $ — Sunday 13:13 → Wednesday 12:47 weekly
-  // Only shows finance/business/success content
+  // STRICT: only finance, entrepreneurship, financial success, empowerment, real overcoming stories
   const dayOfWeek = now.getDay();
   const h = now.getHours();
   const min = now.getMinutes();
@@ -150,7 +188,7 @@ export function getSeasonalSections(movies: Movie[], now: Date = new Date()): Se
     dayOfWeek === 1 || dayOfWeek === 2 ||
     (dayOfWeek === 3 && timeVal < 12 * 60 + 47);
   if (isCofreActive) {
-    const items = movies.filter(mv => matchesKeywords(mv, FINANCE_KEYWORDS));
+    const items = movies.filter(mv => isCofreContent(mv));
     if (items.length > 0) sections.push({ title: 'Cofre de Histórias $', movies: items });
   }
 

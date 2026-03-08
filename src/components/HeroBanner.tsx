@@ -27,10 +27,10 @@ function isDirectVideo(url: string): boolean {
   return /\.(mp4|m3u8|mpd|webm)(\?|$)/i.test(url) || (url.includes('archive.org') && !url.includes('youtube'));
 }
 
-const COVER_DURATION = 3000;   // 3s to show cover before trailer
-const TRAILER_DURATION = 7000; // 7s trailer plays
-const FADE_DURATION = 800;     // crossfade
-const STATIC_DURATION = 5000;  // fallback for no trailer
+const COVER_DURATION = 3000;
+const TRAILER_DURATION = 7000;
+const FADE_DURATION = 800;
+const STATIC_DURATION = 5000;
 
 const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
   const heroMovies = useMemo(() => {
@@ -68,9 +68,9 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
     }, FADE_DURATION);
   }, [heroMovies.length]);
 
-  // Phase state machine
+  // Phase state machine — infinite loop
   useEffect(() => {
-    if (heroMovies.length <= 1) return;
+    if (heroMovies.length <= 1 && !hasTrailer) return;
     if (!movie) return;
 
     if (phase === 'cover') {
@@ -129,7 +129,7 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
             fetchPriority="high"
           />
 
-          {/* Direct video trailer */}
+          {/* Direct video trailer — FULL SIZE */}
           {directSrc && (
             <video
               ref={videoRef}
@@ -141,14 +141,14 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
             />
           )}
 
-          {/* YouTube trailer */}
+          {/* YouTube trailer — FULL SIZE */}
           {youtubeUrl && !directSrc && showTrailer && (
             <iframe
               ref={iframeRef}
               src={youtubeUrl}
-              className="absolute inset-0 w-full h-full"
+              className="absolute inset-0 w-full h-full z-[2]"
               allow="autoplay; encrypted-media"
-              style={{ border: 'none', pointerEvents: 'none' }}
+              style={{ border: 'none', pointerEvents: 'none', width: '100%', height: '100%' }}
             />
           )}
         </motion.div>
@@ -158,8 +158,17 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
       <div className="absolute inset-0 z-[1]" style={{ background: 'var(--hero-gradient)' }} />
       <div className="absolute inset-0 z-[1] bg-gradient-to-r from-background/90 via-background/40 to-transparent" />
 
-      {/* Content */}
-      <div className="relative z-10 flex flex-col justify-end h-full px-4 md:px-12 pb-12 sm:pb-16 max-w-2xl">
+      {/* Content — left aligned, moves down during trailer */}
+      <div className={`relative z-10 flex flex-col justify-end h-full px-4 md:px-12 max-w-2xl transition-all duration-500 ${
+        showTrailer ? 'pb-4 sm:pb-6' : 'pb-12 sm:pb-16'
+      }`}>
+        {/* Dark backdrop behind text when trailer is playing */}
+        {showTrailer && (
+          <div className="absolute inset-x-0 bottom-0 h-[40%] z-[-1]" style={{
+            background: 'linear-gradient(to top, hsl(var(--background)) 0%, hsl(var(--background) / 0.85) 40%, transparent 100%)',
+          }} />
+        )}
+
         <AnimatePresence mode="wait">
           <motion.div
             key={movie.id}
@@ -167,17 +176,20 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.5 }}
+            className="text-left"
           >
-            <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-display tracking-wider mb-1.5 sm:mb-2 drop-shadow-lg">
+            <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-display tracking-wider mb-1.5 sm:mb-2 drop-shadow-lg text-left">
               {movie.title}
             </h1>
-            <p className="text-[10px] sm:text-xs md:text-sm text-secondary-foreground mb-1 drop-shadow">
+            <p className="text-[10px] sm:text-xs md:text-sm text-secondary-foreground mb-1 drop-shadow text-left">
               {movie.year} · {movie.genre.join(', ')} {movie.rating ? `· ★ ${movie.rating}` : ''}
             </p>
-            <p className="text-[10px] sm:text-xs md:text-sm text-foreground/80 mb-3 sm:mb-5 line-clamp-2 sm:line-clamp-3 drop-shadow max-w-lg">
+            <p className={`text-[10px] sm:text-xs md:text-sm text-foreground/80 mb-3 sm:mb-5 drop-shadow max-w-lg text-left ${
+              showTrailer ? 'line-clamp-1' : 'line-clamp-2 sm:line-clamp-3'
+            }`}>
               {movie.description}
             </p>
-            <div className="flex gap-2 sm:gap-3">
+            <div className="flex gap-2 sm:gap-3 justify-start">
               <button
                 onClick={() => onPlay(movie)}
                 className="flex items-center gap-1.5 px-3 sm:px-5 py-1.5 sm:py-2 rounded-md bg-foreground text-background font-semibold hover:opacity-80 transition text-[10px] sm:text-xs md:text-sm"
@@ -212,7 +224,7 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
         </div>
       )}
 
-      {/* Progress bar for current slide */}
+      {/* Progress bar */}
       <div className="absolute bottom-0 left-0 right-0 z-10 h-[2px] bg-foreground/10">
         <motion.div
           key={`progress-${currentIndex}-${phase}`}
