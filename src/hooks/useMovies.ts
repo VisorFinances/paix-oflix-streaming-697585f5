@@ -71,7 +71,7 @@ async function tmdbSearch(title: string, type: 'movie' | 'tv'): Promise<any | nu
   } catch { return null; }
 }
 
-async function enrichMoviesWithTMDB(movies: Movie[], setMovies: (m: Movie[]) => void) {
+async function enrichMoviesWithTMDB(movies: Movie[], setMovies: React.Dispatch<React.SetStateAction<Movie[]>>) {
   const cache = loadEnrichCache();
   const needsEnrich = movies.filter(m => !m.image && !cache[m.title]);
   
