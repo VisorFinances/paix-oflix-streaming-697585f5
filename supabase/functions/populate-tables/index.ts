@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
     // Map fields
     const mappedData = data
       .filter((item: RawItem) => item.titulo)
-      .map((item: RawItem) => mapItem(item, table));
+      .map((item: RawItem) => mapItem(item));
 
     // Clear existing data
     await supabase.from(table).delete().neq("id", "00000000-0000-0000-0000-000000000000");
