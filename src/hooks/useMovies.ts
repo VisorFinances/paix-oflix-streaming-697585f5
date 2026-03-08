@@ -17,94 +17,95 @@ export function pickRandom<T>(arr: T[], count: number): T[] {
   return shuffleArray(arr).slice(0, count);
 }
 
-// ─── GitHub JSON fallback ─────────────────────────────────────────────────────
+// ─── TMDB client-side enrichment for missing posters ────────────────────────
 
-const BASE = 'https://raw.githubusercontent.com/VisorFinances/paix-oflix-streaming-697585f5/refs/heads/main/data';
+const TMDB_API_KEY = 'b275ce8e1a6b3d5d879bb0907e4f56ad';
+const TMDB_BASE = 'https://api.themoviedb.org/3';
+const ENRICH_CACHE_KEY = 'paixaoflix-tmdb-enrich';
 
-interface RawItem {
-  titulo: string;
-  tmdb_id?: string;
-  url?: string;
-  identificador_archive?: string;
-  trailer?: string;
-  genero?: string | string[];
-  categories?: string[];
-  year?: string;
-  rating?: string;
-  desc?: string;
-  poster?: string;
-  type?: string;
-  kids?: boolean;
-}
-
-async function safeFetch(url: string): Promise<RawItem[]> {
-  try {
-    const res = await fetch(url, { cache: 'no-store' });
-    if (!res.ok) return [];
-    const text = await res.text();
-    if (text.trim().startsWith('<')) return [];
-    const parsed = JSON.parse(text);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function parseGenres(raw: RawItem): string[] {
-  let genres: string[] = [];
-  if (raw.categories?.length) genres = [...raw.categories];
-  if (raw.genero) {
-    if (Array.isArray(raw.genero)) genres = [...genres, ...raw.genero];
-    else genres.push(raw.genero);
-  }
-  return [...new Set(genres)];
-}
-
-function normalizeRawItem(raw: RawItem, idx: number, source: string): Movie {
-  const genres = parseGenres(raw);
-  const tipo = raw.type === 'serie' || raw.type === 'series' ? 'series' : 'movie';
-  const isKids = !!raw.kids || source.includes('kids') || genres.some(g => /kids|infantil|crian/i.test(g));
-
-  return {
-    id: `${source}-${idx}`,
-    title: raw.titulo || '',
-    description: raw.desc || '',
-    image: raw.poster || '',
-    year: parseInt(raw.year || '2024') || 2024,
-    genre: genres,
-    type: tipo as Movie['type'],
-    rating: raw.rating || '',
-    streamUrl: raw.identificador_archive
-      ? `https://archive.org/download/${raw.identificador_archive}/`
-      : (raw.url || ''),
-    trailer: raw.trailer || '',
-    kids: isKids,
-    source: isKids ? (tipo === 'series' ? 'serieskids' : 'filmeskids') : (tipo === 'series' ? 'series' : 'cinema'),
-    tmdbId: raw.tmdb_id,
+interface EnrichCache {
+  [titulo: string]: {
+    poster?: string;
+    backdrop?: string;
+    genres?: string[];
+    year?: string;
+    rating?: string;
+    description?: string;
   };
 }
 
-async function fetchFromGitHub(): Promise<Movie[]> {
-  const [cinema, series, kidsFilmes, kidsSeries, favoritos] = await Promise.all([
-    safeFetch(`${BASE}/cinema.json`),
-    safeFetch(`${BASE}/series.json`),
-    safeFetch(`${BASE}/kids_filmes.json`),
-    safeFetch(`${BASE}/kids_series.json`),
-    safeFetch(`${BASE}/Favoritos.json`),
-  ]);
+function loadEnrichCache(): EnrichCache {
+  try {
+    return JSON.parse(localStorage.getItem(ENRICH_CACHE_KEY) || '{}');
+  } catch { return {}; }
+}
 
-  const all: Movie[] = [];
-  cinema.forEach((r, i) => r.titulo && all.push(normalizeRawItem(r, i, 'cinema')));
-  series.forEach((r, i) => r.titulo && all.push(normalizeRawItem(r, i, 'series')));
-  kidsFilmes.forEach((r, i) => r.titulo && all.push(normalizeRawItem(r, i, 'kids_filmes')));
-  kidsSeries.forEach((r, i) => r.titulo && all.push(normalizeRawItem(r, i, 'kids_series')));
-  favoritos.forEach((r, i) => {
-    if (r.titulo) {
-      const m = normalizeRawItem(r, i, 'cinema');
-      all.push({ ...m, id: `favoritos-${i}`, source: 'favoritos' });
+function saveEnrichCache(cache: EnrichCache) {
+  try {
+    localStorage.setItem(ENRICH_CACHE_KEY, JSON.stringify(cache));
+  } catch { /* storage full */ }
+}
+
+async function tmdbSearch(title: string, type: 'movie' | 'tv'): Promise<any | null> {
+  const clean = title
+    .replace(/\s*-\s*\d+ª\s*Temporada/i, '')
+    .replace(/\s*Temporada\s*\d+/i, '')
+    .replace(/\s*-\s*Todos os episódios/i, '')
+    .replace(/\s*-\s*Completo/i, '')
+    .trim();
+
+  try {
+    const res = await fetch(
+      `${TMDB_BASE}/search/${type}?api_key=${TMDB_API_KEY}&language=pt-BR&query=${encodeURIComponent(clean)}&page=1`
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const result = data.results?.[0];
+    if (!result) return null;
+    return {
+      poster: result.poster_path ? `https://image.tmdb.org/t/p/w500${result.poster_path}` : undefined,
+      backdrop: result.backdrop_path ? `https://image.tmdb.org/t/p/original${result.backdrop_path}` : undefined,
+      genres: [], // basic search doesn't return genre names
+      year: (result.release_date || result.first_air_date || '').slice(0, 4),
+      rating: result.vote_average ? result.vote_average.toFixed(1) : undefined,
+      description: result.overview || undefined,
+    };
+  } catch { return null; }
+}
+
+async function enrichMoviesWithTMDB(movies: Movie[]): Promise<Movie[]> {
+  const cache = loadEnrichCache();
+  const needsEnrich = movies.filter(m => !m.image && !cache[m.title]);
+  
+  // Enrich up to 20 missing posters per load (to avoid rate limits)
+  const batch = needsEnrich.slice(0, 20);
+  
+  for (const m of batch) {
+    const type = m.type === 'series' ? 'tv' : 'movie';
+    const result = await tmdbSearch(m.title, type);
+    if (result) {
+      cache[m.title] = result;
+    } else {
+      cache[m.title] = {}; // mark as searched to avoid re-fetching
     }
+    await new Promise(r => setTimeout(r, 200));
+  }
+  
+  if (batch.length > 0) saveEnrichCache(cache);
+  
+  // Apply cached enrichments
+  return movies.map(m => {
+    const enriched = cache[m.title];
+    if (!enriched) return m;
+    return {
+      ...m,
+      image: m.image || enriched.poster || '',
+      backdrop: m.backdrop || enriched.backdrop || undefined,
+      description: m.description || enriched.description || '',
+      year: m.year === 2024 && enriched.year ? parseInt(enriched.year) || m.year : m.year,
+      rating: m.rating || enriched.rating || '',
+    };
   });
-  return all;
 }
 
 // ─── DB Row → Movie mapper ──────────────────────────────────────────────────
@@ -131,7 +132,10 @@ function dbRowToMovie(row: DbRow, sourceOverride: string): Movie {
   const genreArr: string[] = [];
   if (row.genero) {
     if (Array.isArray(row.genero)) genreArr.push(...row.genero);
-    else genreArr.push(row.genero);
+    else {
+      // Handle comma-separated string
+      row.genero.split(',').forEach(g => genreArr.push(g.trim()));
+    }
   }
   if (row.categories) genreArr.push(...row.categories);
   const uniqueGenres = [...new Set(genreArr.filter(Boolean))];
@@ -207,20 +211,23 @@ export function useMovies() {
 
   const fetchData = useCallback(async () => {
     try {
-      const cloudMovies = await fetchFromCloud();
+      let cloudMovies = await fetchFromCloud();
       if (cloudMovies.length > 0) {
+        // First render with raw data
         setMovies(cloudMovies);
         setLoading(false);
+        
+        // Then enrich missing posters from TMDB (non-blocking)
+        const enriched = await enrichMoviesWithTMDB(cloudMovies);
+        setMovies(enriched);
         return;
       }
 
-      console.warn('[useMovies] Cloud DB empty, falling back to GitHub JSON');
-      const githubMovies = await fetchFromGitHub();
-      setMovies(githubMovies);
+      console.warn('[useMovies] Cloud DB empty, no data available');
+      setMovies([]);
     } catch (e) {
       console.error('Error fetching movies:', e);
-      const githubMovies = await fetchFromGitHub();
-      setMovies(githubMovies);
+      setMovies([]);
     } finally {
       setLoading(false);
     }

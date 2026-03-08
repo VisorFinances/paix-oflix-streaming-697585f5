@@ -54,28 +54,49 @@ function matchesKeywords(movie: Movie, keywords: RegExp[]): boolean {
 
 const MOTHER_KEYWORDS = [/mãe/i, /mae/i, /matern/i, /mother/i, /mamãe/i, /mama/i, /família/i];
 const FATHER_KEYWORDS = [/pai/i, /patern/i, /father/i, /papai/i, /dad/i, /família/i];
-const FINANCE_KEYWORDS = [/dinheiro/i, /financ/i, /wall street/i, /bilion/i, /billion/i, /milion/i, /million/i, /banco/i, /bank/i, /invest/i, /econom/i, /negóci/i, /business/i, /empres/i, /rico/i, /riq/i, /fortune/i, /fortuna/i, /money/i, /capital/i, /bolsa/i, /trader/i, /cripto/i];
+
+// Enhanced finance/success keywords - much broader coverage
+const FINANCE_KEYWORDS = [
+  // Finance & Money
+  /dinheiro/i, /financ/i, /wall street/i, /bilion/i, /billion/i, /milion/i, /million/i,
+  /banco/i, /bank/i, /invest/i, /econom/i, /money/i, /capital/i, /bolsa/i, /trader/i,
+  /cripto/i, /bitcoin/i, /forex/i, /ações/i, /stock/i, /lucro/i, /profit/i,
+  // Business & Entrepreneurship
+  /negóci/i, /business/i, /empres/i, /empreend/i, /startup/i, /ceo/i, /corporat/i,
+  /empresa/i, /magnata/i, /mogul/i, /tycoon/i, /empire/i, /império/i,
+  // Success & Wealth
+  /rico/i, /riq/i, /fortune/i, /fortuna/i, /sucesso/i, /success/i, /wealth/i,
+  /milionár/i, /billionair/i, /bilionár/i, /milionari/i, /prosper/i,
+  // Empowerment & Overcoming
+  /superação/i, /superar/i, /empoderam/i, /empower/i, /inspira/i, /motivac/i,
+  /conquist/i, /vitória/i, /triumph/i, /determinaç/i, /resiliên/i,
+  // Specific titles commonly about finance/success
+  /wolf/i, /lobo/i, /pursuit.*happyness/i, /à procura/i, /wall\s*street/i,
+  /big\s*short/i, /grande\s*aposta/i, /margin\s*call/i, /inside\s*job/i,
+  /social\s*network/i, /rede\s*social/i, /jobs/i, /steve\s*jobs/i,
+  /fundador/i, /founder/i, /self[\s-]*made/i, /rags.*riches/i,
+];
 
 export function getSeasonalSections(movies: Movie[], now: Date = new Date()): SeasonalSection[] {
   const year = now.getFullYear();
   const sections: SeasonalSection[] = [];
 
-  // 1. Semana Santa: Monday 06:01 before Easter → Monday 23:59 after Easter
+  // 1. Semana Santa
   const easter = easterSunday(year);
   const easterMonBefore = mondayOfWeek(easter);
   easterMonBefore.setHours(6, 1, 0);
   const easterMonAfter = new Date(easter);
-  easterMonAfter.setDate(easter.getDate() + 1); // Monday after
+  easterMonAfter.setDate(easter.getDate() + 1);
   easterMonAfter.setHours(23, 59, 0);
   if (now >= easterMonBefore && now <= easterMonAfter) {
     const items = movies.filter(m => m.genre.some(g => /religi/i.test(g)));
     if (items.length > 0) sections.push({ title: 'Semana Santa', movies: items });
   }
 
-  // 2. Dia das Mães: Friday 08:00 before → Monday 14:00 after
+  // 2. Dia das Mães
   const mothersDay = mothersDayDate(year);
   const mdFri = new Date(mothersDay);
-  mdFri.setDate(mothersDay.getDate() - 2); // Friday before Sunday
+  mdFri.setDate(mothersDay.getDate() - 2);
   mdFri.setHours(8, 0, 0);
   const mdMon = new Date(mothersDay);
   mdMon.setDate(mothersDay.getDate() + 1);
@@ -85,7 +106,7 @@ export function getSeasonalSections(movies: Movie[], now: Date = new Date()): Se
     if (items.length > 0) sections.push({ title: 'Especial para as Mães', movies: items });
   }
 
-  // 3. Dia dos Pais: Friday 07:00 before → Monday 13:00 after
+  // 3. Dia dos Pais
   const fathersDay = fathersDayDate(year);
   const fdFri = new Date(fathersDay);
   fdFri.setDate(fathersDay.getDate() - 2);
@@ -98,7 +119,7 @@ export function getSeasonalSections(movies: Movie[], now: Date = new Date()): Se
     if (items.length > 0) sections.push({ title: 'Especial para os Papais', movies: items });
   }
 
-  // 4. Semana das Crianças: Oct 8 09:00 → Oct 13 22:51
+  // 4. Semana das Crianças
   const kidsStart = new Date(year, 9, 8, 9, 0, 0);
   const kidsEnd = new Date(year, 9, 13, 22, 51, 0);
   if (now >= kidsStart && now <= kidsEnd) {
@@ -106,7 +127,7 @@ export function getSeasonalSections(movies: Movie[], now: Date = new Date()): Se
     if (items.length > 0) sections.push({ title: 'Semana das Crianças', movies: items });
   }
 
-  // 5. Natal: Monday of Christmas week 02:00 → Dec 27 00:00
+  // 5. Natal
   const christmas = new Date(year, 11, 25);
   const xmasMon = mondayOfWeek(christmas);
   xmasMon.setHours(2, 0, 0);
@@ -119,14 +140,15 @@ export function getSeasonalSections(movies: Movie[], now: Date = new Date()): Se
   }
 
   // 6. Cofre de Histórias $ — Sunday 13:13 → Wednesday 12:47 weekly
+  // Only shows finance/business/success content
   const dayOfWeek = now.getDay();
   const h = now.getHours();
-  const m = now.getMinutes();
-  const timeVal = h * 60 + m;
+  const min = now.getMinutes();
+  const timeVal = h * 60 + min;
   const isCofreActive =
-    (dayOfWeek === 0 && timeVal >= 13 * 60 + 13) || // Sunday after 13:13
-    dayOfWeek === 1 || dayOfWeek === 2 || // Mon, Tue
-    (dayOfWeek === 3 && timeVal < 12 * 60 + 47); // Wed before 12:47
+    (dayOfWeek === 0 && timeVal >= 13 * 60 + 13) ||
+    dayOfWeek === 1 || dayOfWeek === 2 ||
+    (dayOfWeek === 3 && timeVal < 12 * 60 + 47);
   if (isCofreActive) {
     const items = movies.filter(mv => matchesKeywords(mv, FINANCE_KEYWORDS));
     if (items.length > 0) sections.push({ title: 'Cofre de Histórias $', movies: items });
