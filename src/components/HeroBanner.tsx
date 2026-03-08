@@ -44,6 +44,18 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [canPlayTrailer, setCanPlayTrailer] = useState(true);
+  const prevMoviesRef = useRef<Movie[]>(movies);
+
+  // Reset when movies list changes (view switch)
+  useEffect(() => {
+    if (prevMoviesRef.current !== movies) {
+      prevMoviesRef.current = movies;
+      setCurrentIndex(0);
+      setImgLoaded(false);
+      setPhase('cover');
+      if (timerRef.current) clearTimeout(timerRef.current);
+    }
+  }, [movies]);
 
   useEffect(() => {
     const conn = (navigator as any).connection;
