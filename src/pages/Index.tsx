@@ -406,7 +406,7 @@ const Index = () => {
               )}
 
               {!loading && homeCategories && homeCategories.nostalgia.length > 0 && (
-                <MovieRow title="Nostalgia que aquecem o coração" movies={homeCategories.nostalgia} {...sharedRowProps} />
+                <MovieRow title="Nostalgia que aquecem o coração" movies={homeCategories.nostalgia} gridMode {...sharedRowProps} />
               )}
 
               {!loading && homeCategories && homeCategories.personalized.length > 0 && (
