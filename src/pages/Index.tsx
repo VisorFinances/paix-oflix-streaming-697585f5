@@ -402,7 +402,7 @@ const Index = () => {
               )}
 
               {!loading && homeCategories && homeCategories.kids.length > 0 && (
-                <MovieRow title="As crianças amam" movies={homeCategories.kids} {...sharedRowProps} />
+                <MovieRow title="As crianças amam" movies={homeCategories.kids} gridMode {...sharedRowProps} />
               )}
 
               {!loading && homeCategories && homeCategories.nostalgia.length > 0 && (
