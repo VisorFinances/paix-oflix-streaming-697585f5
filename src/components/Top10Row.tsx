@@ -22,10 +22,10 @@ const Top10Row = ({ title, items, onPlay, onShowDetails }: Top10RowProps) => {
 
   if (items.length === 0) return null;
 
-  const CARD_W = isMobile ? 100 : 200;
-  const NUM_W = isMobile ? 40 : 80;
-  const FONT_SIZE = isMobile ? '4rem' : '7.5rem';
-  const STROKE = isMobile ? '1.5px' : '3px';
+  const CARD_W = isMobile ? 90 : 150;
+  const NUM_W = isMobile ? 36 : 60;
+  const FONT_SIZE = isMobile ? '3.5rem' : '6rem';
+  const STROKE = isMobile ? '1.5px' : '2.5px';
 
   return (
     <section className="mb-6 sm:mb-8 animate-fade-in">
@@ -48,9 +48,9 @@ const Top10Row = ({ title, items, onPlay, onShowDetails }: Top10RowProps) => {
           {items.slice(0, 10).map((item, index) => {
             // Number "10" needs wider space
             const isDoubleDigit = index >= 9;
-            const numWidth = isDoubleDigit ? (isMobile ? 56 : 100) : NUM_W;
+            const numWidth = isDoubleDigit ? (isMobile ? 50 : 80) : NUM_W;
             const fontSize = isDoubleDigit
-              ? (isMobile ? '3.2rem' : '6.5rem')
+              ? (isMobile ? '2.8rem' : '5rem')
               : FONT_SIZE;
 
             return (

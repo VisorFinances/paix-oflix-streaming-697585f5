@@ -88,7 +88,7 @@ const StreamingCardItem = ({ item, idx, onPlay, onShowDetails }: {
 
   return (
     <div
-      className="movie-card group flex-shrink-0 w-[calc((100vw-40px)/3)] sm:w-[160px] md:w-[200px] lg:w-[220px]"
+      className="movie-card group flex-shrink-0 w-[calc((100vw-40px)/3)] sm:w-[130px] md:w-[150px] lg:w-[170px]"
       data-nav="card"
       onMouseEnter={startPreview}
       onMouseLeave={stopPreview}
