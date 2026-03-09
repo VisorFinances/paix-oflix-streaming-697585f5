@@ -11,6 +11,7 @@ import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+import Plans from "./pages/Plans";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const queryClient = new QueryClient({
@@ -35,6 +36,7 @@ const App = () => (
               <Route path="/signup" element={<Signup />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/plans" element={<Plans />} />
               <Route path="/" element={
                 <ProtectedRoute>
                   <Index />
