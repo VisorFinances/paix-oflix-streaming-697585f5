@@ -121,7 +121,7 @@ const VideoPlayer = ({ url, autoPlay = true, onTimeUpdate, className = '' }: Vid
           manifestLoadingMaxRetry: 4,
         });
         hlsRef.current = hls;
-        hls.loadSource(url);
+        hls.loadSource(resolvedUrl);
         hls.attachMedia(video);
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
           clearTimeout(loadTimeout.current);
