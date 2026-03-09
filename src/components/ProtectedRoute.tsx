@@ -27,7 +27,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <img src="/images/logo.png" alt="PaixãoFlix" className="h-[100px] w-auto object-contain animate-pulse" />
+          <img src="/images/logo.png" alt="PaixãoFlix" className="h-[80px] w-auto object-contain animate-pulse" />
           <p className="text-muted-foreground">Carregando...</p>
         </div>
       </div>
