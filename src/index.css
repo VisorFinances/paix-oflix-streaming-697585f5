@@ -196,29 +196,23 @@ body {
     display: none;
   }
 
-  /* Row card sizing — MOBILE: 3 cards visible */
+  /* Row card sizing — MOBILE: 3 cards visible, compact */
   .category-row .pv-card {
     flex-shrink: 0;
-    width: calc((100vw - 24px - 16px) / 3); /* 3 cards, accounting for padding and gaps */
+    width: calc((100vw - 24px - 16px) / 3);
     min-width: calc((100vw - 24px - 16px) / 3);
   }
-  @media (min-width: 400px) {
-    .category-row .pv-card { 
-      width: calc((100vw - 24px - 16px) / 3);
-      min-width: calc((100vw - 24px - 16px) / 3);
-    }
-  }
   @media (min-width: 640px) {
-    .category-row .pv-card { width: 220px; }
+    .category-row .pv-card { width: 150px; min-width: 150px; }
   }
   @media (min-width: 768px) {
-    .category-row .pv-card { width: 244px; }
+    .category-row .pv-card { width: 160px; min-width: 160px; }
   }
   @media (min-width: 1024px) {
-    .category-row .pv-card { width: 268px; }
+    .category-row .pv-card { width: 175px; min-width: 175px; }
   }
   @media (min-width: 1400px) {
-    .category-row .pv-card { width: 293px; }
+    .category-row .pv-card { width: 190px; min-width: 190px; }
   }
 
   /* Mobile: less bottom padding for rows */
