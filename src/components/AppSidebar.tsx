@@ -60,7 +60,7 @@ const AppSidebar = ({ activeView, onNavigate }: AppSidebarProps) => {
         <div className="flex items-center justify-center h-16 border-b border-sidebar-border">
           {expanded ? (
             <div className="flex items-center justify-between w-full px-3">
-              <img src="/images/logo.png" alt="PaixãoFlix" className="h-9" />
+              <img src="/images/logo.png" alt="PaixãoFlix" className="h-[100px] w-auto object-contain" />
               <button onClick={() => setExpanded(false)} className="text-sidebar-foreground hover:text-foreground transition">
                 <X className="w-5 h-5" />
               </button>

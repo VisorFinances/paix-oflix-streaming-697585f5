@@ -19,7 +19,7 @@ body {
     --popover: 0 0% 11%;
     --popover-foreground: 0 0% 95%;
 
-    --primary: 0 85% 50%;
+    --primary: 240 100% 25%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 0 0% 16%;
@@ -36,18 +36,18 @@ body {
 
     --border: 0 0% 20%;
     --input: 0 0% 20%;
-    --ring: 0 85% 50%;
+    --ring: 240 100% 25%;
 
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 6%;
     --sidebar-foreground: 0 0% 80%;
-    --sidebar-primary: 0 85% 50%;
+    --sidebar-primary: 240 100% 25%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 14%;
     --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 0 85% 50%;
+    --sidebar-ring: 240 100% 25%;
 
     --progress-bar: 210 100% 55%;
     --hero-gradient: linear-gradient(to top, hsl(0 0% 8%) 0%, transparent 60%);
