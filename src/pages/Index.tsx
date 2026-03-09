@@ -207,38 +207,39 @@ const Index = () => {
       const sourceMovies = movies.filter(sourceFilter);
 
       if (source === 'series') {
-        const seriesGroups = new Map<string, Movie[]>();
+        // Show all seasons as individual covers, deduplicate only same title+season
+        const seen = new Set<string>();
+        const dedupedSeries: Movie[] = [];
         for (const m of sourceMovies) {
-          const base = getBaseSeriesTitle(m.title);
-          if (!seriesGroups.has(base)) seriesGroups.set(base, []);
-          seriesGroups.get(base)!.push(m);
+          const key = `${getBaseSeriesTitle(m.title)}::${getSeasonNumber(m.title)}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            dedupedSeries.push(m);
+          }
         }
-        for (const [, group] of seriesGroups) {
-          group.sort((a, b) => getSeasonNumber(a.title) - getSeasonNumber(b.title));
-        }
+
+        // Assign each series to ONE genre only (first genre, split compound genres)
         const genreMap = new Map<string, Movie[]>();
-        const assignedSeries = new Set<string>();
-        const sortedGroups = Array.from(seriesGroups.entries()).sort((a, b) => a[0].localeCompare(b[0], 'pt-BR'));
+        const assignedIds = new Set<string>();
 
-        for (const [baseTitle, group] of sortedGroups) {
-          if (assignedSeries.has(baseTitle)) continue;
-          assignedSeries.add(baseTitle);
-          const allGenres = group.flatMap(m => m.genre).filter(Boolean);
-          const primaryGenre = allGenres[0] || 'Outros';
+        for (const m of dedupedSeries) {
+          if (assignedIds.has(m.id)) continue;
+          assignedIds.add(m.id);
+          // Split compound genres like "Ação & Aventura" into separate genres, use first one
+          const allGenres = m.genre.flatMap(g => g.includes('&') ? g.split('&').map(s => s.trim()) : [g]).filter(Boolean);
+          const primaryGenre = allGenres[0] || 'Drama';
           if (!genreMap.has(primaryGenre)) genreMap.set(primaryGenre, []);
-          genreMap.get(primaryGenre)!.push(...group);
+          genreMap.get(primaryGenre)!.push(m);
         }
 
-        const launch2026 = sourceMovies.filter(m => m.year >= 2026);
-        if (launch2026.length > 0) genreMap.set('Lançamento 2026', launch2026);
-        const launch2025 = sourceMovies.filter(m => m.year === 2025);
-        if (launch2025.length > 0) genreMap.set('Lançamento 2025', launch2025);
-
-        return Array.from(genreMap.entries()).sort((a, b) => {
-          const ia = ORDER_LIST.findIndex(o => o.toLowerCase() === a[0].toLowerCase());
-          const ib = ORDER_LIST.findIndex(o => o.toLowerCase() === b[0].toLowerCase());
-          return (ia >= 0 ? ia : 999) - (ib >= 0 ? ib : 999);
-        });
+        // No "Lançamento" categories for series page
+        return Array.from(genreMap.entries())
+          .filter(([genre]) => genre.toLowerCase() !== 'outros')
+          .sort((a, b) => {
+            const ia = ORDER_LIST.findIndex(o => o.toLowerCase() === a[0].toLowerCase());
+            const ib = ORDER_LIST.findIndex(o => o.toLowerCase() === b[0].toLowerCase());
+            return (ia >= 0 ? ia : 999) - (ib >= 0 ? ib : 999);
+          });
       }
 
       const genreMap = new Map<string, Movie[]>();
