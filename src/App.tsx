@@ -14,6 +14,7 @@ import NotFound from "./pages/NotFound";
 import Plans from "./pages/Plans";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
+import Admin from "./pages/Admin";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const queryClient = new QueryClient({
