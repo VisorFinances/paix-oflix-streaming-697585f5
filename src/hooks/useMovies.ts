@@ -17,6 +17,44 @@ export function pickRandom<T>(arr: T[], count: number): T[] {
   return shuffleArray(arr).slice(0, count);
 }
 
+// ─── Genre translation EN → PT-BR ──────────────────────────────────────────
+
+const GENRE_TRANSLATION: Record<string, string> = {
+  'action': 'Ação',
+  'adventure': 'Aventura',
+  'animation': 'Animação',
+  'comedy': 'Comédia',
+  'crime': 'Crime',
+  'documentary': 'Documentário',
+  'drama': 'Drama',
+  'family': 'Família',
+  'fantasy': 'Fantasia',
+  'history': 'História',
+  'horror': 'Terror',
+  'music': 'Musical',
+  'mystery': 'Mistério',
+  'romance': 'Romance',
+  'science fiction': 'Ficção Científica',
+  'sci-fi': 'Ficção Científica',
+  'sci-fi & fantasy': 'Ficção Científica & Fantasia',
+  'action & adventure': 'Ação & Aventura',
+  'tv movie': 'Filme para TV',
+  'thriller': 'Suspense',
+  'war': 'Guerra',
+  'western': 'Faroeste',
+  'war & politics': 'Guerra & Política',
+  'kids': 'Infantil',
+  'reality': 'Reality',
+  'soap': 'Novela',
+  'talk': 'Talk Show',
+  'news': 'Notícias',
+};
+
+function translateGenre(genre: string): string {
+  const lower = genre.trim().toLowerCase();
+  return GENRE_TRANSLATION[lower] || genre.trim();
+}
+
 // ─── TMDB client-side enrichment for missing posters (non-blocking) ─────────
 
 const TMDB_API_KEY = 'b275ce8e1a6b3d5d879bb0907e4f56ad';
@@ -30,6 +68,7 @@ interface EnrichCache {
     year?: string;
     rating?: string;
     description?: string;
+    genres?: string[];
   };
 }
 
@@ -54,26 +93,36 @@ async function tmdbSearch(title: string, type: 'movie' | 'tv'): Promise<any | nu
     .trim();
 
   try {
+    // First search
     const res = await fetch(
       `${TMDB_BASE}/search/${type}?api_key=${TMDB_API_KEY}&language=pt-BR&query=${encodeURIComponent(clean)}&page=1`
     );
     if (!res.ok) return null;
     const data = await res.json();
-    const result = data.results?.[0];
-    if (!result) return null;
+    const firstResult = data.results?.[0];
+    if (!firstResult) return null;
+    
+    // Get full details with genres
+    const detailRes = await fetch(
+      `${TMDB_BASE}/${type}/${firstResult.id}?api_key=${TMDB_API_KEY}&language=pt-BR`
+    );
+    if (!detailRes.ok) return null;
+    const detail = await detailRes.json();
+    
     return {
-      poster: result.poster_path ? `https://image.tmdb.org/t/p/w500${result.poster_path}` : undefined,
-      backdrop: result.backdrop_path ? `https://image.tmdb.org/t/p/original${result.backdrop_path}` : undefined,
-      year: (result.release_date || result.first_air_date || '').slice(0, 4),
-      rating: result.vote_average ? result.vote_average.toFixed(1) : undefined,
-      description: result.overview || undefined,
+      poster: detail.poster_path ? `https://image.tmdb.org/t/p/w500${detail.poster_path}` : undefined,
+      backdrop: detail.backdrop_path ? `https://image.tmdb.org/t/p/original${detail.backdrop_path}` : undefined,
+      year: (detail.release_date || detail.first_air_date || '').slice(0, 4),
+      rating: detail.vote_average ? detail.vote_average.toFixed(1) : undefined,
+      description: detail.overview || undefined,
+      genres: detail.genres?.map((g: any) => translateGenre(g.name)) || undefined,
     };
   } catch { return null; }
 }
 
 async function enrichMoviesWithTMDB(movies: Movie[], setMovies: React.Dispatch<React.SetStateAction<Movie[]>>) {
   const cache = loadEnrichCache();
-  const needsEnrich = movies.filter(m => !m.image && !cache[m.title]);
+  const needsEnrich = movies.filter(m => (!m.image || m.image.length < 5) && !cache[m.title]);
   
   // Apply cached enrichments immediately
   const withCache = movies.map(m => {
@@ -86,6 +135,7 @@ async function enrichMoviesWithTMDB(movies: Movie[], setMovies: React.Dispatch<R
       description: m.description || enriched.description || '',
       year: m.year === 2024 && enriched.year ? parseInt(enriched.year) || m.year : m.year,
       rating: m.rating || enriched.rating || '',
+      genre: enriched.genres && enriched.genres.length > 0 && m.genre.length === 0 ? enriched.genres : m.genre,
     };
   });
   
@@ -93,8 +143,8 @@ async function enrichMoviesWithTMDB(movies: Movie[], setMovies: React.Dispatch<R
     setMovies(withCache);
   }
 
-  // Enrich missing in background (10 at a time, no blocking)
-  const batch = needsEnrich.slice(0, 10);
+  // Enrich missing in background (15 at a time)
+  const batch = needsEnrich.slice(0, 15);
   if (batch.length === 0) return;
   
   for (const m of batch) {
@@ -117,6 +167,7 @@ async function enrichMoviesWithTMDB(movies: Movie[], setMovies: React.Dispatch<R
       description: m.description || enriched.description || '',
       year: m.year === 2024 && enriched.year ? parseInt(enriched.year) || m.year : m.year,
       rating: m.rating || enriched.rating || '',
+      genre: enriched.genres && enriched.genres.length > 0 && m.genre.length === 0 ? enriched.genres : m.genre,
     };
   }));
 }
@@ -144,13 +195,15 @@ interface DbRow {
 function dbRowToMovie(row: DbRow, sourceOverride: string): Movie {
   const genreArr: string[] = [];
   if (row.genero) {
-    if (Array.isArray(row.genero)) genreArr.push(...row.genero);
+    if (Array.isArray(row.genero)) genreArr.push(...row.genero.map(translateGenre));
     else {
-      row.genero.split(',').forEach(g => genreArr.push(g.trim()));
+      row.genero.split(',').forEach(g => genreArr.push(translateGenre(g)));
     }
   }
-  if (row.categories) genreArr.push(...row.categories);
-  const uniqueGenres = [...new Set(genreArr.filter(Boolean))];
+  if (row.categories) genreArr.push(...row.categories.map(translateGenre));
+  
+  // Remove "Outros" — always use real genre
+  const uniqueGenres = [...new Set(genreArr.filter(g => g && g.toLowerCase() !== 'outros'))];
 
   const isKids = !!row.kids || sourceOverride.includes('kids') || uniqueGenres.some(g => /kids|infantil|crian/i.test(g));
   const tipo = (row.tipo === 'series' || row.tipo === 'serie') ? 'series' : 'movie';
@@ -184,21 +237,32 @@ function dbRowToMovie(row: DbRow, sourceOverride: string): Movie {
   };
 }
 
-// ─── Deduplicate series by tmdb_id (keep one with trailer, or first) ────────
+// ─── Deduplicate series by tmdb_id or normalized title ──────────────────────
+
+function normalizeSeriesTitle(title: string): string {
+  return title
+    .replace(/\s*-\s*\d+ª\s*Temporada/i, '')
+    .replace(/\s*Temporada\s*\d+/i, '')
+    .replace(/\s*-\s*Todos os episódios/i, '')
+    .replace(/\s*-\s*Completo/i, '')
+    .replace(/\s*S\d+E\d+/i, '')
+    .replace(/\s*\(\d{4}\)/i, '')
+    .trim()
+    .toLowerCase();
+}
 
 function deduplicateDbRows(rows: DbRow[]): DbRow[] {
   const seen = new Map<string, DbRow>();
   for (const row of rows) {
-    // Key by tmdb_id + titulo combo to catch duplicates
+    const normalizedTitle = normalizeSeriesTitle(row.titulo);
     const key = row.tmdb_id 
-      ? `tmdb:${row.tmdb_id}:${row.titulo.toLowerCase()}`
-      : `title:${row.titulo.toLowerCase()}`;
+      ? `tmdb:${row.tmdb_id}:${normalizedTitle}`
+      : `title:${normalizedTitle}`;
     
     const existing = seen.get(key);
     if (!existing) {
       seen.set(key, row);
     } else {
-      // Keep the one with more data (trailer, poster, etc.)
       const existingScore = (existing.trailer ? 1 : 0) + (existing.poster ? 1 : 0) + (existing.descricao ? 1 : 0);
       const newScore = (row.trailer ? 1 : 0) + (row.poster ? 1 : 0) + (row.descricao ? 1 : 0);
       if (newScore > existingScore) {
@@ -239,7 +303,6 @@ async function fetchFromCloud(): Promise<Movie[]> {
 
   for (const result of results) {
     if (result) {
-      // Deduplicate rows from DB before mapping
       const deduplicated = deduplicateDbRows(result.data);
       deduplicated.forEach(row => all.push(dbRowToMovie(row, result.source)));
     }
@@ -261,6 +324,7 @@ export function useMovies() {
     try {
       const cloudMovies = await fetchFromCloud();
       if (cloudMovies.length > 0) {
+        // Filter out movies without cover images (unless enrichment can fix them)
         setMovies(cloudMovies);
         setLoading(false);
         
@@ -281,7 +345,8 @@ export function useMovies() {
 
   useEffect(() => {
     fetchData();
-    const id = setInterval(fetchData, 15 * 60 * 1000);
+    // Auto-refresh every 7 minutes
+    const id = setInterval(fetchData, 7 * 60 * 1000);
     return () => clearInterval(id);
   }, [fetchData]);
 

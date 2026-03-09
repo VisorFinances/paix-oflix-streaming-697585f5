@@ -55,64 +55,65 @@ function matchesKeywords(movie: Movie, keywords: RegExp[]): boolean {
 const MOTHER_KEYWORDS = [/mãe/i, /mae/i, /matern/i, /mother/i, /mamãe/i, /mama/i, /família/i];
 const FATHER_KEYWORDS = [/pai/i, /patern/i, /father/i, /papai/i, /dad/i, /família/i];
 
-// STRICT finance/success keywords — only content truly about financial success, entrepreneurship, overcoming
-const COFRE_TITLE_KEYWORDS = [
-  // Direct finance titles
-  /wall\s*street/i, /wolf.*wall/i, /lobo.*wall/i,
-  /big\s*short/i, /grande\s*aposta/i,
-  /margin\s*call/i, /inside\s*job/i,
-  /money\s*ball/i, /moneyball/i,
-  /trading/i, /trader/i,
-  /bitcoin/i, /cripto/i, /crypto/i,
-  /bilion/i, /billion/i,
-  /pursuit.*happyness/i, /à\s*procura.*felicidade/i,
-  /social\s*network/i, /rede\s*social/i,
-  /steve\s*jobs/i, /jobs/i,
-  /founder/i, /fundador/i,
-  /self[\s-]*made/i,
-  /mogul/i, /magnata/i, /tycoon/i,
-  // Portuguese finance
-  /dinheiro/i, /milionár/i, /bilionár/i,
-  /empreendedor/i, /startup/i,
-  /investidor/i, /investimento/i,
-  /fortuna/i, /riqueza/i,
-  /bolsa\s*de\s*valores/i,
-  /negócios/i, /business/i,
-  /imperio\s*financ/i, /império/i,
-  /corporaç/i, /corporate/i,
+// STRICT whitelist of finance/business titles — only truly finance-related content
+const COFRE_TITLE_WHITELIST = [
+  'o lobo de wall street',
+  'the wolf of wall street',
+  'a grande aposta',
+  'the big short',
+  'margin call',
+  'inside job',
+  'moneyball',
+  'à procura da felicidade',
+  'the pursuit of happyness',
+  'a rede social',
+  'the social network',
+  'steve jobs',
+  'o fundador',
+  'the founder',
+  'wall street',
+  'wall street: o dinheiro nunca dorme',
+  'o homem que mudou o jogo',
+  'too big to fail',
+  'billions',
+  'sucession',
+  'succession',
+  'ozark',
+  'narcos',
+  'o jogo do dinheiro',
+  'money monster',
+  'gold',
+  'enron: os mais espertos da sala',
+  'dirty money',
+  'startup',
+  'boiler room',
+  'rogue trader',
+  'trading places',
+  'glengarry glen ross',
+  'o informante',
+  'the big bull',
+  'o grande momento',
+  'joy',
+  'jerry maguire',
+  'flash boys',
+  'o método',
+  'trabalho interno',
+  'capitalismo: uma história de amor',
+  'fome de poder',
+  'the founder',
+  'quebrando tudo',
+  'banco central',
 ];
-
-// Description-level keywords that MUST appear in context of finance/business
-const COFRE_DESC_KEYWORDS = [
-  /financ/i, /wall\s*street/i, /bolsa\s*de\s*valores/i,
-  /empreend/i, /empresa/i, /negócio/i, /business/i,
-  /investi/i, /lucro/i, /profit/i, /capital/i,
-  /bilion/i, /billion/i, /milion/i, /million/i,
-  /rico/i, /riqueza/i, /wealth/i, /fortune/i,
-  /sucesso\s*(financ|profission|empres)/i,
-  /self[\s-]*made/i, /empreendedorismo/i,
-  /startup/i, /ceo/i, /fundador/i,
-  /superação.*vida/i, /história.*real.*sucesso/i,
-];
-
-// Genres that should EXCLUDE content from Cofre (not about finance)
-const COFRE_EXCLUDE_GENRES = [/terror/i, /horror/i, /infantil/i, /kids/i, /animação/i, /anime/i];
 
 function isCofreContent(movie: Movie): boolean {
-  // Exclude kids content and horror
   if (movie.kids) return false;
-  if (movie.genre.some(g => COFRE_EXCLUDE_GENRES.some(rx => rx.test(g)))) return false;
-
-  const title = movie.title.toLowerCase();
-  const desc = (movie.description || '').toLowerCase();
-
-  // Check if title matches any finance-related title
-  if (COFRE_TITLE_KEYWORDS.some(rx => rx.test(title))) return true;
-
-  // Check if description has finance/business keywords
-  if (COFRE_DESC_KEYWORDS.some(rx => rx.test(desc))) return true;
-
-  return false;
+  
+  const titleLower = movie.title.toLowerCase().trim();
+  
+  // Only match titles from the whitelist
+  return COFRE_TITLE_WHITELIST.some(whiteTitle => {
+    return titleLower.includes(whiteTitle) || whiteTitle.includes(titleLower);
+  });
 }
 
 export function getSeasonalSections(movies: Movie[], now: Date = new Date()): SeasonalSection[] {
@@ -178,7 +179,6 @@ export function getSeasonalSections(movies: Movie[], now: Date = new Date()): Se
   }
 
   // 6. Cofre de Histórias $ — Sunday 13:13 → Wednesday 12:47 weekly
-  // STRICT: only finance, entrepreneurship, financial success, empowerment, real overcoming stories
   const dayOfWeek = now.getDay();
   const h = now.getHours();
   const min = now.getMinutes();

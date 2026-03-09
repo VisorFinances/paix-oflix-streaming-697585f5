@@ -23,8 +23,8 @@ import SeriesDetailModal from '@/components/SeriesDetailModal';
 const ORDER_LIST = [
   'Lançamento 2026', 'Lançamento 2025', 'Ação', 'Aventura', 'Anime', 'Animação',
   'Comédia', 'Drama', 'Dorama', 'Clássicos', 'Crime', 'Policial', 'Família',
-  'Musical', 'Documentário', 'Faroeste', 'Ficção', 'Nacional', 'Religioso',
-  'Romance', 'Terror', 'Suspense', 'Adulto', 'Negritude',
+  'Musical', 'Documentário', 'Faroeste', 'Ficção', 'Ficção Científica', 'Ficção Científica & Fantasia',
+  'Nacional', 'Religioso', 'Romance', 'Terror', 'Suspense', 'Negritude', 'Adulto',
 ];
 
 /** Deduplicate series by title (e.g. remove "- S01E01") */
@@ -109,7 +109,8 @@ const Index = () => {
   const [showSabado, setShowSabado] = useState(isSabadoNoite());
   const [personalizedTs, setPersonalizedTs] = useLocalStorage<number>('paixaoflix-personalized-ts', 0);
 
-  const uniqueMovies = useMemo(() => deduplicateByTitle(movies), [movies]);
+  // Filter out items without cover images, then deduplicate
+  const uniqueMovies = useMemo(() => deduplicateByTitle(movies.filter(m => m.image && m.image.length > 5)), [movies]);
   const { streamingData, trendingSeries, oscarNominees, top10Brazil } = useStreamingTop5(uniqueMovies);
 
   useSmartTV();
@@ -160,6 +161,10 @@ const Index = () => {
     if (uniqueMovies.length === 0) return null;
     const usedIds = new Set<string>();
 
+    // Add hero banner movie IDs to avoid duplicates
+    const heroPool = uniqueMovies.filter(m => m.source !== 'filmeskids' && m.source !== 'serieskids' && m.image && m.description);
+    heroPool.slice(0, 10).forEach(m => usedIds.add(m.id));
+
     const pick1Genre = (rx: RegExp) => {
       const candidates = uniqueMovies.filter(m => !usedIds.has(m.id) && m.genre.some(g => rx.test(g)));
       const picked = pickRandom(candidates, 1);
@@ -183,8 +188,8 @@ const Index = () => {
     const animacoes = pickExcluding(uniqueMovies.filter(m => m.genre.some(g => /anima[çc][aã]o/i.test(g))), 5, usedIds);
     const romance = pickExcluding(uniqueMovies.filter(m => m.genre.some(g => /romance/i.test(g))), 5, usedIds);
     const novelas = pickExcluding(uniqueMovies.filter(m => m.type === 'novela' || m.genre.some(g => /novela/i.test(g))), 5, usedIds);
-    const kids = pickExcluding(uniqueMovies.filter(m => m.kids), 6, usedIds);
-    const nostalgia = pickExcluding(uniqueMovies.filter(m => m.genre.some(g => /cl[áa]ssic/i.test(g))), 6, usedIds);
+    const kids = pickExcluding(uniqueMovies.filter(m => m.kids), 5, usedIds);
+    const nostalgia = pickExcluding(uniqueMovies.filter(m => m.genre.some(g => /cl[áa]ssic/i.test(g))), 5, usedIds);
 
     const shouldRefreshPersonalized = Date.now() - personalizedTs > 48 * 60 * 60 * 1000;
     const personalized = getPersonalized(uniqueMovies.filter(m => !usedIds.has(m.id)), continueWatching);
@@ -349,7 +354,7 @@ const Index = () => {
               )}
 
               {!loading && homeCategories && homeCategories.lancamentos.length > 0 && (
-                <MovieRow title="Lançamentos & Novidades" movies={homeCategories.lancamentos} {...sharedRowProps} />
+                <MovieRow title="Lançamentos & Novidades" movies={homeCategories.lancamentos} gridMode {...sharedRowProps} />
               )}
 
               {trendingSeries.length > 0 && (
@@ -357,7 +362,7 @@ const Index = () => {
               )}
 
               {!loading && homeCategories && homeCategories.negritude.length > 0 && (
-                <MovieRow title="Negritude em destaque" movies={homeCategories.negritude} {...sharedRowProps} />
+                <MovieRow title="Negritude em destaque" movies={homeCategories.negritude} gridMode {...sharedRowProps} />
               )}
 
               {!loading && (() => {
@@ -381,7 +386,7 @@ const Index = () => {
               )}
 
               {!loading && homeCategories && homeCategories.nacionais.length > 0 && (
-                <MovieRow title="Cinema Nacional" movies={homeCategories.nacionais} {...sharedRowProps} />
+                <MovieRow title="Cinema Nacional" movies={homeCategories.nacionais} gridMode {...sharedRowProps} />
               )}
 
               {!loading && showSabado && homeCategories && homeCategories.sabado.length > 0 && (
@@ -389,23 +394,23 @@ const Index = () => {
               )}
 
               {!loading && homeCategories && homeCategories.animacoes.length > 0 && (
-                <MovieRow title="Animações para a Família" movies={homeCategories.animacoes} {...sharedRowProps} />
+                <MovieRow title="Animações para a Família" movies={homeCategories.animacoes} gridMode {...sharedRowProps} />
               )}
 
               {!loading && homeCategories && homeCategories.romance.length > 0 && (
-                <MovieRow title="Romances para se inspirar" movies={homeCategories.romance} {...sharedRowProps} />
+                <MovieRow title="Romances para se inspirar" movies={homeCategories.romance} gridMode {...sharedRowProps} />
               )}
 
               {!loading && homeCategories && homeCategories.kids.length > 0 && (
-                <MovieRow title="As crianças amam" movies={homeCategories.kids} {...sharedRowProps} />
+                <MovieRow title="As crianças amam" movies={homeCategories.kids} gridMode {...sharedRowProps} />
               )}
 
               {!loading && homeCategories && homeCategories.nostalgia.length > 0 && (
-                <MovieRow title="Nostalgia que aquecem o coração" movies={homeCategories.nostalgia} {...sharedRowProps} />
+                <MovieRow title="Nostalgia que aquecem o coração" movies={homeCategories.nostalgia} gridMode {...sharedRowProps} />
               )}
 
               {!loading && homeCategories && homeCategories.personalized.length > 0 && (
-                <MovieRow title="Indicações exclusiva para você" movies={homeCategories.personalized} {...sharedRowProps} />
+                <MovieRow title="Indicações exclusiva para você" movies={homeCategories.personalized} gridMode {...sharedRowProps} />
               )}
 
               {/* Top 10 do Brasileiro - from TMDB trending */}
@@ -440,7 +445,7 @@ const Index = () => {
               )}
 
               {!loading && homeCategories && homeCategories.novelas.length > 0 && (
-                <MovieRow title="Novela é sempre bom" movies={homeCategories.novelas} {...sharedRowProps} />
+                <MovieRow title="Novela é sempre bom" movies={homeCategories.novelas} gridMode {...sharedRowProps} />
               )}
 
             </div>

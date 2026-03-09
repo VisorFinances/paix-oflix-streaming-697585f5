@@ -19,7 +19,7 @@ body {
     --popover: 0 0% 11%;
     --popover-foreground: 0 0% 100%;
 
-    --primary: 240 100% 25%;
+    --primary: 0 72% 51%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 0 0% 16%;
@@ -36,23 +36,23 @@ body {
 
     --border: 0 0% 20%;
     --input: 0 0% 20%;
-    --ring: 240 100% 25%;
+    --ring: 0 72% 51%;
 
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 6%;
     --sidebar-foreground: 0 0% 80%;
-    --sidebar-primary: 240 100% 25%;
+    --sidebar-primary: 0 72% 51%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 14%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 240 100% 25%;
+    --sidebar-ring: 0 72% 51%;
 
-    --progress-bar: 210 100% 55%;
+    --progress-bar: 0 72% 51%;
     --hero-gradient: linear-gradient(to top, hsl(0 0% 8%) 0%, transparent 60%);
     --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    --accent-blue: 210 100% 50%;
+    --accent-blue: 0 72% 51%;
   }
 }
 
@@ -136,7 +136,7 @@ body {
   @media (min-width: 640px) {
     .pv-card:hover,
     .pv-card:focus-visible {
-      transform: scale(1.35) translateZ(0);
+      transform: scale(1.20) translateZ(0);
       z-index: 100;
       border-color: hsl(var(--foreground) / 0.2);
       box-shadow: 0 20px 80px rgba(0, 0, 0, 0.95);
@@ -144,7 +144,7 @@ body {
 
     .pv-card--expanded {
       z-index: 100;
-      transform: scale(1.35) translateZ(0);
+      transform: scale(1.20) translateZ(0);
       box-shadow: 0 24px 100px rgba(0, 0, 0, 0.98);
     }
   }
@@ -196,23 +196,62 @@ body {
     display: none;
   }
 
-  /* Row card sizing — MOBILE: 3 cards visible, compact */
+  /* Row card sizing — MOBILE: 3 cards visible, compact — +10% on all breakpoints */
   .category-row .pv-card {
     flex-shrink: 0;
     width: calc((100vw - 24px - 16px) / 3);
     min-width: calc((100vw - 24px - 16px) / 3);
   }
   @media (min-width: 640px) {
-    .category-row .pv-card { width: 150px; min-width: 150px; }
+    .category-row .pv-card { width: 165px; min-width: 165px; }
   }
   @media (min-width: 768px) {
-    .category-row .pv-card { width: 160px; min-width: 160px; }
+    .category-row .pv-card { width: 176px; min-width: 176px; }
   }
   @media (min-width: 1024px) {
-    .category-row .pv-card { width: 175px; min-width: 175px; }
+    .category-row .pv-card { width: 193px; min-width: 193px; }
   }
   @media (min-width: 1400px) {
-    .category-row .pv-card { width: 190px; min-width: 190px; }
+    .category-row .pv-card { width: 209px; min-width: 209px; }
+  }
+
+  /* Desktop grid mode: 5 cards fill screen width */
+  .grid-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    overflow: visible;
+  }
+  @media (max-width: 639px) {
+    .grid-row {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+  }
+  .grid-row .pv-card {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  /* Kids grid — 5 per row, no horizontal scroll */
+  .kids-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    overflow: visible;
+  }
+  @media (min-width: 640px) {
+    .kids-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  }
+  @media (min-width: 768px) {
+    .kids-grid { grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  }
+  @media (min-width: 1024px) {
+    .kids-grid { grid-template-columns: repeat(5, 1fr); gap: 14px; }
+  }
+  .kids-grid .pv-card {
+    width: 100% !important;
+    min-width: 0 !important;
   }
 
   /* Mobile: less bottom padding for rows */

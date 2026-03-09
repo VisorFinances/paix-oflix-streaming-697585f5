@@ -65,6 +65,7 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
       clearTimeout(hoverTimer.current);
       hoverTimer.current = null;
     }
+    // Immediately stop trailer and collapse
     setExpanded(false);
     setShowTrailer(false);
     if (activeCardId === movie.id) {
@@ -87,7 +88,6 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
   const handleClick = useCallback(() => {
     if (isMobile) {
       if (mobileTapState === 'idle' && hasTrailer) {
-        // 1st tap: show trailer
         if (activeCardId && activeCardId !== movie.id && activeCardCleanup) {
           activeCardCleanup();
         }
@@ -100,7 +100,6 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
         setMobileTapState('trailer');
         return;
       }
-      // 2nd tap (or no trailer): movie → play, series → details
       setShowTrailer(false);
       setMobileTapState('idle');
       if (activeCardId === movie.id) {
@@ -114,7 +113,6 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
       }
       return;
     }
-    // Desktop: always open details
     onShowDetails?.(movie);
   }, [isMobile, mobileTapState, hasTrailer, movie, onShowDetails, onPlay]);
 
@@ -160,7 +158,7 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
           }}
         />
 
-        {/* YouTube trailer — mobile + desktop */}
+        {/* YouTube trailer — only render when showTrailer is true, destroy on blur */}
         {ytUrl && (
           <iframe
             src={ytUrl}
@@ -172,7 +170,7 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
 
         {/* NEW badge */}
         {isNew && !showTrailer && (
-          <div className="absolute top-1 left-1 sm:top-2 sm:left-2 z-[5] px-1 py-0.5 sm:px-1.5 rounded text-[8px] sm:text-xs font-bold uppercase tracking-wider bg-accent-blue text-white">
+          <div className="absolute top-1 left-1 sm:top-2 sm:left-2 z-[5] px-1 py-0.5 sm:px-1.5 rounded text-[8px] sm:text-xs font-bold uppercase tracking-wider bg-primary text-primary-foreground">
             Novo
           </div>
         )}
@@ -228,7 +226,7 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
         )}
       </div>
 
-      {/* Metadata BELOW the card — desktop/TV only */}
+      {/* Metadata BELOW the card — desktop/TV only, limited to 2 lines synopsis */}
       {expanded && !isMobile && (
         <div className="pv-card-meta">
           <h3 className="text-xs sm:text-sm font-semibold text-foreground leading-tight line-clamp-2">
@@ -238,7 +236,7 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
             {movie.year} {movie.genre[0] && `· ${movie.genre[0]}`}
           </p>
           {movie.description && (
-            <p className="text-[9px] sm:text-[11px] text-foreground/70 mt-1.5 line-clamp-3">
+            <p className="text-[9px] sm:text-[11px] text-foreground/70 mt-1.5 line-clamp-2">
               {movie.description}
             </p>
           )}
@@ -260,8 +258,8 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
               title={isFavorite ? 'Remover da lista' : 'Minha Lista'}
             >
               {isFavorite
-                ? <Check className="w-3.5 h-3.5 text-primary" />
-                : <Plus className="w-3.5 h-3.5" />}
+                ? <Check className="w-3.5 h-3.5 text-foreground" />
+                : <Plus className="w-3.5 h-3.5 text-foreground" />}
             </button>
           </div>
         </div>

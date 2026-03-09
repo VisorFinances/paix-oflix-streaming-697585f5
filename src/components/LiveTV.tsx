@@ -23,7 +23,7 @@ const LiveTV = ({ channels, onBack }: LiveTVProps) => {
         <div className="sticky top-0 z-10 bg-background p-2 sm:p-4 md:relative md:flex md:items-center md:justify-center md:h-screen">
           {selected ? (
             <div className="w-full max-w-5xl">
-              <h3 className="text-sm sm:text-lg font-semibold mb-1 sm:mb-3">{selected.name}</h3>
+              <h3 className="text-sm sm:text-lg font-semibold mb-1 sm:mb-3 text-foreground">{selected.name}</h3>
               <div className="aspect-video rounded-lg overflow-hidden bg-card">
                 <VideoPlayer url={selected.url} />
               </div>
@@ -34,14 +34,14 @@ const LiveTV = ({ channels, onBack }: LiveTVProps) => {
         </div>
       </div>
 
-      {/* Channel list */}
-      <div className="w-full md:w-80 md:order-1 bg-card border-r border-border overflow-y-auto md:h-screen">
-        <div className="flex items-center gap-3 p-4 border-b border-border">
+      {/* Channel list — glassmorphism, tight width */}
+      <div className="w-full md:w-fit md:max-w-72 md:order-1 bg-card/30 backdrop-blur-xl border-r border-foreground/10 overflow-y-auto md:h-screen">
+        <div className="flex items-center gap-3 p-4 border-b border-foreground/10">
           <button onClick={onBack} className="text-muted-foreground hover:text-foreground transition">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <Radio className="w-5 h-5 text-primary" />
-          <h2 className="text-xl font-display tracking-wider">TV ao Vivo</h2>
+          <Radio className="w-5 h-5 text-foreground" />
+          <h2 className="text-xl font-display tracking-wider text-foreground">TV ao Vivo</h2>
         </div>
         {/* Mobile: grid columns, Desktop: list */}
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-1 gap-1">
@@ -56,7 +56,12 @@ const LiveTV = ({ channels, onBack }: LiveTVProps) => {
                     ${selected?.id === ch.id ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50'}`}
                 >
                   <img src={ch.logo} alt={ch.name} className="w-8 h-8 object-contain bg-foreground/10 rounded p-0.5" />
-                  <span className="text-[10px] md:text-sm font-medium text-center md:text-left truncate w-full">{ch.name}</span>
+                  <span
+                    className="text-[10px] md:text-sm font-medium text-center md:text-left w-full text-foreground leading-tight break-words"
+                    style={{ maxWidth: '12ch', wordBreak: 'break-word' }}
+                  >
+                    {ch.name}
+                  </span>
                 </button>
               ))}
             </div>
