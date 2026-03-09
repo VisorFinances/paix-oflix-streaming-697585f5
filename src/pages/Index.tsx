@@ -410,7 +410,7 @@ const Index = () => {
               )}
 
               {!loading && homeCategories && homeCategories.personalized.length > 0 && (
-                <MovieRow title="Indicações exclusiva para você" movies={homeCategories.personalized} {...sharedRowProps} />
+                <MovieRow title="Indicações exclusiva para você" movies={homeCategories.personalized} gridMode {...sharedRowProps} />
               )}
 
               {/* Top 10 do Brasileiro - from TMDB trending */}
