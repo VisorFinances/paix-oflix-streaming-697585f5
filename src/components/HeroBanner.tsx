@@ -142,7 +142,11 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
   const showTrailer = phase === 'trailer' && hasTrailer && !isTransitioning;
 
   return (
-    <div className="relative w-full h-[32vh] sm:h-[55vh] md:h-[65vh] lg:h-[75vh] overflow-hidden">
+    <div
+      className="relative w-full h-[32vh] sm:h-[55vh] md:h-[65vh] lg:h-[75vh] overflow-hidden"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* Background layer with crossfade */}
       <div
         className="absolute inset-0 transition-opacity duration-700"
