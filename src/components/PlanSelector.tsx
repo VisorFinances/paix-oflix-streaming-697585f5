@@ -61,7 +61,7 @@ const PlanSelector = ({ selected, onSelect }: PlanSelectorProps) => {
           )}
         >
           {plan.popular && (
-            <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider whitespace-nowrap">
+            <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-foreground text-background text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider whitespace-nowrap">
               Mais Popular
             </span>
           )}
