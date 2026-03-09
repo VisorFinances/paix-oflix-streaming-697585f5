@@ -67,7 +67,7 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="border-b border-border bg-background/95 backdrop-blur sticky top-0 z-50">
+      <header className="bg-background/95 backdrop-blur sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <img src="/images/logo.png" alt="PaixãoFlix" className="h-[80px] w-auto object-contain" />
           {step === 'login' && (

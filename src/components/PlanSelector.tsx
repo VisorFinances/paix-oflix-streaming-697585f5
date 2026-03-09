@@ -56,28 +56,25 @@ const PlanSelector = ({ selected, onSelect }: PlanSelectorProps) => {
           className={cn(
             "relative flex flex-col rounded-2xl border-2 p-5 text-left transition-all duration-300 group",
             selected === plan.id
-              ? "border-primary bg-primary/10 shadow-lg shadow-primary/20 scale-[1.02]"
+              ? "border-foreground bg-foreground/10 shadow-lg shadow-foreground/10 scale-[1.02]"
               : "border-border bg-card hover:border-muted-foreground/40 hover:bg-secondary/50"
           )}
         >
           {plan.popular && (
-            <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider whitespace-nowrap">
+            <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-foreground text-background text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider whitespace-nowrap">
               Mais Popular
             </span>
           )}
 
           <div className="flex items-center justify-between mb-3">
-            <h3 className={cn(
-              "text-lg font-bold transition-colors",
-              selected === plan.id ? "text-primary" : "text-foreground"
-            )}>
+            <h3 className="text-lg font-bold text-foreground">
               {plan.name}
             </h3>
             <div className={cn(
               "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
-              selected === plan.id ? "border-primary bg-primary" : "border-muted-foreground/50"
+              selected === plan.id ? "border-foreground bg-foreground" : "border-muted-foreground/50"
             )}>
-              {selected === plan.id && <Check className="w-3 h-3 text-primary-foreground" />}
+              {selected === plan.id && <Check className="w-3 h-3 text-background" />}
             </div>
           </div>
 
@@ -98,10 +95,7 @@ const PlanSelector = ({ selected, onSelect }: PlanSelectorProps) => {
           <ul className="space-y-2 flex-1">
             {plan.features.map((feature, i) => (
               <li key={i} className="flex items-center gap-2 text-sm">
-                <Check className={cn(
-                  "w-4 h-4 flex-shrink-0",
-                  selected === plan.id ? "text-primary" : "text-muted-foreground"
-                )} />
+                <Check className="w-4 h-4 flex-shrink-0 text-foreground" />
                 <span className="text-muted-foreground">{feature}</span>
               </li>
             ))}
