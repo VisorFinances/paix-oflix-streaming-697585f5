@@ -67,17 +67,15 @@ const PlanSelector = ({ selected, onSelect }: PlanSelectorProps) => {
           )}
 
           <div className="flex items-center justify-between mb-3">
-            <h3 className={cn(
-              "text-lg font-bold transition-colors",
-              selected === plan.id ? "text-primary" : "text-foreground"
-            )}>
+            <h3 className="text-lg font-bold text-foreground">
               {plan.name}
             </h3>
             <div className={cn(
               "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
-              selected === plan.id ? "border-primary bg-primary" : "border-muted-foreground/50"
+              selected === plan.id ? "border-foreground bg-foreground" : "border-muted-foreground/50"
             )}>
-              {selected === plan.id && <Check className="w-3 h-3 text-primary-foreground" />}
+              {selected === plan.id && <Check className="w-3 h-3 text-background" />}
+            </div>
             </div>
           </div>
 
