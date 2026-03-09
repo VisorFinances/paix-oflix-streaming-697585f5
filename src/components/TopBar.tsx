@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Movie } from '@/types';
+import UserMenu from './UserMenu';
 
 interface TopBarProps {
   movies: Movie[];
@@ -53,8 +54,8 @@ const TopBar = ({ movies }: TopBarProps) => {
           </span>
         </div>
 
-        {/* Spacer for balance */}
-        <div className="w-8 sm:w-10 md:w-12" />
+        {/* User Menu */}
+        <UserMenu />
       </div>
     </div>
   );

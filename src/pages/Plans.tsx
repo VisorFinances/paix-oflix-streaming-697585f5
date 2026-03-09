@@ -301,8 +301,8 @@ const Plans = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-muted-foreground">
             <a href="#" className="hover:underline">Perguntas frequentes</a>
             <a href="#" className="hover:underline">Central de Ajuda</a>
-            <a href="#" className="hover:underline">Termos de Uso</a>
-            <a href="#" className="hover:underline">Privacidade</a>
+            <a href="/terms" className="hover:underline">Termos de Uso</a>
+            <a href="/privacy" className="hover:underline">Privacidade</a>
             <a href="#" className="hover:underline">Preferências de cookies</a>
             <a href="#" className="hover:underline">Informações corporativas</a>
           </div>
