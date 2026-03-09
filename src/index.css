@@ -47,7 +47,7 @@ body {
     --sidebar-accent: 0 0% 14%;
     --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 0 85% 50%;
+    --sidebar-ring: 240 100% 25%;
 
     --progress-bar: 210 100% 55%;
     --hero-gradient: linear-gradient(to top, hsl(0 0% 8%) 0%, transparent 60%);
