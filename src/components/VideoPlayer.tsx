@@ -63,8 +63,36 @@ const VideoPlayer = ({ url, autoPlay = true, onTimeUpdate, className = '' }: Vid
       hlsRef.current = null;
     };
 
-    const loadSource = () => {
+    const resolveArchiveUrl = async (rawUrl: string): Promise<string> => {
+      // If URL ends with / and is archive.org, resolve to first mp4 file
+      if (rawUrl.includes('archive.org/download/') && (rawUrl.endsWith('/') || !rawUrl.match(/\.\w{2,4}$/))) {
+        try {
+          const identifier = rawUrl.split('archive.org/download/')[1]?.replace(/\/$/, '');
+          if (identifier) {
+            const metaRes = await fetch(`https://archive.org/metadata/${identifier}`);
+            if (metaRes.ok) {
+              const meta = await metaRes.json();
+              const mp4File = meta.files?.find((f: any) => /\.mp4$/i.test(f.name) && f.source === 'original');
+              const anyMp4 = meta.files?.find((f: any) => /\.mp4$/i.test(f.name));
+              const file = mp4File || anyMp4;
+              if (file) {
+                return `https://archive.org/download/${identifier}/${encodeURIComponent(file.name)}`;
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('[Player] Archive resolve failed:', e);
+        }
+      }
+      return rawUrl;
+    };
+
+    const loadSource = async () => {
       cleanup();
+
+      // Resolve Archive.org directory URLs
+      const resolvedUrl = await resolveArchiveUrl(url);
+      console.log('[Player] Resolved URL:', resolvedUrl);
 
       // 8s loading timeout with more retries
       loadTimeout.current = setTimeout(() => {
@@ -78,7 +106,7 @@ const VideoPlayer = ({ url, autoPlay = true, onTimeUpdate, className = '' }: Vid
         }
       }, 8000);
 
-      if (url.includes('.m3u8') && Hls.isSupported()) {
+      if (resolvedUrl.includes('.m3u8') && Hls.isSupported()) {
         const hls = new Hls({
           maxBufferLength: 60,
           maxMaxBufferLength: 120,
