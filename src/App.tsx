@@ -15,6 +15,7 @@ import Plans from "./pages/Plans";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Admin from "./pages/Admin";
+import Payment from "./pages/Payment";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const queryClient = new QueryClient({
