@@ -70,8 +70,9 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
   }, []);
 
   const movie = heroMovies[currentIndex];
-  const hasTrailer = canPlayTrailer && !!movie?.trailer;
-  const youtubeUrl = hasTrailer ? getYouTubeEmbedUrl(movie.trailer!) : null;
+  // On mobile, only allow direct video trailers (not YouTube iframes which don't autoplay)
+  const hasTrailer = canPlayTrailer && !!movie?.trailer && (!isMobile || isDirectVideo(movie.trailer!));
+  const youtubeUrl = hasTrailer && !isMobile ? getYouTubeEmbedUrl(movie.trailer!) : null;
   const directSrc = hasTrailer && isDirectVideo(movie.trailer!) ? movie.trailer! : '';
 
   const advanceToNext = useCallback(() => {
