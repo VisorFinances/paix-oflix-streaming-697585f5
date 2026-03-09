@@ -150,9 +150,9 @@ const VideoPlayer = ({ url, autoPlay = true, onTimeUpdate, className = '' }: Vid
             }
           }
         });
-      } else if (url.includes('.m3u8') && video.canPlayType('application/vnd.apple.mpegurl')) {
+      } else if (resolvedUrl.includes('.m3u8') && video.canPlayType('application/vnd.apple.mpegurl')) {
         // Native HLS (Safari)
-        video.src = url;
+        video.src = resolvedUrl;
         video.addEventListener('loadedmetadata', () => {
           clearTimeout(loadTimeout.current);
           setIsLoading(false);
