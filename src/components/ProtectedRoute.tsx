@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useAdmin } from '@/hooks/useAdmin';
 import DeviceSelectionDialog from '@/components/DeviceSelectionDialog';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -10,10 +11,11 @@ import { AlertCircle } from 'lucide-react';
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading: authLoading } = useAuth();
   const { subscription, loading: subLoading, isActive, needsDeviceSelection, updateSubscription } = useSubscription();
+  const { isAdmin, loading: adminLoading } = useAdmin();
   const [showDeviceDialog, setShowDeviceDialog] = useState(false);
   const navigate = useNavigate();
 
-  const loading = authLoading || subLoading;
+  const loading = authLoading || subLoading || adminLoading;
 
   useEffect(() => {
     if (!loading && isActive && needsDeviceSelection) {
