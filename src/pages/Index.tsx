@@ -394,7 +394,7 @@ const Index = () => {
               )}
 
               {!loading && homeCategories && homeCategories.animacoes.length > 0 && (
-                <MovieRow title="Animações para a Família" movies={homeCategories.animacoes} {...sharedRowProps} />
+                <MovieRow title="Animações para a Família" movies={homeCategories.animacoes} gridMode {...sharedRowProps} />
               )}
 
               {!loading && homeCategories && homeCategories.romance.length > 0 && (
