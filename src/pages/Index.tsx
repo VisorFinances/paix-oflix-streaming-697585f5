@@ -362,7 +362,7 @@ const Index = () => {
               )}
 
               {!loading && homeCategories && homeCategories.negritude.length > 0 && (
-                <MovieRow title="Negritude em destaque" movies={homeCategories.negritude} {...sharedRowProps} />
+                <MovieRow title="Negritude em destaque" movies={homeCategories.negritude} gridMode {...sharedRowProps} />
               )}
 
               {!loading && (() => {
