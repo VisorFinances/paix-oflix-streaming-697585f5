@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Movie } from '@/types';
+import UserMenu from './UserMenu';
 
 interface TopBarProps {
   movies: Movie[];
