@@ -17,6 +17,11 @@ serve(async (req) => {
       throw new Error("MERCADOPAGO_ACCESS_TOKEN not configured");
     }
 
+    // Read body FIRST before anything else consumes it
+    const body = await req.json();
+    const { plan, amount, email } = body;
+    console.log("Request body:", JSON.stringify({ plan, amount, email }));
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const authHeader = req.headers.get("Authorization")!;
@@ -32,9 +37,26 @@ serve(async (req) => {
       });
     }
 
-    const { plan, amount, email } = await req.json();
+    console.log("Creating PIX for user:", user.id, "plan:", plan, "amount:", amount);
 
     // Create PIX payment via Mercado Pago
+    const mpPayload = {
+      transaction_amount: Number(amount),
+      description: `PaixãoFlix - Plano ${plan === "pro" ? "Pro" : "Básico"} (Mensal)`,
+      payment_method_id: "pix",
+      payer: {
+        email: email || user.email,
+      },
+      notification_url: `${supabaseUrl}/functions/v1/mercadopago-webhook`,
+      external_reference: JSON.stringify({
+        user_id: user.id,
+        plan: plan,
+        max_screens: plan === "pro" ? 2 : 1,
+      }),
+    };
+
+    console.log("MP payload:", JSON.stringify(mpPayload));
+
     const mpResponse = await fetch("https://api.mercadopago.com/v1/payments", {
       method: "POST",
       headers: {
@@ -42,27 +64,22 @@ serve(async (req) => {
         "Content-Type": "application/json",
         "X-Idempotency-Key": `${user.id}-${plan}-${Date.now()}`,
       },
-      body: JSON.stringify({
-        transaction_amount: amount,
-        description: `PaixãoFlix - Plano ${plan === "pro" ? "Pro" : "Básico"} (Mensal)`,
-        payment_method_id: "pix",
-        payer: {
-          email: email || user.email,
-        },
-        notification_url: `${supabaseUrl}/functions/v1/mercadopago-webhook`,
-        external_reference: JSON.stringify({
-          user_id: user.id,
-          plan: plan,
-          max_screens: plan === "pro" ? 2 : 1,
-        }),
-      }),
+      body: JSON.stringify(mpPayload),
     });
 
-    const mpData = await mpResponse.json();
+    const mpText = await mpResponse.text();
+    console.log("MP response status:", mpResponse.status);
+    console.log("MP response body:", mpText);
+
+    let mpData;
+    try {
+      mpData = JSON.parse(mpText);
+    } catch {
+      throw new Error(`Mercado Pago returned non-JSON response [${mpResponse.status}]: ${mpText}`);
+    }
 
     if (!mpResponse.ok) {
-      console.error("Mercado Pago error:", JSON.stringify(mpData));
-      throw new Error(`Mercado Pago API error [${mpResponse.status}]: ${JSON.stringify(mpData)}`);
+      throw new Error(`Mercado Pago API error [${mpResponse.status}]: ${mpText}`);
     }
 
     // Update subscription with pending status
