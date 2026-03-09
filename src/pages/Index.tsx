@@ -109,7 +109,8 @@ const Index = () => {
   const [showSabado, setShowSabado] = useState(isSabadoNoite());
   const [personalizedTs, setPersonalizedTs] = useLocalStorage<number>('paixaoflix-personalized-ts', 0);
 
-  const uniqueMovies = useMemo(() => deduplicateByTitle(movies), [movies]);
+  // Filter out items without cover images, then deduplicate
+  const uniqueMovies = useMemo(() => deduplicateByTitle(movies.filter(m => m.image && m.image.length > 5)), [movies]);
   const { streamingData, trendingSeries, oscarNominees, top10Brazil } = useStreamingTop5(uniqueMovies);
 
   useSmartTV();
