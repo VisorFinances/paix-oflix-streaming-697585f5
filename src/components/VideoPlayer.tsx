@@ -161,7 +161,7 @@ const VideoPlayer = ({ url, autoPlay = true, onTimeUpdate, className = '' }: Vid
       } else {
         // MP4 / progressive
         video.preload = 'auto';
-        video.src = url;
+        video.src = resolvedUrl;
         video.addEventListener('canplay', () => {
           clearTimeout(loadTimeout.current);
           setIsLoading(false);

@@ -201,15 +201,15 @@ const PreviewCard = ({ movie, onPlay, onToggleFavorite, isFavorite, progress, on
           </div>
         )}
 
-        {/* Title overlay — visible when NOT showing trailer */}
+        {/* Metadata overlay — visible when NOT showing trailer: year, rating (yellow), duration */}
         {!showTrailer && (isMobile || (!expanded)) && (
           <div className="absolute bottom-0 left-0 right-0 z-[4] p-1.5 sm:p-2.5 md:p-3">
-            <h3 className="text-[10px] sm:text-xs md:text-sm font-semibold text-foreground leading-tight line-clamp-2">
-              {movie.title}
-            </h3>
-            <p className="text-[8px] sm:text-[10px] md:text-xs text-muted-foreground mt-0.5 truncate">
-              {movie.year} {movie.genre[0] && `· ${movie.genre[0]}`}
-            </p>
+            <div className="flex items-center gap-1 text-[8px] sm:text-[10px] md:text-xs">
+              <span className="text-foreground/80">{movie.year}</span>
+              {movie.rating && (
+                <span className="font-semibold" style={{ color: '#f9ff00' }}>★ {movie.rating}</span>
+              )}
+            </div>
           </div>
         )}
 

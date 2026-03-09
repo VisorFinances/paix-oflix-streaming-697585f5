@@ -513,10 +513,10 @@ const Index = () => {
             <div className="py-6">
               {loading && <><SkeletonRow /><SkeletonRow /></>}
               {kidsFilmes.length > 0 && (
-                <MovieRow title="Filmes" movies={kidsFilmes} {...sharedRowProps} />
+                <MovieRow title="Filmes" movies={kidsFilmes} gridMode {...sharedRowProps} />
               )}
               {kidsSeries.length > 0 && (
-                <MovieRow title="Séries" movies={kidsSeries} {...sharedRowProps} />
+                <MovieRow title="Séries" movies={kidsSeries} gridMode {...sharedRowProps} />
               )}
             </div>
           </div>

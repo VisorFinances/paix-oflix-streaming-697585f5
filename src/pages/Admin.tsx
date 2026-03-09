@@ -117,8 +117,8 @@ const Admin = () => {
           </button>
           <img src="/images/logo.png" alt="PaixãoFlix" className="h-[80px] w-auto object-contain" />
           <div className="flex items-center gap-2 ml-auto">
-            <Shield className="w-5 h-5 text-primary" />
-            <span className="text-sm font-semibold text-primary">Administrador</span>
+            <Shield className="w-5 h-5 text-foreground" />
+            <span className="text-sm font-semibold text-foreground">Administrador</span>
           </div>
         </div>
       </header>
