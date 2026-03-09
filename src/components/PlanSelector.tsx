@@ -76,7 +76,6 @@ const PlanSelector = ({ selected, onSelect }: PlanSelectorProps) => {
             )}>
               {selected === plan.id && <Check className="w-3 h-3 text-background" />}
             </div>
-            </div>
           </div>
 
           <div className="mb-4">
