@@ -96,10 +96,7 @@ const PlanSelector = ({ selected, onSelect }: PlanSelectorProps) => {
           <ul className="space-y-2 flex-1">
             {plan.features.map((feature, i) => (
               <li key={i} className="flex items-center gap-2 text-sm">
-                <Check className={cn(
-                  "w-4 h-4 flex-shrink-0",
-                  selected === plan.id ? "text-primary" : "text-muted-foreground"
-                )} />
+                <Check className="w-4 h-4 flex-shrink-0 text-foreground" />
                 <span className="text-muted-foreground">{feature}</span>
               </li>
             ))}
