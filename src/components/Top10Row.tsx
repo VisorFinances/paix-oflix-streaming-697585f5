@@ -48,9 +48,9 @@ const Top10Row = ({ title, items, onPlay, onShowDetails }: Top10RowProps) => {
           {items.slice(0, 10).map((item, index) => {
             // Number "10" needs wider space
             const isDoubleDigit = index >= 9;
-            const numWidth = isDoubleDigit ? (isMobile ? 56 : 100) : NUM_W;
+            const numWidth = isDoubleDigit ? (isMobile ? 50 : 80) : NUM_W;
             const fontSize = isDoubleDigit
-              ? (isMobile ? '3.2rem' : '6.5rem')
+              ? (isMobile ? '2.8rem' : '5rem')
               : FONT_SIZE;
 
             return (
