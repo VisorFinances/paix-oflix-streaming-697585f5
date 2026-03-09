@@ -24,8 +24,8 @@ const Top10Row = ({ title, items, onPlay, onShowDetails }: Top10RowProps) => {
 
   const CARD_W = isMobile ? 90 : 150;
   const NUM_W = isMobile ? 36 : 60;
-  const FONT_SIZE = isMobile ? '4rem' : '7.5rem';
-  const STROKE = isMobile ? '1.5px' : '3px';
+  const FONT_SIZE = isMobile ? '3.5rem' : '6rem';
+  const STROKE = isMobile ? '1.5px' : '2.5px';
 
   return (
     <section className="mb-6 sm:mb-8 animate-fade-in">
