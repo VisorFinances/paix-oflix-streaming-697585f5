@@ -398,7 +398,7 @@ const Index = () => {
               )}
 
               {!loading && homeCategories && homeCategories.romance.length > 0 && (
-                <MovieRow title="Romances para se inspirar" movies={homeCategories.romance} {...sharedRowProps} />
+                <MovieRow title="Romances para se inspirar" movies={homeCategories.romance} gridMode {...sharedRowProps} />
               )}
 
               {!loading && homeCategories && homeCategories.kids.length > 0 && (
