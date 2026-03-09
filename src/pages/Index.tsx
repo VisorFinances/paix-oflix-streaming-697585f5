@@ -445,7 +445,7 @@ const Index = () => {
               )}
 
               {!loading && homeCategories && homeCategories.novelas.length > 0 && (
-                <MovieRow title="Novela é sempre bom" movies={homeCategories.novelas} {...sharedRowProps} />
+                <MovieRow title="Novela é sempre bom" movies={homeCategories.novelas} gridMode {...sharedRowProps} />
               )}
 
             </div>
