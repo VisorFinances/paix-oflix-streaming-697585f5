@@ -92,7 +92,7 @@ const Admin = () => {
   if (loading || !isAdmin) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <img src="/images/logo.png" alt="PaixãoFlix" className="h-[100px] w-auto object-contain animate-pulse" />
+        <img src="/images/logo.png" alt="PaixãoFlix" className="h-[80px] w-auto object-contain animate-pulse" />
       </div>
     );
   }
