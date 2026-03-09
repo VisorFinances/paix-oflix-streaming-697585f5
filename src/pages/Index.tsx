@@ -21,9 +21,9 @@ import MovieDetailModal from '@/components/MovieDetailModal';
 import SeriesDetailModal from '@/components/SeriesDetailModal';
 
 const ORDER_LIST = [
-  'Lançamento 2026', 'Lançamento 2025', 'Ação', 'Aventura', 'Anime', 'Animação',
+  'Ação', 'Aventura', 'Anime', 'Animação',
   'Comédia', 'Drama', 'Dorama', 'Clássicos', 'Crime', 'Policial', 'Família',
-  'Musical', 'Documentário', 'Faroeste', 'Ficção', 'Ficção Científica', 'Ficção Científica & Fantasia',
+  'Musical', 'Documentário', 'Faroeste', 'Ficção', 'Ficção Científica', 'Fantasia',
   'Nacional', 'Religioso', 'Romance', 'Terror', 'Suspense', 'Negritude', 'Adulto',
 ];
 
