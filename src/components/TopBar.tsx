@@ -10,7 +10,6 @@ const TopBar = ({ movies }: TopBarProps) => {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    // Animate counter
     const target = movies.length;
     if (target === 0) return;
     
@@ -40,17 +39,14 @@ const TopBar = ({ movies }: TopBarProps) => {
           <img
             src="/images/logo.png"
             alt="PaixãoFlix"
-            className="h-[80px] w-auto object-contain"
+            className="h-[75px] sm:h-[80px] w-auto object-contain"
           />
         </div>
 
         {/* Dynamic content counter center */}
-        <div className="flex flex-col items-center">
-          <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-widest">
-            Já temos
-          </span>
-          <span className="text-sm sm:text-lg md:text-xl font-bold text-foreground tabular-nums">
-            {count.toLocaleString('pt-BR')} <span className="text-primary">conteúdos disponíveis</span>
+        <div className="flex items-center justify-center">
+          <span className="text-xs sm:text-sm md:text-base font-bold text-foreground tabular-nums text-center">
+            Já temos {count.toLocaleString('pt-BR')} conteúdos
           </span>
         </div>
 

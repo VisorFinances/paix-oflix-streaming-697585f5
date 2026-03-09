@@ -9,6 +9,43 @@ const corsHeaders = {
 const TMDB_API_KEY = 'b275ce8e1a6b3d5d879bb0907e4f56ad';
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 
+// Genre translation EN → PT-BR
+const GENRE_TRANSLATION: Record<string, string> = {
+  'action': 'Ação',
+  'adventure': 'Aventura',
+  'animation': 'Animação',
+  'comedy': 'Comédia',
+  'crime': 'Crime',
+  'documentary': 'Documentário',
+  'drama': 'Drama',
+  'family': 'Família',
+  'fantasy': 'Fantasia',
+  'history': 'História',
+  'horror': 'Terror',
+  'music': 'Musical',
+  'mystery': 'Mistério',
+  'romance': 'Romance',
+  'science fiction': 'Ficção Científica',
+  'sci-fi': 'Ficção Científica',
+  'sci-fi & fantasy': 'Ficção Científica & Fantasia',
+  'action & adventure': 'Ação & Aventura',
+  'tv movie': 'Filme para TV',
+  'thriller': 'Suspense',
+  'war': 'Guerra',
+  'western': 'Faroeste',
+  'war & politics': 'Guerra & Política',
+  'kids': 'Infantil',
+  'reality': 'Reality',
+  'soap': 'Novela',
+  'talk': 'Talk Show',
+  'news': 'Notícias',
+};
+
+function translateGenre(name: string): string {
+  const lower = name.trim().toLowerCase();
+  return GENRE_TRANSLATION[lower] || name.trim();
+}
+
 interface TMDBResult {
   id: number;
   poster_path?: string;
@@ -73,7 +110,6 @@ serve(async (req) => {
 
     let query;
     if (table === 'series') {
-      // Series: enrich all that have no poster
       query = sb.from('series').select('id, titulo, tmdb_id, tipo, poster').is('poster', null).limit(limit);
     } else if (table === 'kids_filmes') {
       query = sb.from('kids_filmes').select('id, titulo, tmdb_id, tipo, poster').is('poster', null).limit(limit);
@@ -86,7 +122,6 @@ serve(async (req) => {
     const { data: rows, error } = await query;
     if (error) throw error;
 
-    // Filter rows that need enrichment
     const needsEnrich = (rows || []).filter((r: any) => !r.poster || r.poster === '');
     
     let enriched = 0;
@@ -115,10 +150,12 @@ serve(async (req) => {
           update.descricao = details.overview;
         }
         if (details.genres?.length) {
-          const genreStr = details.genres.map(g => g.name).join(', ');
+          // Translate genres to PT-BR
+          const translatedGenres = details.genres.map(g => translateGenre(g.name));
+          const genreStr = translatedGenres.join(', ');
           update.genero = genreStr;
           if (table === 'filmes') {
-            update.categories = details.genres.map(g => g.name);
+            update.categories = translatedGenres;
           }
         }
         const dateStr = details.release_date || details.first_air_date;
@@ -142,7 +179,6 @@ serve(async (req) => {
         }
       }
 
-      // Rate limit: 250ms between requests
       await new Promise(r => setTimeout(r, 250));
     }
 

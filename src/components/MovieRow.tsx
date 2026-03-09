@@ -12,9 +12,10 @@ interface MovieRowProps {
   favorites: string[];
   continueWatching?: Record<string, number>;
   onShowDetails?: (movie: Movie) => void;
+  gridMode?: boolean; // use grid layout instead of scroll
 }
 
-const MovieRow = ({ title, subtitle, movies, onPlay, onToggleFavorite, favorites, continueWatching, onShowDetails }: MovieRowProps) => {
+const MovieRow = ({ title, subtitle, movies, onPlay, onToggleFavorite, favorites, continueWatching, onShowDetails, gridMode }: MovieRowProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const scroll = (dir: 'left' | 'right') => {
@@ -26,6 +27,8 @@ const MovieRow = ({ title, subtitle, movies, onPlay, onToggleFavorite, favorites
 
   if (movies.length === 0) return null;
 
+  const showArrows = !gridMode && movies.length > 5;
+
   return (
     <section className="mb-6 sm:mb-8 animate-fade-in">
       <div className="px-3 sm:px-4 md:px-12 mb-2 sm:mb-3">
@@ -33,31 +36,51 @@ const MovieRow = ({ title, subtitle, movies, onPlay, onToggleFavorite, favorites
         {subtitle && <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">{subtitle}</p>}
       </div>
       <div className="relative group/row">
-        <button
-          onClick={() => scroll('left')}
-          className="absolute left-0 top-0 bottom-0 z-20 w-8 sm:w-10 bg-gradient-to-r from-background/80 to-transparent opacity-0 group-hover/row:opacity-100 transition-opacity flex items-center justify-center hidden sm:flex"
-        >
-          <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
-        </button>
-        <div ref={scrollRef} className="category-row px-3 sm:px-4 md:px-12 gap-2 sm:gap-3 md:gap-4">
-          {movies.map(movie => (
-            <PreviewCard
-              key={movie.id}
-              movie={movie}
-              onPlay={onPlay}
-              onToggleFavorite={onToggleFavorite}
-              isFavorite={favorites.includes(movie.id)}
-              progress={continueWatching?.[movie.id]}
-              onShowDetails={onShowDetails}
-            />
-          ))}
-        </div>
-        <button
-          onClick={() => scroll('right')}
-          className="absolute right-0 top-0 bottom-0 z-20 w-8 sm:w-10 bg-gradient-to-l from-background/80 to-transparent opacity-0 group-hover/row:opacity-100 transition-opacity flex items-center justify-center hidden sm:flex"
-        >
-          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
-        </button>
+        {showArrows && (
+          <button
+            onClick={() => scroll('left')}
+            className="absolute left-0 top-0 bottom-0 z-20 w-8 sm:w-10 bg-gradient-to-r from-background/80 to-transparent opacity-0 group-hover/row:opacity-100 transition-opacity flex items-center justify-center hidden sm:flex"
+          >
+            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+          </button>
+        )}
+        {gridMode ? (
+          <div className="grid-row px-3 sm:px-4 md:px-12">
+            {movies.map(movie => (
+              <PreviewCard
+                key={movie.id}
+                movie={movie}
+                onPlay={onPlay}
+                onToggleFavorite={onToggleFavorite}
+                isFavorite={favorites.includes(movie.id)}
+                progress={continueWatching?.[movie.id]}
+                onShowDetails={onShowDetails}
+              />
+            ))}
+          </div>
+        ) : (
+          <div ref={scrollRef} className="category-row px-3 sm:px-4 md:px-12 gap-2 sm:gap-3 md:gap-4">
+            {movies.map(movie => (
+              <PreviewCard
+                key={movie.id}
+                movie={movie}
+                onPlay={onPlay}
+                onToggleFavorite={onToggleFavorite}
+                isFavorite={favorites.includes(movie.id)}
+                progress={continueWatching?.[movie.id]}
+                onShowDetails={onShowDetails}
+              />
+            ))}
+          </div>
+        )}
+        {showArrows && (
+          <button
+            onClick={() => scroll('right')}
+            className="absolute right-0 top-0 bottom-0 z-20 w-8 sm:w-10 bg-gradient-to-l from-background/80 to-transparent opacity-0 group-hover/row:opacity-100 transition-opacity flex items-center justify-center hidden sm:flex"
+          >
+            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+          </button>
+        )}
       </div>
     </section>
   );
