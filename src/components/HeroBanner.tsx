@@ -135,7 +135,7 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [phase, currentIndex, hasTrailer, directSrc, advanceToNext, heroMovies.length, movie, isTransitioning]);
+  }, [phase, currentIndex, hasTrailer, directSrc, advanceToNext, heroMovies.length, movie, isTransitioning, isMobile]);
 
   if (!movie) return null;
 
