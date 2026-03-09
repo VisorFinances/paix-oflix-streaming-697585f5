@@ -172,7 +172,7 @@ const Payment = () => {
                       className="absolute top-2 right-2 p-2 rounded-lg bg-background/80 hover:bg-background transition-colors"
                     >
                       {copied ? (
-                        <Check className="w-4 h-4 text-green-400" />
+                        <Check className="w-4 h-4 text-foreground" />
                       ) : (
                         <Copy className="w-4 h-4 text-muted-foreground" />
                       )}
