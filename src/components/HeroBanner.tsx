@@ -114,7 +114,7 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
     if (heroMovies.length === 0 || !movie || isTransitioning) return;
 
     if (phase === 'cover') {
-      const duration = hasTrailer ? COVER_DURATION : 5000;
+      const duration = hasTrailer ? COVER_DURATION : (isMobile ? COVER_DURATION_MOBILE : 5000);
       timerRef.current = setTimeout(() => {
         if (hasTrailer) {
           setPhase('trailer');
