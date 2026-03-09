@@ -161,6 +161,10 @@ const Index = () => {
     if (uniqueMovies.length === 0) return null;
     const usedIds = new Set<string>();
 
+    // Add hero banner movie IDs to avoid duplicates
+    const heroPool = uniqueMovies.filter(m => m.source !== 'filmeskids' && m.source !== 'serieskids' && m.image && m.description);
+    heroPool.slice(0, 10).forEach(m => usedIds.add(m.id));
+
     const pick1Genre = (rx: RegExp) => {
       const candidates = uniqueMovies.filter(m => !usedIds.has(m.id) && m.genre.some(g => rx.test(g)));
       const picked = pickRandom(candidates, 1);
@@ -184,8 +188,8 @@ const Index = () => {
     const animacoes = pickExcluding(uniqueMovies.filter(m => m.genre.some(g => /anima[çc][aã]o/i.test(g))), 5, usedIds);
     const romance = pickExcluding(uniqueMovies.filter(m => m.genre.some(g => /romance/i.test(g))), 5, usedIds);
     const novelas = pickExcluding(uniqueMovies.filter(m => m.type === 'novela' || m.genre.some(g => /novela/i.test(g))), 5, usedIds);
-    const kids = pickExcluding(uniqueMovies.filter(m => m.kids), 6, usedIds);
-    const nostalgia = pickExcluding(uniqueMovies.filter(m => m.genre.some(g => /cl[áa]ssic/i.test(g))), 6, usedIds);
+    const kids = pickExcluding(uniqueMovies.filter(m => m.kids), 5, usedIds);
+    const nostalgia = pickExcluding(uniqueMovies.filter(m => m.genre.some(g => /cl[áa]ssic/i.test(g))), 5, usedIds);
 
     const shouldRefreshPersonalized = Date.now() - personalizedTs > 48 * 60 * 60 * 1000;
     const personalized = getPersonalized(uniqueMovies.filter(m => !usedIds.has(m.id)), continueWatching);
