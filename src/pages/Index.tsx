@@ -354,7 +354,7 @@ const Index = () => {
               )}
 
               {!loading && homeCategories && homeCategories.lancamentos.length > 0 && (
-                <MovieRow title="Lançamentos & Novidades" movies={homeCategories.lancamentos} {...sharedRowProps} />
+                <MovieRow title="Lançamentos & Novidades" movies={homeCategories.lancamentos} gridMode {...sharedRowProps} />
               )}
 
               {trendingSeries.length > 0 && (
