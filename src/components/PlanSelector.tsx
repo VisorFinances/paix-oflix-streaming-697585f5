@@ -56,7 +56,7 @@ const PlanSelector = ({ selected, onSelect }: PlanSelectorProps) => {
           className={cn(
             "relative flex flex-col rounded-2xl border-2 p-5 text-left transition-all duration-300 group",
             selected === plan.id
-              ? "border-primary bg-primary/10 shadow-lg shadow-primary/20 scale-[1.02]"
+              ? "border-foreground bg-foreground/10 shadow-lg shadow-foreground/10 scale-[1.02]"
               : "border-border bg-card hover:border-muted-foreground/40 hover:bg-secondary/50"
           )}
         >
