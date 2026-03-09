@@ -386,7 +386,7 @@ const Index = () => {
               )}
 
               {!loading && homeCategories && homeCategories.nacionais.length > 0 && (
-                <MovieRow title="Cinema Nacional" movies={homeCategories.nacionais} {...sharedRowProps} />
+                <MovieRow title="Cinema Nacional" movies={homeCategories.nacionais} gridMode {...sharedRowProps} />
               )}
 
               {!loading && showSabado && homeCategories && homeCategories.sabado.length > 0 && (
