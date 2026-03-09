@@ -27,7 +27,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <img src="/images/logo.png" alt="PaixãoFlix" className="h-[100px] w-auto object-contain animate-pulse" />
+          <img src="/images/logo.png" alt="PaixãoFlix" className="h-[80px] w-auto object-contain animate-pulse" />
           <p className="text-muted-foreground">Carregando...</p>
         </div>
       </div>
@@ -48,7 +48,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <div className="max-w-md w-full text-center space-y-6">
-          <img src="/images/logo.png" alt="PaixãoFlix" className="h-[100px] w-auto object-contain mx-auto" />
+          <img src="/images/logo.png" alt="PaixãoFlix" className="h-[80px] w-auto object-contain mx-auto" />
           <div className="bg-card border border-border rounded-2xl p-8 space-y-4">
             <AlertCircle className="w-12 h-12 text-primary mx-auto" />
             <h2 className="text-2xl font-bold text-foreground">Assinatura Necessária</h2>

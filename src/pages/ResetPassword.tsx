@@ -79,7 +79,7 @@ const ResetPassword = () => {
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <img src="/images/logo.png" alt="PaixãoFlix" className="h-[100px] w-auto object-contain mx-auto mb-6" />
+          <img src="/images/logo.png" alt="PaixãoFlix" className="h-[80px] w-auto object-contain mx-auto mb-6" />
           <h1 className="text-3xl font-bold text-foreground">Redefinir Senha</h1>
           <p className="text-muted-foreground mt-2">Digite sua nova senha</p>
         </div>

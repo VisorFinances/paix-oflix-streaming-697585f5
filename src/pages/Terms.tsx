@@ -11,7 +11,7 @@ const Terms = () => {
           <button onClick={() => navigate(-1)} className="text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <img src="/images/logo.png" alt="PaixãoFlix" className="h-[100px] w-auto object-contain cursor-pointer" onClick={() => navigate('/')} />
+          <img src="/images/logo.png" alt="PaixãoFlix" className="h-[80px] w-auto object-contain cursor-pointer" onClick={() => navigate('/')} />
         </div>
       </header>
 
