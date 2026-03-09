@@ -95,7 +95,7 @@ body {
 
   .pv-card-wrapper:hover,
   .pv-card-wrapper:focus-within {
-    z-index: 100;
+    z-index: 200;
   }
 
   /* ─── Prime Video-style Card ─── */
