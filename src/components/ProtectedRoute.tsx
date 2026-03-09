@@ -38,6 +38,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/login" replace />;
   }
 
+  // Admins bypass subscription check
+  if (isAdmin) {
+    return <>{children}</>;
+  }
+
   // If subscription is not active, show paywall
   if (!isActive) {
     return (
