@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Movie } from '@/types';
 import { Play, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface HeroBannerProps {
   movies: Movie[];
@@ -27,9 +28,12 @@ function isDirectVideo(url: string): boolean {
 }
 
 const COVER_DURATION = 3500;
+const COVER_DURATION_MOBILE = 6500;
 const TRAILER_DURATION = 10000;
 
 const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
+  const isMobile = useIsMobile();
+
   const heroMovies = useMemo(() => {
     const withTrailer = movies.filter(m => m.image && m.description && m.trailer);
     const withoutTrailer = movies.filter(m => m.image && m.description && !m.trailer);
@@ -44,6 +48,7 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [canPlayTrailer, setCanPlayTrailer] = useState(true);
   const prevMoviesRef = useRef<Movie[]>(movies);
+  const touchStartX = useRef(0);
 
   // Reset when movies list changes (view switch)
   useEffect(() => {
