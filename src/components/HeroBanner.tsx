@@ -75,6 +75,17 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
   const youtubeUrl = hasTrailer && !isMobile ? getYouTubeEmbedUrl(movie.trailer!) : null;
   const directSrc = hasTrailer && isDirectVideo(movie.trailer!) ? movie.trailer! : '';
 
+  const goToPrev = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setCurrentIndex(prev => (prev - 1 + Math.max(heroMovies.length, 1)) % Math.max(heroMovies.length, 1));
+      setImgLoaded(false);
+      setPhase('cover');
+      setTimeout(() => setIsTransitioning(false), 50);
+    }, 400);
+  }, [heroMovies.length]);
+
   const advanceToNext = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     setIsTransitioning(true);
@@ -85,6 +96,18 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
       setTimeout(() => setIsTransitioning(false), 50);
     }, 600);
   }, [heroMovies.length]);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) advanceToNext();
+      else goToPrev();
+    }
+  }, [advanceToNext, goToPrev]);
 
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
