@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Movie } from '@/types';
 import { Play, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface HeroBannerProps {
   movies: Movie[];
@@ -27,9 +28,12 @@ function isDirectVideo(url: string): boolean {
 }
 
 const COVER_DURATION = 3500;
+const COVER_DURATION_MOBILE = 6500;
 const TRAILER_DURATION = 10000;
 
 const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
+  const isMobile = useIsMobile();
+
   const heroMovies = useMemo(() => {
     const withTrailer = movies.filter(m => m.image && m.description && m.trailer);
     const withoutTrailer = movies.filter(m => m.image && m.description && !m.trailer);
@@ -44,6 +48,7 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [canPlayTrailer, setCanPlayTrailer] = useState(true);
   const prevMoviesRef = useRef<Movie[]>(movies);
+  const touchStartX = useRef(0);
 
   // Reset when movies list changes (view switch)
   useEffect(() => {
@@ -65,9 +70,21 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
   }, []);
 
   const movie = heroMovies[currentIndex];
-  const hasTrailer = canPlayTrailer && !!movie?.trailer;
-  const youtubeUrl = hasTrailer ? getYouTubeEmbedUrl(movie.trailer!) : null;
+  // On mobile, only allow direct video trailers (not YouTube iframes which don't autoplay)
+  const hasTrailer = canPlayTrailer && !!movie?.trailer && (!isMobile || isDirectVideo(movie.trailer!));
+  const youtubeUrl = hasTrailer && !isMobile ? getYouTubeEmbedUrl(movie.trailer!) : null;
   const directSrc = hasTrailer && isDirectVideo(movie.trailer!) ? movie.trailer! : '';
+
+  const goToPrev = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setCurrentIndex(prev => (prev - 1 + Math.max(heroMovies.length, 1)) % Math.max(heroMovies.length, 1));
+      setImgLoaded(false);
+      setPhase('cover');
+      setTimeout(() => setIsTransitioning(false), 50);
+    }, 400);
+  }, [heroMovies.length]);
 
   const advanceToNext = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -80,12 +97,24 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
     }, 600);
   }, [heroMovies.length]);
 
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) advanceToNext();
+      else goToPrev();
+    }
+  }, [advanceToNext, goToPrev]);
+
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     if (heroMovies.length === 0 || !movie || isTransitioning) return;
 
     if (phase === 'cover') {
-      const duration = hasTrailer ? COVER_DURATION : 5000;
+      const duration = hasTrailer ? COVER_DURATION : (isMobile ? COVER_DURATION_MOBILE : 5000);
       timerRef.current = setTimeout(() => {
         if (hasTrailer) {
           setPhase('trailer');
@@ -106,14 +135,18 @@ const HeroBanner = ({ movies, onPlay, onShowDetails }: HeroBannerProps) => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [phase, currentIndex, hasTrailer, directSrc, advanceToNext, heroMovies.length, movie, isTransitioning]);
+  }, [phase, currentIndex, hasTrailer, directSrc, advanceToNext, heroMovies.length, movie, isTransitioning, isMobile]);
 
   if (!movie) return null;
 
   const showTrailer = phase === 'trailer' && hasTrailer && !isTransitioning;
 
   return (
-    <div className="relative w-full h-[32vh] sm:h-[55vh] md:h-[65vh] lg:h-[75vh] overflow-hidden">
+    <div
+      className="relative w-full h-[32vh] sm:h-[55vh] md:h-[65vh] lg:h-[75vh] overflow-hidden"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* Background layer with crossfade */}
       <div
         className="absolute inset-0 transition-opacity duration-700"
