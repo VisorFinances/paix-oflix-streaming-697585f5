@@ -115,7 +115,7 @@ const Admin = () => {
           <button onClick={() => navigate('/')} className="text-muted-foreground hover:text-foreground">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <img src="/images/logo.png" alt="PaixãoFlix" className="h-[100px] w-auto object-contain" />
+          <img src="/images/logo.png" alt="PaixãoFlix" className="h-[80px] w-auto object-contain" />
           <div className="flex items-center gap-2 ml-auto">
             <Shield className="w-5 h-5 text-primary" />
             <span className="text-sm font-semibold text-primary">Administrador</span>

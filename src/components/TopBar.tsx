@@ -40,7 +40,7 @@ const TopBar = ({ movies }: TopBarProps) => {
           <img
             src="/images/logo.png"
             alt="PaixãoFlix"
-            className="h-[100px] w-auto object-contain"
+            className="h-[80px] w-auto object-contain"
           />
         </div>
 
